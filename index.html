@@ -11,6 +11,8 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
   </head>
   <body>
     <div class="container">
@@ -24,6 +26,30 @@
         </div>
         <div class="timestamp">Data as of March 3, 2026</div>
       </header>
+
+      <section class="card chart-card">
+        <div class="chart-top">
+          <div>
+            <h2>Stock Price Comparison (Publix vs Walmart vs Kroger)</h2>
+            <p class="muted section-note">Interactive view with weekly live data for KR/WMT and quarterly Publix share updates.</p>
+          </div>
+          <div class="view-toggle" role="group" aria-label="Chart view toggle">
+            <button id="mode-percent" class="toggle-btn active" data-mode="percent">% Change</button>
+            <button id="mode-price" class="toggle-btn" data-mode="price">Actual Price</button>
+          </div>
+        </div>
+
+        <div class="range-buttons" role="group" aria-label="Select time range">
+          <button class="range-btn active" data-range="1">1Y</button>
+          <button class="range-btn" data-range="2">2Y</button>
+          <button class="range-btn" data-range="3">3Y</button>
+          <button class="range-btn" data-range="5">5Y</button>
+        </div>
+
+        <div class="chart-wrap">
+          <canvas id="stockComparisonChart" aria-label="Stock comparison chart" role="img"></canvas>
+        </div>
+      </section>
 
       <section class="disclosure card">
         <h2>Quarter alignment matters</h2>
