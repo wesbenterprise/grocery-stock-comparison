@@ -7,7 +7,7 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
 
   const symbol = (searchParams.get('symbol') || 'KR').toUpperCase();
-  const range = searchParams.get('range') || '5y';
+  const range = searchParams.get('range') || 'max';
   const interval = searchParams.get('interval') || '1wk';
 
   if (!/^[A-Z.\-]{1,10}$/.test(symbol)) {

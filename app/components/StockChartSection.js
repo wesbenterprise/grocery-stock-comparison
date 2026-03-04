@@ -53,6 +53,8 @@ const SERIES = {
 };
 
 function getRangeStartDate(years) {
+  if (years === 'all') return null;
+
   const now = new Date();
   const start = new Date(now);
   start.setFullYear(now.getFullYear() - years);
@@ -62,7 +64,29 @@ function getRangeStartDate(years) {
 
 function sliceByRange(data, years) {
   const startDate = getRangeStartDate(years);
+  if (!startDate) return data;
   return data.filter((p) => p.x >= startDate);
+}
+
+function alignToCommonStart(seriesMap) {
+  const starts = Object.values(seriesMap)
+    .map((points) => points?.[0]?.x)
+    .filter(Boolean)
+    .map((d) => d.getTime());
+
+  if (!starts.length) return { aligned: seriesMap, commonStart: null };
+
+  const commonStartTs = Math.max(...starts);
+  const commonStart = new Date(commonStartTs);
+
+  const aligned = Object.fromEntries(
+    Object.entries(seriesMap).map(([key, points]) => [
+      key,
+      (points || []).filter((p) => p.x.getTime() >= commonStartTs),
+    ])
+  );
+
+  return { aligned, commonStart };
 }
 
 function normalizePercent(data) {
@@ -84,22 +108,21 @@ function formatDate(dateObj) {
   }).format(dateObj);
 }
 
-function tooltipLabel(ctx, mode, years) {
+function tooltipLabel(ctx, mode) {
   const val = ctx.parsed.y;
   const point = ctx.raw || {};
   const rawPrice = point.rawPrice ?? point.y ?? val;
-  const pct = point.rawPrice != null ? point.y : val;
 
   if (mode === 'percent') {
-    return `${ctx.dataset.label}: ${pct.toFixed(2)}% (Price: $${rawPrice.toFixed(2)})`;
+    return `${ctx.dataset.label}: ${val.toFixed(2)}% (Price: $${rawPrice.toFixed(2)})`;
   }
 
-  const base = sliceByRange(SERIES[ctx.dataset.key].data, years)[0]?.y;
+  const base = ctx.dataset.meta?.basePrice;
   const pctChange = base ? ((rawPrice - base) / base) * 100 : 0;
   return `${ctx.dataset.label}: $${rawPrice.toFixed(2)} (${pctChange.toFixed(2)}%)`;
 }
 
-async function fetchYahooSeries(symbol, range = '5y', interval = '1wk') {
+async function fetchYahooSeries(symbol, range = 'max', interval = '1wk') {
   const res = await fetch(`/api/stock?symbol=${symbol}&range=${range}&interval=${interval}`);
   if (!res.ok) {
     throw new Error(`Proxy fetch failed for ${symbol}: ${res.status}`);
@@ -124,24 +147,47 @@ export default function StockChartSection() {
   const chartRef = useRef(null);
   const [mode, setMode] = useState('percent');
   const [years, setYears] = useState(5);
-  const [error, setError] = useState('');
+  const [warning, setWarning] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
   const [loadedSeries, setLoadedSeries] = useState({ wmt: [], kr: [] });
 
   useEffect(() => {
     let cancelled = false;
+
     (async () => {
-      try {
-        const [wmt, kr] = await Promise.all([fetchYahooSeries('WMT'), fetchYahooSeries('KR')]);
-        if (!cancelled) {
-          setLoadedSeries({ wmt, kr });
-          setError('');
-        }
-      } catch (err) {
-        console.error(err);
-        if (!cancelled) {
-          setError('Unable to load live Yahoo Finance data right now. Please refresh to try again.');
-        }
+      setIsLoading(true);
+
+      const [wmtResult, krResult] = await Promise.allSettled([
+        fetchYahooSeries('WMT', 'max'),
+        fetchYahooSeries('KR', 'max'),
+      ]);
+
+      if (cancelled) return;
+
+      const next = { wmt: [], kr: [] };
+      const failed = [];
+
+      if (wmtResult.status === 'fulfilled') {
+        next.wmt = wmtResult.value;
+      } else {
+        console.error(wmtResult.reason);
+        failed.push('WMT');
       }
+
+      if (krResult.status === 'fulfilled') {
+        next.kr = krResult.value;
+      } else {
+        console.error(krResult.reason);
+        failed.push('KR');
+      }
+
+      setLoadedSeries(next);
+      setWarning(
+        failed.length
+          ? `Some live data failed to load (${failed.join(', ')}). Showing available series.`
+          : ''
+      );
+      setIsLoading(false);
     })();
 
     return () => {
@@ -149,22 +195,32 @@ export default function StockChartSection() {
     };
   }, []);
 
-  const datasets = useMemo(() => {
+  const { datasets, commonStart } = useMemo(() => {
     const merged = {
       publix: SERIES.publix,
       wmt: { ...SERIES.wmt, data: loadedSeries.wmt },
       kr: { ...SERIES.kr, data: loadedSeries.kr },
     };
 
-    return ['publix', 'wmt', 'kr'].map((key) => {
+    const ranged = {
+      publix: sliceByRange(merged.publix.data, years),
+      wmt: sliceByRange(merged.wmt.data, years),
+      kr: sliceByRange(merged.kr.data, years),
+    };
+
+    const { aligned, commonStart } = alignToCommonStart(ranged);
+
+    const datasets = ['publix', 'wmt', 'kr'].map((key) => {
       const series = merged[key];
-      const ranged = sliceByRange(series.data, years);
-      const points = mode === 'percent' ? normalizePercent(ranged) : ranged;
+      const source = mode === 'percent' ? aligned[key] : ranged[key];
+      const points = mode === 'percent' ? normalizePercent(source) : source;
+      const basePrice = source?.[0]?.y ?? null;
 
       return {
         key,
         label: series.label,
         data: points,
+        meta: { basePrice },
         borderColor: series.color,
         backgroundColor: series.color,
         borderWidth: 2.5,
@@ -175,10 +231,12 @@ export default function StockChartSection() {
         spanGaps: true,
       };
     });
+
+    return { datasets, commonStart };
   }, [loadedSeries, mode, years]);
 
   useEffect(() => {
-    if (!canvasRef.current || error) return;
+    if (!canvasRef.current || isLoading) return;
 
     if (!chartRef.current) {
       chartRef.current = new Chart(canvasRef.current, {
@@ -195,6 +253,10 @@ export default function StockChartSection() {
           plugins: {
             legend: {
               position: 'top',
+              labels: {
+                usePointStyle: true,
+                boxWidth: 10,
+              },
             },
             tooltip: {
               callbacks: {
@@ -203,7 +265,7 @@ export default function StockChartSection() {
                   return d ? formatDate(new Date(d)) : '';
                 },
                 label(ctx) {
-                  return tooltipLabel(ctx, mode, years);
+                  return tooltipLabel(ctx, mode);
                 },
               },
             },
@@ -215,15 +277,34 @@ export default function StockChartSection() {
                 unit: 'month',
                 tooltipFormat: 'MMM d, yyyy',
               },
+              grid: {
+                color: '#edf2f7',
+                drawBorder: false,
+              },
               title: {
                 display: true,
-                text: 'Date',
+                text: mode === 'percent' && commonStart ? `Date (aligned from ${formatDate(commonStart)})` : 'Date',
               },
             },
             y: {
+              grid: {
+                color(context) {
+                  if (mode === 'percent' && context.tick?.value === 0) {
+                    return '#b7c4d6';
+                  }
+                  return '#edf2f7';
+                },
+                lineWidth(context) {
+                  if (mode === 'percent' && context.tick?.value === 0) {
+                    return 1.5;
+                  }
+                  return 1;
+                },
+                drawBorder: false,
+              },
               title: {
                 display: true,
-                text: mode === 'percent' ? '% Change from Start' : 'Price (USD)',
+                text: mode === 'percent' ? '% Change from Common Start' : 'Price (USD)',
               },
               ticks: {
                 callback(value) {
@@ -238,11 +319,14 @@ export default function StockChartSection() {
     }
 
     chartRef.current.data.datasets = datasets;
-    chartRef.current.options.scales.y.title.text = mode === 'percent' ? '% Change from Start' : 'Price (USD)';
+    chartRef.current.options.scales.x.title.text =
+      mode === 'percent' && commonStart ? `Date (aligned from ${formatDate(commonStart)})` : 'Date';
+    chartRef.current.options.scales.y.title.text =
+      mode === 'percent' ? '% Change from Common Start' : 'Price (USD)';
     chartRef.current.options.scales.y.ticks.callback = (v) =>
       mode === 'percent' ? `${Number(v).toFixed(0)}%` : `$${Number(v).toFixed(0)}`;
     chartRef.current.update();
-  }, [datasets, error, mode, years]);
+  }, [datasets, isLoading, mode, commonStart]);
 
   useEffect(() => {
     return () => {
@@ -259,6 +343,7 @@ export default function StockChartSection() {
           <p className="muted section-note">
             Interactive view with weekly live data for KR/WMT and quarterly Publix share updates.
           </p>
+          {warning && <p className="muted section-note">{warning}</p>}
         </div>
         <div className="view-toggle" role="group" aria-label="Chart view toggle">
           <button
@@ -281,21 +366,21 @@ export default function StockChartSection() {
       </div>
 
       <div className="range-buttons" role="group" aria-label="Select time range">
-        {[1, 2, 3, 5].map((r) => (
+        {[1, 2, 3, 5, 'all'].map((r) => (
           <button
             key={r}
             className={`range-btn ${years === r ? 'active' : ''}`}
             data-range={r}
             onClick={() => setYears(r)}
           >
-            {r}Y
+            {r === 'all' ? 'All' : `${r}Y`}
           </button>
         ))}
       </div>
 
       <div className="chart-wrap">
-        {error ? (
-          <div className="muted">{error}</div>
+        {isLoading ? (
+          <div className="muted">Loading chart data...</div>
         ) : (
           <canvas id="stockComparisonChart" ref={canvasRef} aria-label="Stock comparison chart" role="img" />
         )}
