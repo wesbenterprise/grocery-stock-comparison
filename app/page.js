@@ -1,256 +1,309 @@
-import StockChartSection from './components/StockChartSection';
+'use client';
 
-export default function HomePage() {
-  return (
-    <div className="container">
-      <header className="page-header card">
-        <div>
-          <p className="eyebrow">Dashboard</p>
-          <h1>Grocery Stock Comparison — Q4 2025</h1>
-          <p className="subtitle">
-            Side-by-side view of Publix (private), Walmart (WMT), and Kroger (KR) using latest available quarter disclosures.
-          </p>
+import { useState, useCallback } from 'react';
+import dynamic from 'next/dynamic';
+
+// Dynamic import to avoid SSR issues with Chart.js
+const StockChart = dynamic(() => import('./components/StockChart'), {
+  ssr: false,
+  loading: () => (
+    <div className="chart-section">
+      <div className="section-header">
+        <h2 className="section-title">Stock Performance</h2>
+      </div>
+      <div className="chart-wrapper">
+        <div className="chart-canvas-container">
+          <div className="chart-loading">
+            <div className="chart-loading-spinner" aria-hidden="true" />
+            <p>Loading chart…</p>
+          </div>
         </div>
-        <div className="timestamp">Data as of March 3, 2026</div>
+      </div>
+    </div>
+  ),
+});
+
+function formatPrice(p) {
+  if (p == null || isNaN(p)) return '—';
+  return '$' + p.toFixed(2);
+}
+
+function formatChange(current, prev) {
+  if (!current || !prev) return null;
+  const pct = ((current - prev) / prev) * 100;
+  return { pct, isGain: pct >= 0 };
+}
+
+function ChangeTag({ pct, isGain }) {
+  if (pct == null) return null;
+  const sign = isGain ? '+' : '';
+  return (
+    <span className={`stock-change ${isGain ? 'gain' : 'loss'}`}>
+      {sign}{pct.toFixed(2)}%
+    </span>
+  );
+}
+
+export default function Page() {
+  const [liveStocks, setLiveStocks] = useState({ KR: null, WMT: null });
+
+  const handleLiveData = useCallback((data) => {
+    setLiveStocks(data);
+  }, []);
+
+  const wmtChange = formatChange(liveStocks.WMT?.price, liveStocks.WMT?.prev);
+  const krChange  = formatChange(liveStocks.KR?.price,  liveStocks.KR?.prev);
+
+  return (
+    <>
+      {/* Fixed Header */}
+      <header className="app-header">
+        <div className="header-brand">
+          <h1>Grocery Stock Compare</h1>
+          <span className="header-badge">Finance</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+            LIVE
+          </span>
+          <span className="header-dot" aria-label="Live data indicator" />
+        </div>
       </header>
 
-      <StockChartSection />
+      {/* Main */}
+      <main className="main-content">
+        <div className="page-container">
 
-      <section className="disclosure card">
-        <h2>Quarter alignment matters</h2>
-        <ul>
-          <li>
-            <strong>Publix:</strong> Q4 2025 = calendar quarter (Oct–Dec 2025), estimates for private-company figures.
-          </li>
-          <li>
-            <strong>Walmart:</strong> Q4 FY2026 ended Jan 2026 (audited public filing).
-          </li>
-          <li>
-            <strong>Kroger:</strong> Q4 FY2025 not yet reported (ends Feb 2026). Showing <strong>Q3 FY2025 (ended Nov 2025)</strong> as
-            most recent quarter.
-          </li>
-        </ul>
-      </section>
+          {/* Hero: Stock Chart */}
+          <section aria-label="Stock performance chart" style={{ marginBottom: 'var(--space-7)' }}>
+            <StockChart onLiveDataLoaded={handleLiveData} />
+          </section>
 
-      <section className="companies-grid">
-        <article className="company card publix">
-          <div className="company-head">
-            <div className="logo">P</div>
-            <div>
-              <h3>Publix</h3>
-              <p className="muted">Private | Employee-owned ESOP</p>
+          {/* Company Cards */}
+          <section aria-label="Company financials" style={{ marginBottom: 'var(--space-7)' }}>
+            <div className="section-header">
+              <h2 className="section-title">Latest Results</h2>
+              <span className="section-subtitle">Q4 2025 / Most Recent</span>
             </div>
-          </div>
-          <p className="stock-price">$19.65</p>
-          <p className="change negative">QoQ: -3.7%</p>
-          <div className="mini-meta">
-            <span>Implied Mkt Cap: ~$51B</span>
-            <span>~2.6B implied shares</span>
-          </div>
-        </article>
 
-        <article className="company card walmart">
-          <div className="company-head">
-            <div className="logo">W</div>
-            <div>
-              <h3>Walmart (WMT)</h3>
-              <p className="muted">Public | Global big-box + grocery</p>
-            </div>
-          </div>
-          <p className="stock-price">$127.35</p>
-          <p className="change positive">1Y: +30.5%</p>
-          <div className="mini-meta">
-            <span>Market Cap: ~$700B</span>
-            <span>FY2026 Net Income: $21.9B</span>
-          </div>
-        </article>
+            <div className="cards-grid">
 
-        <article className="company card kroger">
-          <div className="company-head">
-            <div className="logo">K</div>
-            <div>
-              <h3>Kroger (KR)</h3>
-              <p className="muted">Public | Regional/national grocery</p>
-            </div>
-          </div>
-          <p className="stock-price">$68.70</p>
-          <p className="change positive">1Y: +9.2%</p>
-          <div className="mini-meta">
-            <span>Market Cap: ~$45B</span>
-            <span>CEO: Greg Foran (Feb 2026)</span>
-          </div>
-        </article>
-      </section>
+              {/* Publix */}
+              <article className="company-card publix fadeIn">
+                <div className="card-header">
+                  <div className="company-name-group">
+                    <div className="company-icon publix">P</div>
+                    <div>
+                      <div className="company-name">Publix</div>
+                      <div className="company-ticker">Employee-Owned</div>
+                    </div>
+                  </div>
+                  <div className="stock-price-block">
+                    <span className="stock-price">$19.65</span>
+                    <span className="stock-change loss">−3.7% QoQ</span>
+                  </div>
+                </div>
 
-      <section className="card">
-        <h2>Q4 Revenue Comparison</h2>
-        <p className="muted section-note">
-          Kroger shown on latest reported quarter (Q3 FY2025) because Q4 FY2025 has not been reported yet.
-        </p>
-        <div className="metric-grid">
-          <div className="metric-item">
-            <div className="metric-head">
-              <span>Publix (Q4 2025 est.)</span>
-              <strong>$14.8B</strong>
+                <div className="card-divider" />
+
+                <div className="card-metrics">
+                  <div className="metric-row">
+                    <span className="metric-label">Revenue (Q4 2025)</span>
+                    <span className="metric-value">~$14.4B</span>
+                  </div>
+                  <div className="metric-row">
+                    <span className="metric-label">Implied Market Cap</span>
+                    <span className="metric-value">~$51B</span>
+                  </div>
+                  <div className="metric-row">
+                    <span className="metric-label">Share Price</span>
+                    <span className="metric-value">$19.65 / share</span>
+                  </div>
+                </div>
+
+                <div className="card-divider" />
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span className="card-note">Not publicly traded on any exchange</span>
+                  <span className="private-badge">Private</span>
+                </div>
+              </article>
+
+              {/* Walmart */}
+              <article className="company-card walmart fadeIn">
+                <div className="card-header">
+                  <div className="company-name-group">
+                    <div className="company-icon walmart">W</div>
+                    <div>
+                      <div className="company-name">Walmart</div>
+                      <div className="company-ticker">NYSE: WMT</div>
+                    </div>
+                  </div>
+                  <div className="stock-price-block">
+                    <span className="stock-price">
+                      {liveStocks.WMT?.price ? formatPrice(liveStocks.WMT.price) : (
+                        <span className="loading-skeleton" style={{ width: 80, height: 22, display: 'inline-block', borderRadius: 4 }} />
+                      )}
+                    </span>
+                    {wmtChange ? <ChangeTag {...wmtChange} /> : null}
+                  </div>
+                </div>
+
+                <div className="card-divider" />
+
+                <div className="card-metrics">
+                  <div className="metric-row">
+                    <span className="metric-label">Revenue (Q4 FY2026)</span>
+                    <span className="metric-value">$190.7B</span>
+                  </div>
+                  <div className="metric-row">
+                    <span className="metric-label">Revenue Growth YoY</span>
+                    <span className="metric-value gain">+5.6%</span>
+                  </div>
+                  <div className="metric-row">
+                    <span className="metric-label">Operating Income</span>
+                    <span className="metric-value">$8.7B</span>
+                  </div>
+                  <div className="metric-row">
+                    <span className="metric-label">Gross Margin</span>
+                    <span className="metric-value">24.67%</span>
+                  </div>
+                </div>
+
+                <div className="card-divider" />
+                <span className="card-note">Q4 FY2026 ended January 2026</span>
+              </article>
+
+              {/* Kroger */}
+              <article className="company-card kroger fadeIn">
+                <div className="card-header">
+                  <div className="company-name-group">
+                    <div className="company-icon kroger">K</div>
+                    <div>
+                      <div className="company-name">Kroger</div>
+                      <div className="company-ticker">NYSE: KR</div>
+                    </div>
+                  </div>
+                  <div className="stock-price-block">
+                    <span className="stock-price">
+                      {liveStocks.KR?.price ? formatPrice(liveStocks.KR.price) : (
+                        <span className="loading-skeleton" style={{ width: 80, height: 22, display: 'inline-block', borderRadius: 4 }} />
+                      )}
+                    </span>
+                    {krChange ? <ChangeTag {...krChange} /> : null}
+                  </div>
+                </div>
+
+                <div className="card-divider" />
+
+                <div className="card-metrics">
+                  <div className="metric-row">
+                    <span className="metric-label">Revenue (Q3 FY2025) *</span>
+                    <span className="metric-value">$33.6B</span>
+                  </div>
+                  <div className="metric-row">
+                    <span className="metric-label">Operating Profit</span>
+                    <span className="metric-value">~$1.0B</span>
+                  </div>
+                  <div className="metric-row">
+                    <span className="metric-label">Quarter Ended</span>
+                    <span className="metric-value">Nov 2025</span>
+                  </div>
+                </div>
+
+                <div className="card-divider" />
+                <span className="card-note">* Q4 FY2025 not yet reported</span>
+              </article>
+
             </div>
-            <div className="bar">
-              <div style={{ width: '7.8%' }} />
+          </section>
+
+          {/* Key Metrics Comparison Table */}
+          <section aria-label="Key metrics comparison" style={{ marginBottom: 'var(--space-7)' }}>
+            <div className="section-header">
+              <h2 className="section-title">Key Metrics</h2>
+              <span className="section-subtitle">Side-by-Side Comparison</span>
             </div>
-          </div>
-          <div className="metric-item">
-            <div className="metric-head">
-              <span>Walmart (Q4 FY2026)</span>
-              <strong>$190.7B</strong>
+
+            <div className="metrics-table">
+              <div className="metrics-table-inner">
+                <div className="metrics-table-header">
+                  <div className="metrics-table-header-cell">Metric</div>
+                  <div className="metrics-table-header-cell company-header-publix">Publix</div>
+                  <div className="metrics-table-header-cell company-header-walmart">Walmart</div>
+                  <div className="metrics-table-header-cell company-header-kroger">Kroger</div>
+                </div>
+
+                {[
+                  {
+                    label: 'Annual Revenue',
+                    publix:  '~$57.6B',
+                    walmart: '$680B+',
+                    kroger:  '~$148B',
+                  },
+                  {
+                    label: 'Operating Margin',
+                    publix:  '~5.5%',
+                    walmart: '~4.5%',
+                    kroger:  '~3.0%',
+                  },
+                  {
+                    label: 'Stock Perf. (1Y)',
+                    publix:  '+30.0%',
+                    walmart: liveStocks.WMT?.price && liveStocks.WMT?.prev
+                      ? ((liveStocks.WMT.price - liveStocks.WMT.prev) / liveStocks.WMT.prev * 100).toFixed(1) + '%'
+                      : '~+76%',
+                    kroger:  liveStocks.KR?.price && liveStocks.KR?.prev
+                      ? ((liveStocks.KR.price - liveStocks.KR.prev) / liveStocks.KR.prev * 100).toFixed(1) + '%'
+                      : '~+8%',
+                  },
+                  {
+                    label: 'Market Cap',
+                    publix:  '~$51B',
+                    walmart: '~$750B',
+                    kroger:  '~$45B',
+                  },
+                  {
+                    label: 'Stores (US)',
+                    publix:  '~1,370',
+                    walmart: '~4,600',
+                    kroger:  '~2,750',
+                  },
+                  {
+                    label: 'Exchange',
+                    publix:  'Private',
+                    walmart: 'NYSE',
+                    kroger:  'NYSE',
+                  },
+                ].map((row) => (
+                  <div key={row.label} className="metrics-table-row">
+                    <div className="metrics-table-cell">{row.label}</div>
+                    <div className="metrics-table-cell">
+                      <span className="publix-val">{row.publix}</span>
+                    </div>
+                    <div className="metrics-table-cell">
+                      <span className="walmart-val">{row.walmart}</span>
+                    </div>
+                    <div className="metrics-table-cell">
+                      <span className="kroger-val">{row.kroger}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="bar">
-              <div style={{ width: '100%' }} />
-            </div>
-          </div>
-          <div className="metric-item">
-            <div className="metric-head">
-              <span>Kroger* (Q3 FY2025)</span>
-              <strong>$33.9B</strong>
-            </div>
-            <div className="bar">
-              <div style={{ width: '17.8%' }} />
-            </div>
-          </div>
+          </section>
+
+          {/* Footer */}
+          <footer className="page-footer">
+            <p className="footer-text">
+              Data sources: Publix quarterly share prices (hardcoded — employee-owned, not publicly traded).<br />
+              KR &amp; WMT prices via Yahoo Finance API (server-side proxy, cached 1hr).<br />
+              Financial figures from public earnings reports. For informational purposes only — not financial advice.
+            </p>
+          </footer>
+
         </div>
-      </section>
-
-      <section className="card">
-        <h2>Margins Comparison</h2>
-        <div className="two-col">
-          <div>
-            <h4>Gross Margin</h4>
-            <div className="metric-item">
-              <div className="metric-head">
-                <span>Publix</span>
-                <strong>~28.5%</strong>
-              </div>
-              <div className="bar margin">
-                <div style={{ width: '100%' }} />
-              </div>
-            </div>
-            <div className="metric-item">
-              <div className="metric-head">
-                <span>Walmart</span>
-                <strong>24.67%</strong>
-              </div>
-              <div className="bar margin">
-                <div style={{ width: '86.6%' }} />
-              </div>
-            </div>
-            <div className="metric-item">
-              <div className="metric-head">
-                <span>Kroger</span>
-                <strong>24.02%</strong>
-              </div>
-              <div className="bar margin">
-                <div style={{ width: '84.3%' }} />
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h4>Operating Margin</h4>
-            <div className="metric-item">
-              <div className="metric-head">
-                <span>Publix</span>
-                <strong>~8.5%</strong>
-              </div>
-              <div className="bar margin">
-                <div style={{ width: '100%' }} />
-              </div>
-            </div>
-            <div className="metric-item">
-              <div className="metric-head">
-                <span>Walmart</span>
-                <strong>4.57%</strong>
-              </div>
-              <div className="bar margin">
-                <div style={{ width: '53.8%' }} />
-              </div>
-            </div>
-            <div className="metric-item">
-              <div className="metric-head">
-                <span>Kroger</span>
-                <strong>3.21%</strong>
-              </div>
-              <div className="bar margin">
-                <div style={{ width: '37.8%' }} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="card">
-        <h2>Stock Performance &amp; Scale</h2>
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Metric</th>
-                <th>Publix</th>
-                <th>Walmart</th>
-                <th>Kroger</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Stock move</td>
-                <td>-3.7% QoQ</td>
-                <td>+30.5% YoY</td>
-                <td>+9.2% YoY</td>
-              </tr>
-              <tr>
-                <td>Market cap</td>
-                <td>~$51B implied</td>
-                <td>~$700B</td>
-                <td>~$45B</td>
-              </tr>
-              <tr>
-                <td>Stores</td>
-                <td>~1,400+</td>
-                <td>~10,500 global</td>
-                <td>~2,700+</td>
-              </tr>
-              <tr>
-                <td>States/footprint</td>
-                <td>8 (Southeast U.S.)</td>
-                <td>All 50 + international</td>
-                <td>35 states</td>
-              </tr>
-              <tr>
-                <td>Employees</td>
-                <td>~255,000</td>
-                <td>~2.1M</td>
-                <td>~410,000</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section className="card takeaway">
-        <h2>Key Takeaways</h2>
-        <ul>
-          <li>Publix gross margin (~28–29%) materially exceeds Walmart (24.7%) and Kroger (24.0%).</li>
-          <li>Publix operating margin (~8–9%) is roughly 2x Walmart (4.6%) and ~3x Kroger (3.2%).</li>
-          <li>Walmart clearly leads on scale and public-market momentum (+30.5% YoY).</li>
-          <li>Publix&apos;s -3.7% QoQ stock decline appears mild versus broader grocery pressure.</li>
-          <li>Publix implied market cap (~$51B) currently screens above Kroger (~$45B).</li>
-        </ul>
-      </section>
-
-      <footer className="footnote">
-        <p>
-          <strong>Disclosure:</strong> Publix is privately held; selected figures (Q4 revenue, annual revenue, margin ranges, implied market
-          cap) are estimates and internal-share-price based. Walmart and Kroger figures are from public filings/consensus as noted.
-        </p>
-        <p>* Kroger Q4 FY2025 pending report; latest available quarter displayed is Q3 FY2025 (ended Nov 2025).</p>
-      </footer>
-    </div>
+      </main>
+    </>
   );
 }
