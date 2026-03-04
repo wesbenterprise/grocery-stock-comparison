@@ -81,6 +81,7 @@ export default function StockChart({ onLiveDataLoaded }) {
   const [viewMode, setViewMode]             = useState('percent');
   const [hidden, setHidden]                 = useState({ publix: false, walmart: false, kroger: false });
   const [chartReady, setChartReady]         = useState(false);
+  const [noData, setNoData]                 = useState({ KR: false, WMT: false });
 
   // Scroll the active year pill into view on mount
   useEffect(() => {
@@ -147,6 +148,10 @@ export default function StockChart({ onLiveDataLoaded }) {
       wmtPts    = liveArg.WMT ? filterByDateRange(liveArg.WMT, start, end) : [];
     }
 
+    // Track which live series have no data for the selected range
+    const emptyKR  = !allTimeArg && liveArg.KR  && krPts.length === 0;
+    const emptyWMT = !allTimeArg && liveArg.WMT && wmtPts.length === 0;
+
     if (viewModeArg === 'percent') {
       const allFirstDates = [publixPts[0]?.x, krPts[0]?.x, wmtPts[0]?.x].filter(Boolean);
       if (allFirstDates.length) {
@@ -160,7 +165,7 @@ export default function StockChart({ onLiveDataLoaded }) {
       wmtPts    = normalizeArr(wmtPts);
     }
 
-    return { dateRange, datasets: [
+    return { dateRange, emptyKR, emptyWMT, datasets: [
       {
         label: 'Publix',
         data: publixPts,
@@ -235,7 +240,8 @@ export default function StockChart({ onLiveDataLoaded }) {
         ? (val >= 0 ? '+' : '') + val.toFixed(1) + '%'
         : '$' + val.toFixed(2);
 
-      const { datasets, dateRange } = buildDatasets(viewMode, allTime, selectedYear, selectedPeriod, hidden, liveData);
+      const { datasets, dateRange, emptyKR, emptyWMT } = buildDatasets(viewMode, allTime, selectedYear, selectedPeriod, hidden, liveData);
+      setNoData({ KR: emptyKR, WMT: emptyWMT });
 
       chartRef.current = new Chart(canvasRef.current, {
         type: 'line',
@@ -331,12 +337,17 @@ export default function StockChart({ onLiveDataLoaded }) {
       ? (val >= 0 ? '+' : '') + val.toFixed(1) + '%'
       : '$' + val.toFixed(2);
 
-    const { datasets, dateRange } = buildDatasets(viewMode, allTime, selectedYear, selectedPeriod, hidden, liveData);
+    const { datasets, dateRange, emptyKR, emptyWMT } = buildDatasets(viewMode, allTime, selectedYear, selectedPeriod, hidden, liveData);
     chartRef.current.data.datasets = datasets;
 
-    // Set explicit x-axis bounds so the axis doesn't collapse on sparse data
-    chartRef.current.options.scales.x.min = dateRange ? dateRange.start.getTime() : undefined;
-    chartRef.current.options.scales.x.max = dateRange ? dateRange.end.getTime() : undefined;
+    // Pin x-axis to the full selected date range so sparse data doesn't collapse the axis
+    if (dateRange) {
+      chartRef.current.options.scales.x.min = dateRange.start.getTime();
+      chartRef.current.options.scales.x.max = dateRange.end.getTime();
+    } else {
+      delete chartRef.current.options.scales.x.min;
+      delete chartRef.current.options.scales.x.max;
+    }
 
     chartRef.current.options.scales.y.ticks.callback = formatY;
     chartRef.current.options.plugins.tooltip.callbacks.label = (ctx) => {
@@ -346,6 +357,8 @@ export default function StockChart({ onLiveDataLoaded }) {
         : '$' + val.toFixed(2);
       return `  ${ctx.dataset.label}:  ${fmt}`;
     };
+
+    setNoData({ KR: emptyKR, WMT: emptyWMT });
 
     chartRef.current.update('active');
   }, [allTime, selectedYear, selectedPeriod, viewMode, hidden, chartReady, buildDatasets, liveData]);
@@ -457,6 +470,14 @@ export default function StockChart({ onLiveDataLoaded }) {
             style={{ display: loading ? 'none' : 'block', width: '100%', height: '100%' }}
           />
         </div>
+
+        {(noData.KR || noData.WMT) && (
+          <div className="chart-no-data-notice">
+            No data available for{' '}
+            {[noData.KR && 'Kroger (KR)', noData.WMT && 'Walmart (WMT)'].filter(Boolean).join(' and ')}{' '}
+            in {selectedYear} {selectedPeriod !== 'Full Year' ? selectedPeriod : ''}
+          </div>
+        )}
 
         <div className="chart-legend" role="list">
           {[
