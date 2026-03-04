@@ -440,6 +440,21 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: var(--shadow-card);
 }
 
+.chart-price-note {
+  margin-bottom: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  background: rgba(255, 193, 7, 0.08);
+  border: 1px solid rgba(255, 193, 7, 0.25);
+  border-radius: var(--radius-md);
+  color: #c9a227;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.chart-price-note strong {
+  color: #e0b840;
+}
+
 .chart-wrapper {
   position: relative;
   background: var(--color-bg-card);
@@ -863,7 +878,8 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .chart-canvas-container {
-    height: 300px;
+    height: 350px;
+    min-height: 350px;
   }
 
   .chart-controls {
