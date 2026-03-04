@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 
 // Dynamic import to avoid SSR issues with Chart.js
 const StockChart = dynamic(() => import('./components/StockChart'), {
@@ -126,6 +127,12 @@ export default function Page() {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span className="card-note">Not publicly traded on any exchange</span>
                   <span className="private-badge">Private</span>
+                </div>
+
+                <div style={{ marginTop: 'var(--space-3)' }}>
+                  <Link href="/publix-history" className="publix-history-link">
+                    View Complete Publix Stock History →
+                  </Link>
                 </div>
               </article>
 
