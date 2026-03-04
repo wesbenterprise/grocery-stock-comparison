@@ -63,7 +63,7 @@ const PUBLIX_RAW = [
   { date: '2017-01-01', price: 7.83 },
   { date: '2017-04-01', price: 7.21 },
   { date: '2017-07-01', price: 7.37 },
-  { date: '2017-10-01', price: 7.37 },
+  // Q4 2017 gap — data not yet found
   // 2018
   { date: '2018-01-01', price: 8.35 },
   { date: '2018-04-01', price: 8.51 },
@@ -106,14 +106,21 @@ const PUBLIX_RAW = [
   { date: '2025-10-01', price: 19.65 },
 ];
 
-const RANGES = [
-  { label: '1Y', years: 1 },
-  { label: '2Y', years: 2 },
-  { label: '3Y', years: 3 },
-  { label: '5Y', years: 5 },
-  { label: '10Y', years: 10 },
-  { label: 'All', years: null },
+// Period definitions: startMonth/endMonth are 0-indexed (Jan=0)
+const PERIODS = [
+  { label: 'Q1',        startMonth: 0,  endMonth: 2  },
+  { label: 'Q2',        startMonth: 3,  endMonth: 5  },
+  { label: 'Q3',        startMonth: 6,  endMonth: 8  },
+  { label: 'Q4',        startMonth: 9,  endMonth: 11 },
+  { label: 'H1',        startMonth: 0,  endMonth: 5  },
+  { label: 'H2',        startMonth: 6,  endMonth: 11 },
+  { label: 'First 3Q',  startMonth: 0,  endMonth: 8  },
+  { label: 'Full Year', startMonth: 0,  endMonth: 11 },
 ];
+
+const MIN_YEAR = 2006;
+const MAX_YEAR = Math.max(...PUBLIX_RAW.map(d => parseInt(d.date.substring(0, 4))));
+const YEARS    = Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, i) => MIN_YEAR + i);
 
 const COLORS = {
   publix:  '#4caf50',
@@ -121,11 +128,57 @@ const COLORS = {
   kroger:  '#e31837',
 };
 
-function filterByYears(pts, years) {
-  if (!years) return pts;
-  const cutoff = new Date();
-  cutoff.setFullYear(cutoff.getFullYear() - years);
-  return pts.filter(p => new Date(p.x || p.date) >= cutoff);
+// Pre-expand Publix stepped data for all time — filter from this pool
+// Each quarter has ONE point at end-of-quarter date, plus a step connector (no dot) before the next quarter
+const PUBLIX_EXPANDED = (() => {
+  const pts = [];
+  for (let i = 0; i < PUBLIX_RAW.length; i++) {
+    const curr = PUBLIX_RAW[i];
+    const next = PUBLIX_RAW[i + 1];
+    // Quarter start date maps to end-of-quarter:
+    // Jan 1 (Q1) → Mar 31, Apr 1 (Q2) → Jun 30, Jul 1 (Q3) → Sep 30, Oct 1 (Q4) → Dec 31
+    const d = new Date(curr.date);
+    const month = d.getMonth();
+    let endOfQuarter;
+    if (month === 0) endOfQuarter = new Date(d.getFullYear(), 2, 31);      // Q1 → Mar 31
+    else if (month === 3) endOfQuarter = new Date(d.getFullYear(), 5, 30);  // Q2 → Jun 30
+    else if (month === 6) endOfQuarter = new Date(d.getFullYear(), 8, 30);  // Q3 → Sep 30
+    else endOfQuarter = new Date(d.getFullYear(), 11, 31);                  // Q4 → Dec 31
+    
+    // The actual data point (shows dot)
+    pts.push({ x: endOfQuarter, y: curr.price, showDot: true });
+    
+    // Step connector to next quarter (no dot) — holds the line flat until next data point
+    if (next) {
+      const nextD = new Date(next.date);
+      const nextMonth = nextD.getMonth();
+      let nextEndOfQuarter;
+      if (nextMonth === 0) nextEndOfQuarter = new Date(nextD.getFullYear(), 2, 31);
+      else if (nextMonth === 3) nextEndOfQuarter = new Date(nextD.getFullYear(), 5, 30);
+      else if (nextMonth === 6) nextEndOfQuarter = new Date(nextD.getFullYear(), 8, 30);
+      else nextEndOfQuarter = new Date(nextD.getFullYear(), 11, 31);
+      
+      const beforeNext = new Date(nextEndOfQuarter);
+      beforeNext.setDate(beforeNext.getDate() - 1);
+      pts.push({ x: beforeNext, y: curr.price, showDot: false });
+    }
+  }
+  return pts;
+})();
+
+function getDateRange(year, periodLabel) {
+  const period = PERIODS.find(p => p.label === periodLabel);
+  if (!period) return { start: null, end: null };
+  const start = new Date(year, period.startMonth, 1);
+  const end   = new Date(year, period.endMonth + 1, 0, 23, 59, 59, 999);
+  return { start, end };
+}
+
+function filterByDateRange(pts, start, end) {
+  return pts.filter(p => {
+    const d = p.x instanceof Date ? p.x : new Date(p.x || p.date);
+    return d >= start && d <= end;
+  });
 }
 
 function normalizeArr(arr) {
@@ -136,15 +189,27 @@ function normalizeArr(arr) {
 }
 
 export default function StockChart({ onLiveDataLoaded }) {
-  const canvasRef             = useRef(null);
-  const chartRef              = useRef(null);
+  const canvasRef    = useRef(null);
+  const chartRef     = useRef(null);
+  const yearScrollRef = useRef(null);
 
-  const [loading, setLoading]         = useState(true);
-  const [liveData, setLiveData]       = useState({ KR: null, WMT: null });
-  const [activeRange, setActiveRange] = useState('5Y');
-  const [viewMode, setViewMode]       = useState('price');
-  const [hidden, setHidden]           = useState({ publix: false, walmart: false, kroger: false });
-  const [chartReady, setChartReady]   = useState(false);
+  const [loading, setLoading]               = useState(true);
+  const [liveData, setLiveData]             = useState({ KR: null, WMT: null });
+  const [allTime, setAllTime]               = useState(false);
+  const [selectedYear, setSelectedYear]     = useState(MAX_YEAR);
+  const [selectedPeriod, setSelectedPeriod] = useState('Full Year');
+  const [viewMode, setViewMode]             = useState('price');
+  const [hidden, setHidden]                 = useState({ publix: false, walmart: false, kroger: false });
+  const [chartReady, setChartReady]         = useState(false);
+
+  // Scroll the active year pill into view on mount
+  useEffect(() => {
+    if (!yearScrollRef.current) return;
+    const active = yearScrollRef.current.querySelector('.year-pill.active');
+    if (active) {
+      active.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
+    }
+  }, []);
 
   // Fetch Yahoo Finance data
   useEffect(() => {
@@ -152,7 +217,7 @@ export default function StockChart({ onLiveDataLoaded }) {
 
     async function fetchSymbol(symbol) {
       try {
-        const res = await fetch(`/api/stock?symbol=${symbol}&range=max&interval=1wk`);
+        const res  = await fetch(`/api/stock?symbol=${symbol}&range=max&interval=1wk`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         const result = json?.chart?.result?.[0];
@@ -184,26 +249,20 @@ export default function StockChart({ onLiveDataLoaded }) {
     return () => { cancelled = true; };
   }, [onLiveDataLoaded]);
 
-  // Build datasets
-  const buildDatasets = useCallback((viewModeArg, rangeArg, hiddenArg, liveArg) => {
-    const years = RANGES.find(r => r.label === rangeArg)?.years ?? null;
+  // Build datasets from current selection
+  const buildDatasets = useCallback((viewModeArg, allTimeArg, yearArg, periodArg, hiddenArg, liveArg) => {
+    let publixPts, krPts, wmtPts;
 
-    // Publix: expand stepped data
-    const publixFiltered = filterByYears(PUBLIX_RAW, years);
-    let publixPts = [];
-    for (let i = 0; i < publixFiltered.length; i++) {
-      const curr = publixFiltered[i];
-      const next = publixFiltered[i + 1];
-      publixPts.push({ x: new Date(curr.date), y: curr.price });
-      if (next) {
-        const beforeNext = new Date(next.date);
-        beforeNext.setDate(beforeNext.getDate() - 1);
-        publixPts.push({ x: beforeNext, y: curr.price });
-      }
+    if (allTimeArg) {
+      publixPts = [...PUBLIX_EXPANDED];
+      krPts     = liveArg.KR  ? [...liveArg.KR]  : [];
+      wmtPts    = liveArg.WMT ? [...liveArg.WMT] : [];
+    } else {
+      const { start, end } = getDateRange(yearArg, periodArg);
+      publixPts = filterByDateRange(PUBLIX_EXPANDED, start, end);
+      krPts     = liveArg.KR  ? filterByDateRange(liveArg.KR,  start, end) : [];
+      wmtPts    = liveArg.WMT ? filterByDateRange(liveArg.WMT, start, end) : [];
     }
-
-    let krPts  = liveArg.KR  ? filterByYears(liveArg.KR,  years) : [];
-    let wmtPts = liveArg.WMT ? filterByYears(liveArg.WMT, years) : [];
 
     if (viewModeArg === 'percent') {
       const allFirstDates = [publixPts[0]?.x, krPts[0]?.x, wmtPts[0]?.x].filter(Boolean);
@@ -290,7 +349,7 @@ export default function StockChart({ onLiveDataLoaded }) {
         ? (val >= 0 ? '+' : '') + val.toFixed(1) + '%'
         : '$' + val.toFixed(2);
 
-      const datasets = buildDatasets(viewMode, activeRange, hidden, liveData);
+      const datasets = buildDatasets(viewMode, allTime, selectedYear, selectedPeriod, hidden, liveData);
 
       chartRef.current = new Chart(canvasRef.current, {
         type: 'line',
@@ -384,7 +443,7 @@ export default function StockChart({ onLiveDataLoaded }) {
       ? (val >= 0 ? '+' : '') + val.toFixed(1) + '%'
       : '$' + val.toFixed(2);
 
-    const datasets = buildDatasets(viewMode, activeRange, hidden, liveData);
+    const datasets = buildDatasets(viewMode, allTime, selectedYear, selectedPeriod, hidden, liveData);
     chartRef.current.data.datasets = datasets;
 
     chartRef.current.options.scales.y.ticks.callback = formatY;
@@ -397,33 +456,78 @@ export default function StockChart({ onLiveDataLoaded }) {
     };
 
     chartRef.current.update('active');
-  }, [activeRange, viewMode, hidden, chartReady, buildDatasets, liveData]);
+  }, [allTime, selectedYear, selectedPeriod, viewMode, hidden, chartReady, buildDatasets, liveData]);
 
   const toggleSeries = (key) => {
     setHidden(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleYearSelect = (year) => {
+    setAllTime(false);
+    setSelectedYear(year);
   };
 
   return (
     <div className="chart-section">
       <div className="section-header">
         <h2 className="section-title">Stock Performance</h2>
-        <span className="section-subtitle">Publix (quarterly) · KR & WMT live</span>
+        <span className="section-subtitle">Publix (quarterly) · KR &amp; WMT live</span>
       </div>
 
       <div className="chart-controls">
-        <div className="range-buttons" role="group" aria-label="Time range">
-          {RANGES.map(r => (
+        {/* Period Selector: year pills + period pills */}
+        <div className="period-selector">
+          {/* Row 1: All Time + scrollable year pills */}
+          <div className="year-selector-row">
             <button
-              key={r.label}
-              className={`range-btn${activeRange === r.label ? ' active' : ''}`}
-              onClick={() => setActiveRange(r.label)}
-              aria-pressed={activeRange === r.label}
+              className={`range-btn all-time-btn${allTime ? ' active' : ''}`}
+              onClick={() => setAllTime(true)}
+              aria-pressed={allTime}
             >
-              {r.label}
+              All Time
             </button>
-          ))}
+
+            <div
+              ref={yearScrollRef}
+              className="year-pills-scroll"
+              role="group"
+              aria-label="Select year"
+            >
+              {YEARS.map(year => (
+                <button
+                  key={year}
+                  className={`year-pill${!allTime && selectedYear === year ? ' active' : ''}`}
+                  onClick={() => handleYearSelect(year)}
+                  aria-pressed={!allTime && selectedYear === year}
+                >
+                  {year}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Row 2: Period pills (hidden in All Time mode) */}
+          <div
+            className={`period-pills-row${allTime ? ' period-pills-hidden' : ''}`}
+            role="group"
+            aria-label="Select period"
+            aria-hidden={allTime}
+          >
+            {PERIODS.map(p => (
+              <button
+                key={p.label}
+                className={`period-pill${!allTime && selectedPeriod === p.label ? ' active' : ''}`}
+                onClick={() => { if (!allTime) setSelectedPeriod(p.label); }}
+                aria-pressed={!allTime && selectedPeriod === p.label}
+                disabled={allTime}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
         </div>
 
+        {/* View toggle: Price / % Change */}
         <div className="view-toggle" role="group" aria-label="View mode">
           <button
             className={`view-toggle-btn${viewMode === 'price' ? ' active' : ''}`}
