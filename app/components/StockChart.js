@@ -130,8 +130,10 @@ export default function StockChart({ onLiveDataLoaded }) {
   }, [onLiveDataLoaded]);
 
   // Build datasets from current selection
+  // Returns { datasets, dateRange } where dateRange is { start, end } or null for all-time
   const buildDatasets = useCallback((viewModeArg, allTimeArg, yearArg, periodArg, hiddenArg, liveArg) => {
     let publixPts, krPts, wmtPts;
+    let dateRange = null;
 
     if (allTimeArg) {
       publixPts = [...PUBLIX_POINTS];
@@ -139,6 +141,7 @@ export default function StockChart({ onLiveDataLoaded }) {
       wmtPts    = liveArg.WMT ? [...liveArg.WMT] : [];
     } else {
       const { start, end } = getDateRange(yearArg, periodArg);
+      dateRange = { start, end };
       publixPts = filterByDateRange(PUBLIX_POINTS, start, end);
       krPts     = liveArg.KR  ? filterByDateRange(liveArg.KR,  start, end) : [];
       wmtPts    = liveArg.WMT ? filterByDateRange(liveArg.WMT, start, end) : [];
@@ -157,7 +160,7 @@ export default function StockChart({ onLiveDataLoaded }) {
       wmtPts    = normalizeArr(wmtPts);
     }
 
-    return [
+    return { dateRange, datasets: [
       {
         label: 'Publix',
         data: publixPts,
@@ -207,7 +210,7 @@ export default function StockChart({ onLiveDataLoaded }) {
         hidden: hiddenArg.kroger,
         order: 3,
       },
-    ];
+    ] };
   }, []);
 
   // Create chart on mount (after loading)
@@ -232,7 +235,7 @@ export default function StockChart({ onLiveDataLoaded }) {
         ? (val >= 0 ? '+' : '') + val.toFixed(1) + '%'
         : '$' + val.toFixed(2);
 
-      const datasets = buildDatasets(viewMode, allTime, selectedYear, selectedPeriod, hidden, liveData);
+      const { datasets, dateRange } = buildDatasets(viewMode, allTime, selectedYear, selectedPeriod, hidden, liveData);
 
       chartRef.current = new Chart(canvasRef.current, {
         type: 'line',
@@ -245,8 +248,10 @@ export default function StockChart({ onLiveDataLoaded }) {
           scales: {
             x: {
               type: 'time',
+              min: dateRange ? dateRange.start.getTime() : undefined,
+              max: dateRange ? dateRange.end.getTime() : undefined,
               time: {
-                displayFormats: { month: 'MMM yy', year: 'yyyy' },
+                displayFormats: { day: 'MMM d', week: 'MMM d', month: 'MMM yy', quarter: 'QQQ yyyy', year: 'yyyy' },
                 tooltipFormat: 'MMM d, yyyy',
               },
               grid: { color: 'rgba(255,255,255,0.04)', drawTicks: false },
@@ -326,8 +331,12 @@ export default function StockChart({ onLiveDataLoaded }) {
       ? (val >= 0 ? '+' : '') + val.toFixed(1) + '%'
       : '$' + val.toFixed(2);
 
-    const datasets = buildDatasets(viewMode, allTime, selectedYear, selectedPeriod, hidden, liveData);
+    const { datasets, dateRange } = buildDatasets(viewMode, allTime, selectedYear, selectedPeriod, hidden, liveData);
     chartRef.current.data.datasets = datasets;
+
+    // Set explicit x-axis bounds so the axis doesn't collapse on sparse data
+    chartRef.current.options.scales.x.min = dateRange ? dateRange.start.getTime() : undefined;
+    chartRef.current.options.scales.x.max = dateRange ? dateRange.end.getTime() : undefined;
 
     chartRef.current.options.scales.y.ticks.callback = formatY;
     chartRef.current.options.plugins.tooltip.callbacks.label = (ctx) => {
