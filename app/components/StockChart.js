@@ -25,6 +25,7 @@ const PERIODS = [
   { label: 'H2',        startMonth: 6,  endMonth: 11 },
   { label: 'First 3Q',  startMonth: 0,  endMonth: 8  },
   { label: 'Full Year', startMonth: 0,  endMonth: 11 },
+  { label: 'YTD',       startMonth: 0,  endMonth: 11, ytd: true },
 ];
 
 const MIN_YEAR = 2006;
@@ -41,7 +42,15 @@ function getDateRange(year, periodLabel) {
   const period = PERIODS.find(p => p.label === periodLabel);
   if (!period) return { start: null, end: null };
   const start = new Date(year, period.startMonth, 1);
-  const end   = new Date(year, period.endMonth + 1, 0, 23, 59, 59, 999);
+  // YTD: Jan 1 of selected year through today (or end of year if past year)
+  let end;
+  if (period.ytd) {
+    const now = new Date();
+    const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999);
+    end = year < now.getFullYear() ? endOfYear : now;
+  } else {
+    end = new Date(year, period.endMonth + 1, 0, 23, 59, 59, 999);
+  }
   return { start, end };
 }
 
