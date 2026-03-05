@@ -83,6 +83,24 @@ function filterByDateRange(pts, start, end) {
   });
 }
 
+// For sparse (quarterly) data: include one point before and after the range
+// so the line extends through the full period rather than stopping at the
+// last in-range point (e.g. Oct 1 for a full-year view).
+function filterWithNeighbors(pts, start, end) {
+  let firstIn = -1, lastIn = -1;
+  for (let i = 0; i < pts.length; i++) {
+    const t = pts[i].x.getTime();
+    if (t >= start.getTime() && t <= end.getTime()) {
+      if (firstIn === -1) firstIn = i;
+      lastIn = i;
+    }
+  }
+  if (firstIn === -1) return [];
+  const lo = Math.max(0, firstIn - 1);
+  const hi = Math.min(pts.length - 1, lastIn + 1);
+  return pts.slice(lo, hi + 1);
+}
+
 function normalizeArr(arr) {
   if (!arr.length) return arr;
   const base = arr[0].y;
@@ -157,7 +175,7 @@ export default function StockChart({ onLiveDataLoaded }) {
     } else {
       const { start, end } = getDateRange(yearArg, periodArg);
       dateRange = { start, end };
-      publixPts = filterByDateRange(PUBLIX_POINTS, start, end);
+      publixPts = filterWithNeighbors(PUBLIX_POINTS, start, end);
       krPts     = liveArg.KR  ? filterByDateRange(liveArg.KR,  start, end) : [];
       wmtPts    = liveArg.WMT ? filterByDateRange(liveArg.WMT, start, end) : [];
     }
