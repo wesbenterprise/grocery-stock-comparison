@@ -3,16 +3,15 @@
 import { useEffect, useRef } from 'react';
 import { PUBLIX_RAW } from '../../lib/publix-data';
 
-// Publix prices are announced on an effective date but represent the value at the
-// END of the previous quarter. Map to end-of-quarter dates (noon ET).
+// Plot at end-of-quarter: Jan→Mar 31, Apr→Jun 30, Jul→Sep 30, Oct→Dec 31 (noon ET).
 const NOON_ET = 17;
 const PUBLIX_POINTS = PUBLIX_RAW.map(p => {
   const year  = parseInt(p.date.substring(0, 4), 10);
   const month = parseInt(p.date.substring(5, 7), 10);
-  if (month === 1) return { x: new Date(Date.UTC(year - 1, 11, 31, NOON_ET)), y: p.price };
-  if (month === 4) return { x: new Date(Date.UTC(year, 2, 31, NOON_ET)), y: p.price };
-  if (month === 7) return { x: new Date(Date.UTC(year, 5, 30, NOON_ET)), y: p.price };
-  return { x: new Date(Date.UTC(year, 8, 30, NOON_ET)), y: p.price };
+  if (month === 1) return { x: new Date(Date.UTC(year, 2, 31, NOON_ET)), y: p.price };
+  if (month === 4) return { x: new Date(Date.UTC(year, 5, 30, NOON_ET)), y: p.price };
+  if (month === 7) return { x: new Date(Date.UTC(year, 8, 30, NOON_ET)), y: p.price };
+  return { x: new Date(Date.UTC(year, 11, 31, NOON_ET)), y: p.price };
 });
 
 // Custom plugin: draws a vertical dashed line + label at the April 2022 split date

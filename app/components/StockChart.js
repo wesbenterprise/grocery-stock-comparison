@@ -11,20 +11,16 @@ function noonET(year, month, day) {
   return new Date(Date.UTC(year, month, day, NOON_ET));
 }
 
-// Publix announces prices on an effective date (Mar 1, May 1, Aug 1, Nov 1) but
-// the price represents value at the END of the previous quarter. Our raw data
-// uses simplified quarter-start dates (Jan, Apr, Jul, Oct). Map to end-of-quarter:
-//   month 1 (Jan) → Dec 31 of PREVIOUS year  (end of Q4)
-//   month 4 (Apr) → Mar 31                    (end of Q1)
-//   month 7 (Jul) → Jun 30                    (end of Q2)
-//   month 10 (Oct) → Sep 30                   (end of Q3)
+// Publix raw data dates represent the quarter the price applies to (Jan=Q1, etc.).
+// Plot at end-of-quarter: Jan→Mar 31, Apr→Jun 30, Jul→Sep 30, Oct→Dec 31.
+// E.g. '2025-10-01' ($19.65) plots at Dec 31, 2025.
 const PUBLIX_POINTS = PUBLIX_RAW.map(p => {
   const year  = parseInt(p.date.substring(0, 4), 10);
   const month = parseInt(p.date.substring(5, 7), 10);
-  if (month === 1) return { x: noonET(year - 1, 11, 31), y: p.price }; // Dec 31 prev year
-  if (month === 4) return { x: noonET(year, 2, 31), y: p.price };      // Mar 31
-  if (month === 7) return { x: noonET(year, 5, 30), y: p.price };      // Jun 30
-  return { x: noonET(year, 8, 30), y: p.price };                        // Sep 30
+  if (month === 1) return { x: noonET(year, 2, 31), y: p.price };  // Mar 31
+  if (month === 4) return { x: noonET(year, 5, 30), y: p.price };  // Jun 30
+  if (month === 7) return { x: noonET(year, 8, 30), y: p.price };  // Sep 30
+  return { x: noonET(year, 11, 31), y: p.price };                   // Dec 31
 });
 
 // Period definitions: startMonth/endMonth are 0-indexed (Jan=0)
