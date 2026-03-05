@@ -36,6 +36,21 @@ const PERIODS = [
   { label: 'YTD',       startMonth: 0,  endMonth: 11, ytd: true },
 ];
 
+// Return only periods whose date range is fully in the past, plus YTD for the
+// current year. For past years every period is available.
+function getAvailablePeriods(year) {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  if (year < currentYear) return PERIODS;
+  // Current (or future) year: only completed periods + YTD
+  const currentMonth = now.getMonth(); // 0-indexed
+  return PERIODS.filter(p => {
+    if (p.ytd) return true;
+    // Period is complete when we're past its endMonth (i.e. currentMonth > endMonth)
+    return currentMonth > p.endMonth;
+  });
+}
+
 const MIN_YEAR = 2006;
 const MAX_YEAR = Math.max(...PUBLIX_RAW.map(d => parseInt(d.date.substring(0, 4))));
 const YEARS    = Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, i) => MIN_YEAR + i);
@@ -369,6 +384,12 @@ export default function StockChart({ onLiveDataLoaded }) {
   const handleYearSelect = (year) => {
     setAllTime(false);
     setSelectedYear(year);
+    // If the current period isn't available for this year, pick the best default
+    const available = getAvailablePeriods(year);
+    if (!available.find(p => p.label === selectedPeriod)) {
+      const fullYear = available.find(p => p.label === 'Full Year');
+      setSelectedPeriod(fullYear ? 'Full Year' : available[available.length - 1].label);
+    }
   };
 
   return (
@@ -407,25 +428,19 @@ export default function StockChart({ onLiveDataLoaded }) {
             </select>
           </div>
 
-          {/* Row 2: Period pills (hidden in All Time mode) */}
-          <div
-            className={`period-pills-row${allTime ? ' period-pills-hidden' : ''}`}
-            role="group"
-            aria-label="Select period"
-            aria-hidden={allTime}
-          >
-            {PERIODS.map(p => (
-              <button
-                key={p.label}
-                className={`period-pill${!allTime && selectedPeriod === p.label ? ' active' : ''}`}
-                onClick={() => { if (!allTime) setSelectedPeriod(p.label); }}
-                aria-pressed={!allTime && selectedPeriod === p.label}
-                disabled={allTime}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
+          {/* Row 2: Period dropdown (hidden in All Time mode) */}
+          {!allTime && (
+            <select
+              className="year-dropdown"
+              value={selectedPeriod}
+              onChange={(e) => setSelectedPeriod(e.target.value)}
+              aria-label="Select period"
+            >
+              {getAvailablePeriods(selectedYear).map(p => (
+                <option key={p.label} value={p.label}>{p.label}</option>
+              ))}
+            </select>
+          )}
         </div>
 
         {/* View toggle: Price / % Change */}
