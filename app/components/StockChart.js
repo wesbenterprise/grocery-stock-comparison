@@ -11,13 +11,20 @@ function noonET(year, month, day) {
   return new Date(Date.UTC(year, month, day, NOON_ET));
 }
 
-// Plot Publix at the effective date (when the price takes effect: Jan 1, Apr 1, etc.)
-// rather than end-of-quarter, so Q1 data appears at the start of the year.
+// Publix announces prices on an effective date (Mar 1, May 1, Aug 1, Nov 1) but
+// the price represents value at the END of the previous quarter. Our raw data
+// uses simplified quarter-start dates (Jan, Apr, Jul, Oct). Map to end-of-quarter:
+//   month 1 (Jan) → Dec 31 of PREVIOUS year  (end of Q4)
+//   month 4 (Apr) → Mar 31                    (end of Q1)
+//   month 7 (Jul) → Jun 30                    (end of Q2)
+//   month 10 (Oct) → Sep 30                   (end of Q3)
 const PUBLIX_POINTS = PUBLIX_RAW.map(p => {
   const year  = parseInt(p.date.substring(0, 4), 10);
-  const month = parseInt(p.date.substring(5, 7), 10) - 1; // 0-indexed
-  const day   = parseInt(p.date.substring(8, 10), 10);
-  return { x: noonET(year, month, day), y: p.price };
+  const month = parseInt(p.date.substring(5, 7), 10);
+  if (month === 1) return { x: noonET(year - 1, 11, 31), y: p.price }; // Dec 31 prev year
+  if (month === 4) return { x: noonET(year, 2, 31), y: p.price };      // Mar 31
+  if (month === 7) return { x: noonET(year, 5, 30), y: p.price };      // Jun 30
+  return { x: noonET(year, 8, 30), y: p.price };                        // Sep 30
 });
 
 // Period definitions: startMonth/endMonth are 0-indexed (Jan=0)
@@ -81,6 +88,24 @@ function filterByDateRange(pts, start, end) {
     const d = p.x instanceof Date ? p.x : new Date(p.x || p.date);
     return d >= start && d <= end;
   });
+}
+
+// For sparse (quarterly) data: include one point before and after the range
+// so the line extends through the full period rather than stopping at the
+// last in-range point (e.g. Oct 1 for a full-year view).
+function filterWithNeighbors(pts, start, end) {
+  let firstIn = -1, lastIn = -1;
+  for (let i = 0; i < pts.length; i++) {
+    const t = pts[i].x.getTime();
+    if (t >= start.getTime() && t <= end.getTime()) {
+      if (firstIn === -1) firstIn = i;
+      lastIn = i;
+    }
+  }
+  if (firstIn === -1) return [];
+  const lo = Math.max(0, firstIn - 1);
+  const hi = Math.min(pts.length - 1, lastIn + 1);
+  return pts.slice(lo, hi + 1);
 }
 
 function normalizeArr(arr) {
@@ -157,7 +182,7 @@ export default function StockChart({ onLiveDataLoaded }) {
     } else {
       const { start, end } = getDateRange(yearArg, periodArg);
       dateRange = { start, end };
-      publixPts = filterByDateRange(PUBLIX_POINTS, start, end);
+      publixPts = filterWithNeighbors(PUBLIX_POINTS, start, end);
       krPts     = liveArg.KR  ? filterByDateRange(liveArg.KR,  start, end) : [];
       wmtPts    = liveArg.WMT ? filterByDateRange(liveArg.WMT, start, end) : [];
     }
