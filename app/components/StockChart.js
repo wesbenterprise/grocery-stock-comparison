@@ -3,15 +3,21 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { PUBLIX_RAW } from '../../lib/publix-data';
 
+// Parse 'YYYY-MM-DD' without timezone shift (new Date('...') parses as UTC,
+// but getMonth()/getFullYear() return local time — off by a day in US timezones)
+function parseLocalDate(s) {
+  const [y, m, d] = s.split('-').map(Number);
+  return { year: y, month: m - 1, day: d };
+}
+
 // Map raw quarterly data to end-of-quarter dates for clean stepped rendering
 const PUBLIX_POINTS = PUBLIX_RAW.map(p => {
-  const d = new Date(p.date);
-  const month = d.getMonth();
+  const { year, month } = parseLocalDate(p.date);
   let endOfQuarter;
-  if (month === 0) endOfQuarter = new Date(d.getFullYear(), 2, 31);
-  else if (month === 3) endOfQuarter = new Date(d.getFullYear(), 5, 30);
-  else if (month === 6) endOfQuarter = new Date(d.getFullYear(), 8, 30);
-  else endOfQuarter = new Date(d.getFullYear(), 11, 31);
+  if (month === 0) endOfQuarter = new Date(year, 2, 31);
+  else if (month === 3) endOfQuarter = new Date(year, 5, 30);
+  else if (month === 6) endOfQuarter = new Date(year, 8, 30);
+  else endOfQuarter = new Date(year, 11, 31);
   return { x: endOfQuarter, y: p.price };
 });
 
