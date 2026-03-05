@@ -13,7 +13,7 @@ const splitAnnotationPlugin = {
     // The split happened April 2022 — use end of Q1 2022 (Mar 31) as the visual marker
     // In our expanded data, Q1 2022 end-of-quarter = Mar 31 2022, Q2 2022 = Jun 30 2022
     // We draw the line right between them: Apr 1 2022
-    const splitDate = new Date(2022, 3, 1);
+    const splitDate = new Date(Date.UTC(2022, 3, 1, 17)); // noon ET
     const xPixel = x.getPixelForValue(splitDate.getTime());
 
     if (xPixel < x.left || xPixel > x.right) return;

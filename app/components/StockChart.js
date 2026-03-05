@@ -3,21 +3,23 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { PUBLIX_RAW } from '../../lib/publix-data';
 
-// Parse 'YYYY-MM-DD' without timezone shift (new Date('...') parses as UTC,
-// but getMonth()/getFullYear() return local time — off by a day in US timezones)
-function parseLocalDate(s) {
-  const [y, m, d] = s.split('-').map(Number);
-  return { year: y, month: m - 1, day: d };
+// All dates pinned to noon ET (17:00 UTC) so the calendar date is stable
+// regardless of the viewer's browser timezone. US markets run on Eastern Time.
+const NOON_ET = 17; // noon ET ≈ 17:00 UTC (EST; 16:00 during EDT — close enough)
+
+function noonET(year, month, day) {
+  return new Date(Date.UTC(year, month, day, NOON_ET));
 }
 
 // Map raw quarterly data to end-of-quarter dates for clean stepped rendering
 const PUBLIX_POINTS = PUBLIX_RAW.map(p => {
-  const { year, month } = parseLocalDate(p.date);
+  const year  = parseInt(p.date.substring(0, 4), 10);
+  const month = parseInt(p.date.substring(5, 7), 10);
   let endOfQuarter;
-  if (month === 0) endOfQuarter = new Date(year, 2, 31);
-  else if (month === 3) endOfQuarter = new Date(year, 5, 30);
-  else if (month === 6) endOfQuarter = new Date(year, 8, 30);
-  else endOfQuarter = new Date(year, 11, 31);
+  if (month === 1) endOfQuarter = noonET(year, 2, 31);       // Q1 → Mar 31
+  else if (month === 4) endOfQuarter = noonET(year, 5, 30);  // Q2 → Jun 30
+  else if (month === 7) endOfQuarter = noonET(year, 8, 30);  // Q3 → Sep 30
+  else endOfQuarter = noonET(year, 11, 31);                   // Q4 → Dec 31
   return { x: endOfQuarter, y: p.price };
 });
 
@@ -47,15 +49,17 @@ const COLORS = {
 function getDateRange(year, periodLabel) {
   const period = PERIODS.find(p => p.label === periodLabel);
   if (!period) return { start: null, end: null };
-  const start = new Date(year, period.startMonth, 1);
-  // YTD: Jan 1 of selected year through today (or end of year if past year)
+  // Range boundaries at midnight ET (05:00 UTC) for start, 11:59pm ET for end
+  const start = new Date(Date.UTC(year, period.startMonth, 1, 5));
   let end;
   if (period.ytd) {
     const now = new Date();
-    const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999);
+    const endOfYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
     end = year < now.getFullYear() ? endOfYear : now;
   } else {
-    end = new Date(year, period.endMonth + 1, 0, 23, 59, 59, 999);
+    // Last day of endMonth: day 0 of next month = last day of endMonth
+    const lastDay = new Date(Date.UTC(year, period.endMonth + 1, 0));
+    end = new Date(Date.UTC(year, period.endMonth, lastDay.getUTCDate(), 23, 59, 59, 999));
   }
   return { start, end };
 }
