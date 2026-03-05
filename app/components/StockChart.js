@@ -166,13 +166,10 @@ export default function StockChart({ onLiveDataLoaded }) {
     const emptyWMT = !allTimeArg && liveArg.WMT && wmtPts.length === 0;
 
     if (viewModeArg === 'percent') {
-      const allFirstDates = [publixPts[0]?.x, krPts[0]?.x, wmtPts[0]?.x].filter(Boolean);
-      if (allFirstDates.length) {
-        const commonStart = new Date(Math.max(...allFirstDates.map(d => d.getTime())));
-        publixPts = publixPts.filter(p => p.x >= commonStart);
-        krPts     = krPts.filter(p => p.x >= commonStart);
-        wmtPts    = wmtPts.filter(p => p.x >= commonStart);
-      }
+      // Normalize each series from its own first data point in the range.
+      // (No common-start alignment — Publix is quarterly while KR/WMT are
+      // weekly, so forcing alignment to the latest first date would discard
+      // most KR/WMT data in Q1/H1/First-3Q views.)
       publixPts = normalizeArr(publixPts);
       krPts     = normalizeArr(krPts);
       wmtPts    = normalizeArr(wmtPts);
