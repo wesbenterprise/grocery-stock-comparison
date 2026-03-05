@@ -281,65 +281,7 @@ h1, h2, h3, h4, h5, h6 {
   white-space: nowrap;
 }
 
-.year-pills-scroll {
-  display: flex;
-  gap: var(--space-1);
-  overflow-x: auto;
-  flex: 1;
-  min-width: 0;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  padding-bottom: 2px;
-}
-
-.year-pills-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-.year-pill {
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: 0 var(--space-2);
-  height: 36px;
-  min-width: 54px;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.year-pill:hover {
-  background: var(--color-bg-card-hover);
-  border-color: var(--color-border-hover);
-  color: var(--color-text);
-}
-
-.year-pill.active {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  color: white;
-  box-shadow: 0 0 12px var(--color-accent-glow);
-}
-
-.period-pills-row {
-  display: flex;
-  gap: var(--space-1);
-  flex-wrap: wrap;
-  transition: opacity var(--transition-fast);
-}
-
-.period-pills-row.period-pills-hidden {
-  opacity: 0.25;
-  pointer-events: none;
-}
-
-.period-pill {
+.year-dropdown {
   font-family: var(--font-mono);
   font-size: var(--text-sm);
   font-weight: 600;
@@ -349,29 +291,24 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: var(--radius-sm);
   padding: 0 var(--space-3);
   height: 36px;
-  min-width: 44px;
   cursor: pointer;
   transition: all var(--transition-fast);
-  letter-spacing: 0.04em;
-  white-space: nowrap;
+  letter-spacing: 0.02em;
+  appearance: auto;
 }
 
-.period-pill:hover:not(:disabled) {
+.year-dropdown:hover {
   background: var(--color-bg-card-hover);
   border-color: var(--color-border-hover);
   color: var(--color-text);
 }
 
-.period-pill.active {
-  background: var(--color-accent);
+.year-dropdown:focus {
+  outline: none;
   border-color: var(--color-accent);
-  color: white;
-  box-shadow: 0 0 12px var(--color-accent-glow);
+  box-shadow: 0 0 0 2px var(--color-accent-glow);
 }
 
-.period-pill:disabled {
-  cursor: default;
-}
 
 /* Keep legacy range-buttons for any other uses */
 .range-buttons {
@@ -914,17 +851,9 @@ h1, h2, h3, h4, h5, h6 {
     font-size: var(--text-sm);
   }
 
-  .year-pill {
+  .year-dropdown {
     height: 48px;
-    min-width: 60px;
     font-size: var(--text-sm);
-  }
-
-  .period-pill {
-    height: 48px;
-    min-width: 52px;
-    font-size: var(--text-sm);
-    padding: 0 var(--space-3);
   }
 
   .view-toggle {

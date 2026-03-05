@@ -36,6 +36,21 @@ const PERIODS = [
   { label: 'YTD',       startMonth: 0,  endMonth: 11, ytd: true },
 ];
 
+// Return only periods whose date range is fully in the past, plus YTD for the
+// current year. For past years every period is available.
+function getAvailablePeriods(year) {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  if (year < currentYear) return PERIODS;
+  // Current (or future) year: only completed periods + YTD
+  const currentMonth = now.getMonth(); // 0-indexed
+  return PERIODS.filter(p => {
+    if (p.ytd) return true;
+    // Period is complete when we're past its endMonth (i.e. currentMonth > endMonth)
+    return currentMonth > p.endMonth;
+  });
+}
+
 const MIN_YEAR = 2006;
 const MAX_YEAR = Math.max(...PUBLIX_RAW.map(d => parseInt(d.date.substring(0, 4))));
 const YEARS    = Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, i) => MIN_YEAR + i);
@@ -81,7 +96,6 @@ function normalizeArr(arr) {
 export default function StockChart({ onLiveDataLoaded }) {
   const canvasRef    = useRef(null);
   const chartRef     = useRef(null);
-  const yearScrollRef = useRef(null);
 
   const [loading, setLoading]               = useState(true);
   const [liveData, setLiveData]             = useState({ KR: null, WMT: null });
@@ -92,15 +106,6 @@ export default function StockChart({ onLiveDataLoaded }) {
   const [hidden, setHidden]                 = useState({ publix: false, walmart: false, kroger: false });
   const [chartReady, setChartReady]         = useState(false);
   const [noData, setNoData]                 = useState({ KR: false, WMT: false });
-
-  // Scroll the active year pill into view on mount
-  useEffect(() => {
-    if (!yearScrollRef.current) return;
-    const active = yearScrollRef.current.querySelector('.year-pill.active');
-    if (active) {
-      active.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
-    }
-  }, []);
 
   // Fetch Yahoo Finance weekly data using period1/period2 for true weekly granularity
   // (range=max causes Yahoo to auto-downsample to monthly for long spans)
@@ -166,13 +171,10 @@ export default function StockChart({ onLiveDataLoaded }) {
     const emptyWMT = !allTimeArg && liveArg.WMT && wmtPts.length === 0;
 
     if (viewModeArg === 'percent') {
-      const allFirstDates = [publixPts[0]?.x, krPts[0]?.x, wmtPts[0]?.x].filter(Boolean);
-      if (allFirstDates.length) {
-        const commonStart = new Date(Math.max(...allFirstDates.map(d => d.getTime())));
-        publixPts = publixPts.filter(p => p.x >= commonStart);
-        krPts     = krPts.filter(p => p.x >= commonStart);
-        wmtPts    = wmtPts.filter(p => p.x >= commonStart);
-      }
+      // Normalize each series from its own first data point in the range.
+      // (No common-start alignment — Publix is quarterly while KR/WMT are
+      // weekly, so forcing alignment to the latest first date would discard
+      // most KR/WMT data in Q1/H1/First-3Q views.)
       publixPts = normalizeArr(publixPts);
       krPts     = normalizeArr(krPts);
       wmtPts    = normalizeArr(wmtPts);
@@ -382,6 +384,12 @@ export default function StockChart({ onLiveDataLoaded }) {
   const handleYearSelect = (year) => {
     setAllTime(false);
     setSelectedYear(year);
+    // If the current period isn't available for this year, pick the best default
+    const available = getAvailablePeriods(year);
+    if (!available.find(p => p.label === selectedPeriod)) {
+      const fullYear = available.find(p => p.label === 'Full Year');
+      setSelectedPeriod(fullYear ? 'Full Year' : available[available.length - 1].label);
+    }
   };
 
   return (
@@ -394,7 +402,7 @@ export default function StockChart({ onLiveDataLoaded }) {
       <div className="chart-controls">
         {/* Period Selector: year pills + period pills */}
         <div className="period-selector">
-          {/* Row 1: All Time + scrollable year pills */}
+          {/* Row 1: All Time toggle + year dropdown */}
           <div className="year-selector-row">
             <button
               className={`range-btn all-time-btn${allTime ? ' active' : ''}`}
@@ -404,44 +412,35 @@ export default function StockChart({ onLiveDataLoaded }) {
               All Time
             </button>
 
-            <div
-              ref={yearScrollRef}
-              className="year-pills-scroll"
-              role="group"
+            <select
+              className="year-dropdown"
+              value={allTime ? '' : selectedYear}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val) handleYearSelect(Number(val));
+              }}
               aria-label="Select year"
             >
+              <option value="" disabled>Year…</option>
               {YEARS.map(year => (
-                <button
-                  key={year}
-                  className={`year-pill${!allTime && selectedYear === year ? ' active' : ''}`}
-                  onClick={() => handleYearSelect(year)}
-                  aria-pressed={!allTime && selectedYear === year}
-                >
-                  {year}
-                </button>
+                <option key={year} value={year}>{year}</option>
               ))}
-            </div>
+            </select>
           </div>
 
-          {/* Row 2: Period pills (hidden in All Time mode) */}
-          <div
-            className={`period-pills-row${allTime ? ' period-pills-hidden' : ''}`}
-            role="group"
-            aria-label="Select period"
-            aria-hidden={allTime}
-          >
-            {PERIODS.map(p => (
-              <button
-                key={p.label}
-                className={`period-pill${!allTime && selectedPeriod === p.label ? ' active' : ''}`}
-                onClick={() => { if (!allTime) setSelectedPeriod(p.label); }}
-                aria-pressed={!allTime && selectedPeriod === p.label}
-                disabled={allTime}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
+          {/* Row 2: Period dropdown (hidden in All Time mode) */}
+          {!allTime && (
+            <select
+              className="year-dropdown"
+              value={selectedPeriod}
+              onChange={(e) => setSelectedPeriod(e.target.value)}
+              aria-label="Select period"
+            >
+              {getAvailablePeriods(selectedYear).map(p => (
+                <option key={p.label} value={p.label}>{p.label}</option>
+              ))}
+            </select>
+          )}
         </div>
 
         {/* View toggle: Price / % Change */}
