@@ -104,8 +104,7 @@ export default function StockChart({ onLiveDataLoaded }) {
   const [chartReady, setChartReady]         = useState(false);
   const [noData, setNoData]                 = useState({ KR: false, WMT: false });
 
-  // Fetch Yahoo Finance weekly data using period1/period2 for true weekly granularity
-  // (range=max causes Yahoo to auto-downsample to monthly for long spans)
+  // Fetch Yahoo Finance daily data for accurate prices
   useEffect(() => {
     let cancelled = false;
     const p1 = Math.floor(Date.UTC(MIN_YEAR, 0, 1) / 1000);
@@ -113,7 +112,7 @@ export default function StockChart({ onLiveDataLoaded }) {
 
     async function fetchSymbol(symbol) {
       try {
-        const res  = await fetch(`/api/stock?symbol=${symbol}&interval=1wk&period1=${p1}&period2=${p2}`);
+        const res  = await fetch(`/api/stock?symbol=${symbol}&interval=1d&period1=${p1}&period2=${p2}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         const result = json?.chart?.result?.[0];
@@ -265,7 +264,6 @@ export default function StockChart({ onLiveDataLoaded }) {
           scales: {
             x: {
               type: 'time',
-              min: dateRange ? dateRange.start.getTime() : undefined,
               max: dateRange ? dateRange.end.getTime() : undefined,
               time: {
                 displayFormats: { day: 'MMM d', week: 'MMM d', month: 'MMM yy', quarter: 'QQQ yyyy', year: 'yyyy' },
@@ -351,9 +349,9 @@ export default function StockChart({ onLiveDataLoaded }) {
     const { datasets, dateRange, emptyKR, emptyWMT } = buildDatasets(viewMode, allTime, selectedYear, selectedPeriod, hidden, liveData);
     chartRef.current.data.datasets = datasets;
 
-    // Pin x-axis to the full selected date range so sparse data doesn't collapse the axis
+    // Set x-axis max to end of selected period (don't set min so data starts at left edge)
     if (dateRange) {
-      chartRef.current.options.scales.x.min = dateRange.start.getTime();
+      delete chartRef.current.options.scales.x.min;
       chartRef.current.options.scales.x.max = dateRange.end.getTime();
     } else {
       delete chartRef.current.options.scales.x.min;
