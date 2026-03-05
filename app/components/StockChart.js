@@ -81,7 +81,6 @@ function normalizeArr(arr) {
 export default function StockChart({ onLiveDataLoaded }) {
   const canvasRef    = useRef(null);
   const chartRef     = useRef(null);
-  const yearScrollRef = useRef(null);
 
   const [loading, setLoading]               = useState(true);
   const [liveData, setLiveData]             = useState({ KR: null, WMT: null });
@@ -92,15 +91,6 @@ export default function StockChart({ onLiveDataLoaded }) {
   const [hidden, setHidden]                 = useState({ publix: false, walmart: false, kroger: false });
   const [chartReady, setChartReady]         = useState(false);
   const [noData, setNoData]                 = useState({ KR: false, WMT: false });
-
-  // Scroll the active year pill into view on mount
-  useEffect(() => {
-    if (!yearScrollRef.current) return;
-    const active = yearScrollRef.current.querySelector('.year-pill.active');
-    if (active) {
-      active.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
-    }
-  }, []);
 
   // Fetch Yahoo Finance weekly data using period1/period2 for true weekly granularity
   // (range=max causes Yahoo to auto-downsample to monthly for long spans)
@@ -391,7 +381,7 @@ export default function StockChart({ onLiveDataLoaded }) {
       <div className="chart-controls">
         {/* Period Selector: year pills + period pills */}
         <div className="period-selector">
-          {/* Row 1: All Time + scrollable year pills */}
+          {/* Row 1: All Time toggle + year dropdown */}
           <div className="year-selector-row">
             <button
               className={`range-btn all-time-btn${allTime ? ' active' : ''}`}
@@ -401,23 +391,20 @@ export default function StockChart({ onLiveDataLoaded }) {
               All Time
             </button>
 
-            <div
-              ref={yearScrollRef}
-              className="year-pills-scroll"
-              role="group"
+            <select
+              className="year-dropdown"
+              value={allTime ? '' : selectedYear}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val) handleYearSelect(Number(val));
+              }}
               aria-label="Select year"
             >
+              <option value="" disabled>Year…</option>
               {YEARS.map(year => (
-                <button
-                  key={year}
-                  className={`year-pill${!allTime && selectedYear === year ? ' active' : ''}`}
-                  onClick={() => handleYearSelect(year)}
-                  aria-pressed={!allTime && selectedYear === year}
-                >
-                  {year}
-                </button>
+                <option key={year} value={year}>{year}</option>
               ))}
-            </div>
+            </select>
           </div>
 
           {/* Row 2: Period pills (hidden in All Time mode) */}
