@@ -1,7 +1,16 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { PUBLIX_EXPANDED } from '../../lib/publix-data';
+import { PUBLIX_RAW } from '../../lib/publix-data';
+
+// Plot at effective dates (when price takes effect), pinned to noon ET
+const NOON_ET = 17;
+const PUBLIX_POINTS = PUBLIX_RAW.map(p => {
+  const year  = parseInt(p.date.substring(0, 4), 10);
+  const month = parseInt(p.date.substring(5, 7), 10) - 1;
+  const day   = parseInt(p.date.substring(8, 10), 10);
+  return { x: new Date(Date.UTC(year, month, day, NOON_ET)), y: p.price };
+});
 
 // Custom plugin: draws a vertical dashed line + label at the April 2022 split date
 const splitAnnotationPlugin = {
@@ -81,27 +90,24 @@ export default function PublixHistoryChart() {
 
       if (destroyed || !canvasRef.current) return;
 
-      const pts = [...PUBLIX_EXPANDED];
-
       chartRef.current = new Chart(canvasRef.current, {
         type: 'line',
         data: {
           datasets: [
             {
               label: 'Publix',
-              data: pts,
+              data: [...PUBLIX_POINTS],
               borderColor: '#4caf50',
               backgroundColor: 'transparent',
               borderWidth: 2.5,
-              pointRadius: pts.map(p => p.showDot ? 4 : 0),
-              pointHoverRadius: pts.map(p => p.showDot ? 7 : 0),
+              pointRadius: 3,
+              pointHoverRadius: 7,
               pointBackgroundColor: '#4caf50',
               pointBorderColor: '#16161f',
               pointBorderWidth: 2,
               pointHoverBackgroundColor: '#4caf50',
               pointHoverBorderColor: '#16161f',
               pointHoverBorderWidth: 2,
-              stepped: 'before',
               tension: 0,
             },
           ],
