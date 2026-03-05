@@ -61,7 +61,17 @@ const COLORS = {
   kroger:  '#e31837',
 };
 
-function getDateRange(year, periodLabel) {
+function getDateRange(year, periodLabel, rangeEndYear) {
+  // Multi-year range: full years from startYear through endYear
+  if (rangeEndYear != null && rangeEndYear !== year) {
+    const start = new Date(Date.UTC(year, 0, 1, 5));
+    const now = new Date();
+    const endYr = rangeEndYear;
+    const end = endYr >= now.getFullYear()
+      ? now
+      : new Date(Date.UTC(endYr, 11, 31, 23, 59, 59, 999));
+    return { start, end };
+  }
   const period = PERIODS.find(p => p.label === periodLabel);
   if (!period) return { start: null, end: null };
   // Range boundaries at midnight ET (05:00 UTC) for start, 11:59pm ET for end
@@ -119,6 +129,7 @@ export default function StockChart({ onLiveDataLoaded }) {
   const [liveData, setLiveData]             = useState({ KR: null, WMT: null });
   const [allTime, setAllTime]               = useState(true);
   const [selectedYear, setSelectedYear]     = useState(MAX_YEAR);
+  const [endYear, setEndYear]               = useState(MAX_YEAR);
   const [selectedPeriod, setSelectedPeriod] = useState('Full Year');
   const [viewMode, setViewMode]             = useState('percent');
   const [hidden, setHidden]                 = useState({ publix: false, walmart: false, kroger: false });
@@ -167,7 +178,7 @@ export default function StockChart({ onLiveDataLoaded }) {
 
   // Build datasets from current selection
   // Returns { datasets, dateRange } where dateRange is { start, end } or null for all-time
-  const buildDatasets = useCallback((viewModeArg, allTimeArg, yearArg, periodArg, hiddenArg, liveArg) => {
+  const buildDatasets = useCallback((viewModeArg, allTimeArg, yearArg, periodArg, hiddenArg, liveArg, endYearArg) => {
     let publixPts, krPts, wmtPts;
     let dateRange = null;
 
@@ -176,7 +187,8 @@ export default function StockChart({ onLiveDataLoaded }) {
       krPts     = liveArg.KR  ? [...liveArg.KR]  : [];
       wmtPts    = liveArg.WMT ? [...liveArg.WMT] : [];
     } else {
-      const { start, end } = getDateRange(yearArg, periodArg);
+      const isRange = endYearArg != null && endYearArg !== yearArg;
+      const { start, end } = getDateRange(yearArg, periodArg, isRange ? endYearArg : undefined);
       dateRange = { start, end };
       publixPts = filterWithNeighbors(PUBLIX_POINTS, start, end);
       krPts     = liveArg.KR  ? filterByDateRange(liveArg.KR,  start, end) : [];
@@ -271,7 +283,7 @@ export default function StockChart({ onLiveDataLoaded }) {
         ? (val >= 0 ? '+' : '') + val.toFixed(1) + '%'
         : '$' + val.toFixed(2);
 
-      const { datasets, dateRange, emptyKR, emptyWMT } = buildDatasets(viewMode, allTime, selectedYear, selectedPeriod, hidden, liveData);
+      const { datasets, dateRange, emptyKR, emptyWMT } = buildDatasets(viewMode, allTime, selectedYear, selectedPeriod, hidden, liveData, endYear);
       setNoData({ KR: emptyKR, WMT: emptyWMT });
 
       chartRef.current = new Chart(canvasRef.current, {
@@ -367,7 +379,7 @@ export default function StockChart({ onLiveDataLoaded }) {
       ? (val >= 0 ? '+' : '') + val.toFixed(1) + '%'
       : '$' + val.toFixed(2);
 
-    const { datasets, dateRange, emptyKR, emptyWMT } = buildDatasets(viewMode, allTime, selectedYear, selectedPeriod, hidden, liveData);
+    const { datasets, dateRange, emptyKR, emptyWMT } = buildDatasets(viewMode, allTime, selectedYear, selectedPeriod, hidden, liveData, endYear);
     chartRef.current.data.datasets = datasets;
 
     // Set x-axis max to end of selected period (don't set min so data starts at left edge)
@@ -391,21 +403,29 @@ export default function StockChart({ onLiveDataLoaded }) {
     setNoData({ KR: emptyKR, WMT: emptyWMT });
 
     chartRef.current.update('active');
-  }, [allTime, selectedYear, selectedPeriod, viewMode, hidden, chartReady, buildDatasets, liveData]);
+  }, [allTime, selectedYear, endYear, selectedPeriod, viewMode, hidden, chartReady, buildDatasets, liveData]);
 
   const toggleSeries = (key) => {
     setHidden(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const isRange = !allTime && selectedYear !== endYear;
+
   const handleYearSelect = (year) => {
     setAllTime(false);
     setSelectedYear(year);
+    // If the new start year is after endYear, move endYear to match
+    if (year > endYear) setEndYear(year);
     // If the current period isn't available for this year, pick the best default
     const available = getAvailablePeriods(year);
     if (!available.find(p => p.label === selectedPeriod)) {
       const fullYear = available.find(p => p.label === 'Full Year');
       setSelectedPeriod(fullYear ? 'Full Year' : available[available.length - 1].label);
     }
+  };
+
+  const handleEndYearSelect = (year) => {
+    setEndYear(year);
   };
 
   return (
@@ -433,7 +453,7 @@ export default function StockChart({ onLiveDataLoaded }) {
               const val = e.target.value;
               if (val) handleYearSelect(Number(val));
             }}
-            aria-label="Select year"
+            aria-label="Select start year"
           >
             <option value="" disabled>Year…</option>
             {YEARS.map(year => (
@@ -442,6 +462,22 @@ export default function StockChart({ onLiveDataLoaded }) {
           </select>
 
           {!allTime && (
+            <>
+              <span className="year-range-dash">–</span>
+              <select
+                className="year-dropdown"
+                value={endYear}
+                onChange={(e) => handleEndYearSelect(Number(e.target.value))}
+                aria-label="Select end year"
+              >
+                {YEARS.filter(y => y >= selectedYear).map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </>
+          )}
+
+          {!allTime && !isRange && (
             <select
               className="year-dropdown"
               value={selectedPeriod}
@@ -498,7 +534,7 @@ export default function StockChart({ onLiveDataLoaded }) {
           <div className="chart-no-data-notice">
             No data available for{' '}
             {[noData.KR && 'Kroger (KR)', noData.WMT && 'Walmart (WMT)'].filter(Boolean).join(' and ')}{' '}
-            in {selectedYear} {selectedPeriod !== 'Full Year' ? selectedPeriod : ''}
+            in {isRange ? `${selectedYear}–${endYear}` : `${selectedYear} ${selectedPeriod !== 'Full Year' ? selectedPeriod : ''}`}
           </div>
         )}
 

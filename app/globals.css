@@ -273,6 +273,14 @@ h1, h2, h3, h4, h5, h6 {
   white-space: nowrap;
 }
 
+.year-range-dash {
+  color: var(--color-text-dim);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  line-height: 1;
+  user-select: none;
+}
+
 .year-dropdown {
   font-family: var(--font-mono);
   font-size: var(--text-sm);
