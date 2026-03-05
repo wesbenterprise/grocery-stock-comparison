@@ -11,16 +11,13 @@ function noonET(year, month, day) {
   return new Date(Date.UTC(year, month, day, NOON_ET));
 }
 
-// Map raw quarterly data to end-of-quarter dates
+// Plot Publix at the effective date (when the price takes effect: Jan 1, Apr 1, etc.)
+// rather than end-of-quarter, so Q1 data appears at the start of the year.
 const PUBLIX_POINTS = PUBLIX_RAW.map(p => {
   const year  = parseInt(p.date.substring(0, 4), 10);
-  const month = parseInt(p.date.substring(5, 7), 10);
-  let endOfQuarter;
-  if (month === 1) endOfQuarter = noonET(year, 2, 31);       // Q1 → Mar 31
-  else if (month === 4) endOfQuarter = noonET(year, 5, 30);  // Q2 → Jun 30
-  else if (month === 7) endOfQuarter = noonET(year, 8, 30);  // Q3 → Sep 30
-  else endOfQuarter = noonET(year, 11, 31);                   // Q4 → Dec 31
-  return { x: endOfQuarter, y: p.price };
+  const month = parseInt(p.date.substring(5, 7), 10) - 1; // 0-indexed
+  const day   = parseInt(p.date.substring(8, 10), 10);
+  return { x: noonET(year, month, day), y: p.price };
 });
 
 // Period definitions: startMonth/endMonth are 0-indexed (Jan=0)
@@ -52,8 +49,8 @@ function getAvailablePeriods(year) {
 }
 
 const MIN_YEAR = 2006;
-const MAX_YEAR = Math.max(...PUBLIX_RAW.map(d => parseInt(d.date.substring(0, 4))));
-const YEARS    = Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, i) => MIN_YEAR + i);
+const MAX_YEAR = new Date().getFullYear(); // always include current year
+const YEARS    = Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, i) => MAX_YEAR - i); // latest first
 
 const COLORS = {
   publix:  '#4caf50',
@@ -400,35 +397,31 @@ export default function StockChart({ onLiveDataLoaded }) {
       </div>
 
       <div className="chart-controls">
-        {/* Period Selector: year pills + period pills */}
-        <div className="period-selector">
-          {/* Row 1: All Time toggle + year dropdown */}
-          <div className="year-selector-row">
-            <button
-              className={`range-btn all-time-btn${allTime ? ' active' : ''}`}
-              onClick={() => setAllTime(true)}
-              aria-pressed={allTime}
-            >
-              All Time
-            </button>
+        {/* All Time + year dropdown + period dropdown (inline) */}
+        <div className="year-selector-row">
+          <button
+            className={`range-btn all-time-btn${allTime ? ' active' : ''}`}
+            onClick={() => setAllTime(true)}
+            aria-pressed={allTime}
+          >
+            All Time
+          </button>
 
-            <select
-              className="year-dropdown"
-              value={allTime ? '' : selectedYear}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (val) handleYearSelect(Number(val));
-              }}
-              aria-label="Select year"
-            >
-              <option value="" disabled>Year…</option>
-              {YEARS.map(year => (
-                <option key={year} value={year}>{year}</option>
-              ))}
-            </select>
-          </div>
+          <select
+            className="year-dropdown"
+            value={allTime ? '' : selectedYear}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val) handleYearSelect(Number(val));
+            }}
+            aria-label="Select year"
+          >
+            <option value="" disabled>Year…</option>
+            {YEARS.map(year => (
+              <option key={year} value={year}>{year}</option>
+            ))}
+          </select>
 
-          {/* Row 2: Period dropdown (hidden in All Time mode) */}
           {!allTime && (
             <select
               className="year-dropdown"
