@@ -11,7 +11,7 @@ function noonET(year, month, day) {
   return new Date(Date.UTC(year, month, day, NOON_ET));
 }
 
-// Map raw quarterly data to end-of-quarter dates for clean stepped rendering
+// Map raw quarterly data to end-of-quarter dates
 const PUBLIX_POINTS = PUBLIX_RAW.map(p => {
   const year  = parseInt(p.date.substring(0, 4), 10);
   const month = parseInt(p.date.substring(5, 7), 10);
@@ -102,13 +102,16 @@ export default function StockChart({ onLiveDataLoaded }) {
     }
   }, []);
 
-  // Fetch Yahoo Finance data
+  // Fetch Yahoo Finance weekly data using period1/period2 for true weekly granularity
+  // (range=max causes Yahoo to auto-downsample to monthly for long spans)
   useEffect(() => {
     let cancelled = false;
+    const p1 = Math.floor(Date.UTC(MIN_YEAR, 0, 1) / 1000);
+    const p2 = Math.floor(Date.now() / 1000);
 
     async function fetchSymbol(symbol) {
       try {
-        const res  = await fetch(`/api/stock?symbol=${symbol}&range=max&interval=1wk`);
+        const res  = await fetch(`/api/stock?symbol=${symbol}&interval=1wk&period1=${p1}&period2=${p2}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         const result = json?.chart?.result?.[0];
@@ -190,7 +193,6 @@ export default function StockChart({ onLiveDataLoaded }) {
         pointHoverBackgroundColor: COLORS.publix,
         pointHoverBorderColor: '#16161f',
         pointHoverBorderWidth: 2,
-        stepped: 'before',
         tension: 0,
         hidden: hiddenArg.publix,
         order: 1,
@@ -491,7 +493,7 @@ export default function StockChart({ onLiveDataLoaded }) {
 
         <div className="chart-legend" role="list">
           {[
-            { key: 'publix',  label: 'Publix',  note: 'stepped' },
+            { key: 'publix',  label: 'Publix',  note: 'quarterly' },
             { key: 'walmart', label: 'Walmart', note: 'WMT' },
             { key: 'kroger',  label: 'Kroger',  note: 'KR' },
           ].map(({ key, label, note }) => (
