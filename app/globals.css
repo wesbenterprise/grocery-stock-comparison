@@ -1256,30 +1256,45 @@ h1, h2, h3, h4, h5, h6 {
   margin: 0.25rem 0 0;
 }
 
-/* Projection callout */
-.projection-callout {
+/* Projection callouts */
+.projection-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
   margin: 1.25rem 0;
+}
+@media (max-width: 500px) {
+  .projection-row { grid-template-columns: 1fr; }
+}
+.projection-callout {
   padding: 1rem 1.25rem;
-  background: rgba(250, 204, 21, 0.04);
-  border: 1px solid rgba(250, 204, 21, 0.15);
   border-radius: 8px;
   text-align: center;
 }
+.projection-callout.trend {
+  background: rgba(250, 204, 21, 0.04);
+  border: 1px solid rgba(250, 204, 21, 0.15);
+}
+.projection-callout.tracker {
+  background: rgba(74, 222, 128, 0.04);
+  border: 1px solid rgba(74, 222, 128, 0.15);
+}
 .proj-label {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   color: #8080a0;
 }
 .proj-price {
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: 700;
-  color: #facc15;
   font-family: 'Space Grotesk', monospace;
   margin: 0.25rem 0;
 }
+.proj-price.trend-color { color: #facc15; }
+.proj-price.tracker-color { color: #4ade80; }
 .proj-change {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-family: 'Space Grotesk', monospace;
 }
 .proj-change.up { color: #4ade80; }

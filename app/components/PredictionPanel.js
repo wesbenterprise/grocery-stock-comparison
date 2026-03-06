@@ -6,8 +6,9 @@ import 'chartjs-adapter-date-fns';
 
 const COLORS = {
   actual: '#22d3ee',   // cyan — actual Publix
-  predicted: '#f472b6', // pink — predicted
-  projection: '#facc15', // yellow — Q1 2026 projection
+  predicted: '#f472b6', // pink — predicted (5yr trend)
+  projection: '#facc15', // yellow — Q1 2026 trend projection
+  q1tracker: '#4ade80', // green — Q1 live weighted tracker
 };
 
 export default function PredictionPanel() {
@@ -53,16 +54,27 @@ export default function PredictionPanel() {
       y: q.predictedPublix,
     }));
 
-    // Add Q1 2026 projection point
+    // Add Q1 2026 trend projection point (from 5yr model)
     const projectionPts = [];
     if (data.projection.predictedPrice) {
-      // Connect from last predicted point
       const lastPredicted = predictedPts[predictedPts.length - 1];
       projectionPts.push({ ...lastPredicted });
       projectionPts.push({
         x: new Date('2026-03-31').getTime(),
         y: data.projection.predictedPrice,
       });
+    }
+
+    // Q1 2026 daily weighted tracker line
+    const q1TrackerPts = [];
+    if (data.q1Tracker && data.q1Tracker.daily.length > 0) {
+      // Start from the last actual Publix point (Q4 2025 end = Dec 31 2025)
+      const lastActual = actualPts[actualPts.length - 1];
+      q1TrackerPts.push({ x: lastActual.x, y: lastActual.y });
+      // Add each daily point
+      for (const d of data.q1Tracker.daily) {
+        q1TrackerPts.push({ x: d.ts, y: d.impliedPrice });
+      }
     }
 
     chartRef.current = new Chart(canvasRef.current, {
@@ -101,7 +113,7 @@ export default function PredictionPanel() {
             order: 2,
           },
           {
-            label: 'Q1 2026 Projection',
+            label: 'Q1 2026 Trend (5yr model)',
             data: projectionPts,
             borderColor: COLORS.projection,
             backgroundColor: 'transparent',
@@ -116,6 +128,20 @@ export default function PredictionPanel() {
             pointHoverRadius: 10,
             tension: 0,
             order: 0,
+          },
+          {
+            label: 'Q1 Weighted Tracker (live)',
+            data: q1TrackerPts,
+            borderColor: COLORS.q1tracker,
+            backgroundColor: 'transparent',
+            borderWidth: 2.5,
+            pointStyle: false,
+            pointRadius: 0,
+            pointHitRadius: 10,
+            pointHoverRadius: 5,
+            pointHoverBackgroundColor: COLORS.q1tracker,
+            tension: 0.1,
+            order: -1,
           },
         ],
       },
@@ -203,6 +229,8 @@ export default function PredictionPanel() {
   const projPrice = data.projection.predictedPrice;
   const lastActual = data.projection.lastActualPublix;
   const projChange = projPrice ? ((projPrice - lastActual) / lastActual * 100).toFixed(1) : null;
+  const trackerPrice = data.q1Tracker?.latestImplied;
+  const trackerReturn = data.q1Tracker?.latestReturn;
 
   return (
     <div className="prediction-panel">
@@ -213,16 +241,27 @@ export default function PredictionPanel() {
         </p>
       </div>
 
-      {/* Projection callout */}
-      {projPrice && (
-        <div className="projection-callout">
-          <div className="proj-label">Q1 2026 Predicted Price</div>
-          <div className="proj-price">${projPrice.toFixed(2)}</div>
-          <div className={`proj-change ${parseFloat(projChange) >= 0 ? 'up' : 'down'}`}>
-            {parseFloat(projChange) >= 0 ? '▲' : '▼'} {projChange}% from Q4 2025 (${lastActual.toFixed(2)})
+      {/* Dual callouts: trend projection + live tracker */}
+      <div className="projection-row">
+        {projPrice && (
+          <div className="projection-callout trend">
+            <div className="proj-label">5yr Trend → Q1 2026</div>
+            <div className="proj-price trend-color">${projPrice.toFixed(2)}</div>
+            <div className={`proj-change ${parseFloat(projChange) >= 0 ? 'up' : 'down'}`}>
+              {parseFloat(projChange) >= 0 ? '▲' : '▼'} {projChange}% from Q4 2025
+            </div>
           </div>
-        </div>
-      )}
+        )}
+        {trackerPrice && (
+          <div className="projection-callout tracker">
+            <div className="proj-label">Q1 Weighted Returns → Today</div>
+            <div className="proj-price tracker-color">${trackerPrice.toFixed(2)}</div>
+            <div className={`proj-change ${trackerReturn >= 0 ? 'up' : 'down'}`}>
+              {trackerReturn >= 0 ? '▲' : '▼'} {Math.abs(trackerReturn).toFixed(1)}% Q1 basket return
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Chart */}
       <div className="prediction-chart-container">

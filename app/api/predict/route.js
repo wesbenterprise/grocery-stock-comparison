@@ -241,6 +241,77 @@ export async function GET() {
       q1Projection = Math.round(currentIndex * basePublix * 100) / 100;
     }
 
+    // ── Q1 2026 Daily Weighted Tracker ──────────────────
+    // Fetch daily prices for each stock from Jan 1 2026 to now
+    // Apply model weights to their daily returns → "implied Publix" each day
+    const lastActualPublix = publixQuarters[publixQuarters.length - 1].price; // $19.65
+    const q1Start = new Date('2025-12-31');
+    const q1p1 = Math.floor(q1Start.getTime() / 1000);
+    const q1p2 = Math.floor(Date.now() / 1000);
+
+    const dailyData = await Promise.all(
+      BASKET.map(async (s) => {
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${s.symbol}?interval=1d&period1=${q1p1}&period2=${q1p2}`;
+        try {
+          const res = await fetch(url, { headers: { Accept: 'application/json' } });
+          const json = await res.json();
+          const result = json.chart?.result?.[0];
+          if (!result) return { symbol: s.symbol, data: [] };
+          const timestamps = result.timestamp || [];
+          const closes = result.indicators?.quote?.[0]?.close || [];
+          return {
+            symbol: s.symbol,
+            data: timestamps.map((t, i) => ({ ts: t * 1000, close: closes[i] }))
+              .filter(d => d.close != null),
+          };
+        } catch {
+          return { symbol: s.symbol, data: [] };
+        }
+      })
+    );
+
+    // Build a map of symbol → { openPrice (first day), dailyPrices[] }
+    const dailyMap = {};
+    for (const d of dailyData) {
+      if (d.data.length > 0) {
+        dailyMap[d.symbol] = {
+          openPrice: d.data[0].close, // Jan 2 close = Q1 opening price
+          prices: d.data,
+        };
+      }
+    }
+
+    // Compute the weighted daily tracker
+    // For each trading day: weightedReturn = Σ(weight_i × (price_i / openPrice_i - 1))
+    // impliedPublix = lastActualPublix × (1 + weightedReturn)
+    let q1DailyTracker = [];
+    if (Object.keys(dailyMap).length === BASKET.length) {
+      // Find the common set of timestamps (use the shortest stock's dates)
+      const allTimestamps = dailyMap[symbols[0]].prices.map(p => p.ts);
+
+      for (const ts of allTimestamps) {
+        let weightedReturn = 0;
+        let valid = true;
+
+        for (let j = 0; j < symbols.length; j++) {
+          const s = symbols[j];
+          const entry = dailyMap[s].prices.find(p => Math.abs(p.ts - ts) < 86400000);
+          if (!entry) { valid = false; break; }
+          const ret = entry.close / dailyMap[s].openPrice - 1;
+          weightedReturn += weights[j] * ret;
+        }
+
+        if (valid) {
+          q1DailyTracker.push({
+            date: new Date(ts).toISOString().split('T')[0],
+            ts,
+            impliedPrice: Math.round(lastActualPublix * (1 + weightedReturn) * 100) / 100,
+            weightedReturn: Math.round(weightedReturn * 10000) / 100, // as percentage
+          });
+        }
+      }
+    }
+
     return NextResponse.json({
       weights: weightResults,
       weightSum: Math.round(weightSum * 1000) / 1000,
@@ -254,8 +325,19 @@ export async function GET() {
         predictedPrice: q1Projection,
         currentPrices,
         basePrices: baseStocks,
-        lastActualPublix: publixQuarters[publixQuarters.length - 1].price,
+        lastActualPublix: lastActualPublix,
         lastActualDate: publixQuarters[publixQuarters.length - 1].date,
+      },
+      q1Tracker: {
+        description: 'Weighted basket returns applied to last Publix price ($' + lastActualPublix + ')',
+        basePrice: lastActualPublix,
+        daily: q1DailyTracker,
+        latestImplied: q1DailyTracker.length > 0
+          ? q1DailyTracker[q1DailyTracker.length - 1].impliedPrice
+          : null,
+        latestReturn: q1DailyTracker.length > 0
+          ? q1DailyTracker[q1DailyTracker.length - 1].weightedReturn
+          : null,
       },
     });
   } catch (error) {
