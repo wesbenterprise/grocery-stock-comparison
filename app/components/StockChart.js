@@ -301,6 +301,10 @@ export default function StockChart({ onLiveDataLoaded }) {
           maintainAspectRatio: false,
           interaction: { mode: 'index', intersect: false },
           animation: { duration: 400 },
+          elements: {
+            point: { radius: 0, hoverRadius: 6 },
+            line: { borderWidth: 2 },
+          },
           scales: {
             x: {
               type: 'time',
