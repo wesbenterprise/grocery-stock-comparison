@@ -3,8 +3,8 @@ import { PUBLIX_RAW } from '../../../lib/publix-data';
 
 // Stocks in our basket
 const BASKET = [
-  { symbol: 'WMT', label: 'Walmart' },
   { symbol: 'KR', label: 'Kroger' },
+  { symbol: 'WMT', label: 'Walmart' },
   { symbol: 'ADRNY', label: 'Ahold' },
   { symbol: 'ACI', label: 'Albertsons' },
   { symbol: 'WMK', label: 'Weis' },
@@ -12,7 +12,6 @@ const BASKET = [
 
 // Get the closing price for a stock nearest to a target date
 async function getQuarterlyPrice(symbol, targetDate) {
-  // Fetch a window around the target date (+/- 10 days)
   const target = new Date(targetDate);
   const p1 = Math.floor((target.getTime() - 15 * 86400000) / 1000);
   const p2 = Math.floor((target.getTime() + 15 * 86400000) / 1000);
@@ -24,7 +23,6 @@ async function getQuarterlyPrice(symbol, targetDate) {
       headers: { Accept: 'application/json' },
       next: { revalidate: 86400 },
     });
-
     if (!res.ok) return null;
     const json = await res.json();
     const result = json.chart?.result?.[0];
@@ -33,20 +31,13 @@ async function getQuarterlyPrice(symbol, targetDate) {
     const timestamps = result.timestamp || [];
     const closes = result.indicators?.quote?.[0]?.close || [];
 
-    // Find the closest trading day to the target
     const targetMs = target.getTime();
-    let bestIdx = 0;
-    let bestDiff = Infinity;
-
+    let bestIdx = 0, bestDiff = Infinity;
     for (let i = 0; i < timestamps.length; i++) {
       if (closes[i] == null) continue;
       const diff = Math.abs(timestamps[i] * 1000 - targetMs);
-      if (diff < bestDiff) {
-        bestDiff = diff;
-        bestIdx = i;
-      }
+      if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
     }
-
     return closes[bestIdx] != null ? closes[bestIdx] : null;
   } catch {
     return null;
@@ -54,55 +45,66 @@ async function getQuarterlyPrice(symbol, targetDate) {
 }
 
 // Map Publix quarter start dates to quarter END dates
-// Publix prices are set at end of quarter but labeled as start
 function publixDateToQuarterEnd(dateStr) {
   const d = new Date(dateStr);
-  const month = d.getMonth(); // 0=Jan (Q1 end Mar), 3=Apr (Q2 end Jun), 6=Jul (Q3 end Sep), 9=Oct (Q4 end Dec)
+  const month = d.getMonth();
   const year = d.getFullYear();
   const endMonths = { 0: 2, 3: 5, 6: 8, 9: 11 };
-  const endMonth = endMonths[month];
-  // Last day of the end month
-  const endDate = new Date(year, endMonth + 1, 0);
-  return endDate;
+  return new Date(year, endMonths[month] + 1, 0);
 }
 
-// Least squares regression: find weights that minimize ||Ax - b||²
-// With constraint: weights >= 0 (non-negative)
-// Using iterative projected gradient descent
+// Constrained least squares: weights >= 0 AND sum to 1.0
+// Uses projected gradient descent with simplex projection
 function fitWeights(A, b) {
-  const n = A[0].length; // number of stocks
-  const m = A.length; // number of observations
+  const n = A[0].length;
+  const m = A.length;
 
   // Initialize equal weights
   let w = new Array(n).fill(1 / n);
-  const lr = 0.0001;
-  const iterations = 50000;
+  const lr = 0.001;
+  const iterations = 100000;
 
   for (let iter = 0; iter < iterations; iter++) {
-    // Compute gradient: A^T * (A*w - b)
+    // Adaptive learning rate
+    const alpha = lr / (1 + iter * 0.00001);
+
+    // Compute gradient: 2/m * A^T * (A*w - b)
     const grad = new Array(n).fill(0);
     for (let i = 0; i < m; i++) {
       let pred = 0;
       for (let j = 0; j < n; j++) pred += A[i][j] * w[j];
       const err = pred - b[i];
-      for (let j = 0; j < n; j++) grad[j] += A[i][j] * err;
+      for (let j = 0; j < n; j++) grad[j] += (2 / m) * A[i][j] * err;
     }
 
     // Gradient step
-    for (let j = 0; j < n; j++) {
-      w[j] -= lr * grad[j];
-    }
+    for (let j = 0; j < n; j++) w[j] -= alpha * grad[j];
 
-    // Project to non-negative
-    for (let j = 0; j < n; j++) {
-      if (w[j] < 0) w[j] = 0;
-    }
+    // Project onto simplex: weights >= 0 and sum to 1
+    // Using Duchi et al. (2008) simplex projection
+    w = projectOntoSimplex(w);
   }
 
   return w;
 }
 
-// Compute R² (coefficient of determination)
+// Project a vector onto the probability simplex (non-negative, sums to 1)
+function projectOntoSimplex(v) {
+  const n = v.length;
+  const sorted = [...v].sort((a, b) => b - a);
+  let tSum = 0;
+  let tMax = -Infinity;
+
+  for (let i = 0; i < n; i++) {
+    tSum += sorted[i];
+    const t = (tSum - 1) / (i + 1);
+    if (sorted[i] - t > 0) tMax = t;
+  }
+
+  return v.map(vi => Math.max(vi - tMax, 0));
+}
+
+// R² (coefficient of determination)
 function rSquared(actual, predicted) {
   const mean = actual.reduce((s, v) => s + v, 0) / actual.length;
   let ssRes = 0, ssTot = 0;
@@ -110,7 +112,7 @@ function rSquared(actual, predicted) {
     ssRes += (actual[i] - predicted[i]) ** 2;
     ssTot += (actual[i] - mean) ** 2;
   }
-  return 1 - ssRes / ssTot;
+  return ssTot === 0 ? 0 : 1 - ssRes / ssTot;
 }
 
 export async function GET() {
@@ -119,16 +121,14 @@ export async function GET() {
     const cutoff = '2021-01-01';
     const publixQuarters = PUBLIX_RAW.filter(p => p.date >= cutoff);
 
-    // For each Publix quarter, get the closing price of each basket stock
-    // at the quarter end date
+    // Fetch stock prices at each Publix quarter end
     const quarterData = [];
 
     for (const pq of publixQuarters) {
       const quarterEnd = publixDateToQuarterEnd(pq.date);
-      const stockPrices = {};
       let allValid = true;
+      const stockPrices = {};
 
-      // Fetch all stocks for this quarter in parallel
       const results = await Promise.all(
         BASKET.map(async (s) => ({
           symbol: s.symbol,
@@ -137,10 +137,7 @@ export async function GET() {
       );
 
       for (const r of results) {
-        if (r.price == null) {
-          allValid = false;
-          break;
-        }
+        if (r.price == null) { allValid = false; break; }
         stockPrices[r.symbol] = r.price;
       }
 
@@ -158,29 +155,41 @@ export async function GET() {
       return NextResponse.json({ error: 'Not enough data points' }, { status: 500 });
     }
 
-    // Build matrices for regression
-    // A[i] = [WMT_i, KR_i, ADRNY_i, ACI_i, WMK_i]  (stock prices)
-    // b[i] = Publix_i
+    // ── Normalize everything to indexed returns (base = first quarter = 1.0) ──
     const symbols = BASKET.map(s => s.symbol);
-    const A = quarterData.map(q => symbols.map(s => q.stocks[s]));
-    const b = quarterData.map(q => q.publix);
+    const basePublix = quarterData[0].publix;
+    const baseStocks = {};
+    for (const s of symbols) baseStocks[s] = quarterData[0].stocks[s];
 
-    // Fit optimal weights
+    // Normalized values: each stock / its starting price
+    // So we're fitting: publix_index = w1 * KR_index + w2 * WMT_index + ...
+    const A = quarterData.map(q =>
+      symbols.map(s => q.stocks[s] / baseStocks[s])
+    );
+    const b = quarterData.map(q => q.publix / basePublix);
+
+    // Fit weights (constrained: non-negative, sum to 1.0)
     const weights = fitWeights(A, b);
 
-    // Compute predicted values for each quarter
-    const predicted = A.map(row =>
+    // Verify weights sum to ~1.0
+    const weightSum = weights.reduce((s, w) => s + w, 0);
+
+    // Compute predicted INDEX values, then convert back to prices
+    const predictedIndex = A.map(row =>
       row.reduce((sum, val, j) => sum + val * weights[j], 0)
     );
+    const predicted = predictedIndex.map(idx => idx * basePublix);
 
-    // Compute R²
-    const r2 = rSquared(b, predicted);
+    // R² on actual prices
+    const actualPrices = quarterData.map(q => q.publix);
+    const r2 = rSquared(actualPrices, predicted);
 
-    // Compute RMSE
-    const mse = b.reduce((sum, actual, i) => sum + (actual - predicted[i]) ** 2, 0) / b.length;
+    // RMSE on actual prices
+    const mse = actualPrices.reduce((sum, actual, i) =>
+      sum + (actual - predicted[i]) ** 2, 0) / actualPrices.length;
     const rmse = Math.sqrt(mse);
 
-    // Build weight results
+    // Build weight results (sorted by weight descending)
     const weightResults = BASKET.map((s, i) => ({
       symbol: s.symbol,
       label: s.label,
@@ -188,7 +197,7 @@ export async function GET() {
       pct: (weights[i] * 100).toFixed(1) + '%',
     })).sort((a, b) => b.weight - a.weight);
 
-    // Build quarter-by-quarter results
+    // Quarter-by-quarter results
     const quarterResults = quarterData.map((q, i) => ({
       date: q.date,
       quarterEnd: q.quarterEnd,
@@ -200,7 +209,6 @@ export async function GET() {
     }));
 
     // ── Q1 2026 Projection ──────────────────────────────
-    // Get CURRENT prices for each stock (latest close)
     const currentPrices = {};
     const currentResults = await Promise.all(
       BASKET.map(async (s) => {
@@ -209,7 +217,6 @@ export async function GET() {
           const res = await fetch(url, { headers: { Accept: 'application/json' } });
           const json = await res.json();
           const closes = json.chart?.result?.[0]?.indicators?.quote?.[0]?.close || [];
-          // Get last valid close
           for (let i = closes.length - 1; i >= 0; i--) {
             if (closes[i] != null) return { symbol: s.symbol, price: closes[i] };
           }
@@ -224,18 +231,19 @@ export async function GET() {
       if (r.price != null) currentPrices[r.symbol] = r.price;
     }
 
-    // Project Publix Q1 2026 price
+    // Project: compute the weighted normalized basket with current prices
     let q1Projection = null;
     if (Object.keys(currentPrices).length === BASKET.length) {
-      q1Projection = symbols.reduce(
-        (sum, s, j) => sum + currentPrices[s] * weights[j],
+      const currentIndex = symbols.reduce(
+        (sum, s, j) => sum + (currentPrices[s] / baseStocks[s]) * weights[j],
         0
       );
-      q1Projection = Math.round(q1Projection * 100) / 100;
+      q1Projection = Math.round(currentIndex * basePublix * 100) / 100;
     }
 
     return NextResponse.json({
       weights: weightResults,
+      weightSum: Math.round(weightSum * 1000) / 1000,
       r2: Math.round(r2 * 10000) / 10000,
       rmse: Math.round(rmse * 100) / 100,
       dataPoints: quarterData.length,
@@ -245,6 +253,7 @@ export async function GET() {
         date: '2026-03-31',
         predictedPrice: q1Projection,
         currentPrices,
+        basePrices: baseStocks,
         lastActualPublix: publixQuarters[publixQuarters.length - 1].price,
         lastActualDate: publixQuarters[publixQuarters.length - 1].date,
       },
