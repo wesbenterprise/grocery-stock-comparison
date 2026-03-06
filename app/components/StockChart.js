@@ -231,8 +231,10 @@ export default function StockChart({ onLiveDataLoaded }) {
       borderColor: color,
       backgroundColor: 'transparent',
       borderWidth: 2,
+      pointStyle: false,
       pointRadius: 0,
-      pointHoverRadius: 6,
+      pointHitRadius: 10,
+      pointHoverRadius: 5,
       pointHoverBackgroundColor: color,
       pointHoverBorderColor: '#16161f',
       pointHoverBorderWidth: 2,
@@ -248,6 +250,7 @@ export default function StockChart({ onLiveDataLoaded }) {
         borderColor: COLORS.publix,
         backgroundColor: 'transparent',
         borderWidth: 2.5,
+        pointStyle: 'circle',
         pointRadius: 3,
         pointHoverRadius: 7,
         pointBackgroundColor: COLORS.publix,
@@ -302,7 +305,7 @@ export default function StockChart({ onLiveDataLoaded }) {
           interaction: { mode: 'index', intersect: false },
           animation: { duration: 400 },
           elements: {
-            point: { radius: 0, hoverRadius: 6 },
+            point: { radius: 0, hoverRadius: 5, pointStyle: false },
             line: { borderWidth: 2 },
           },
           scales: {
