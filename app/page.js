@@ -4,7 +4,17 @@ import { useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 
-// Dynamic import to avoid SSR issues with Chart.js
+// Dynamic imports to avoid SSR issues with Chart.js
+const PredictionPanel = dynamic(() => import('./components/PredictionPanel'), {
+  ssr: false,
+  loading: () => (
+    <div className="prediction-panel loading">
+      <div className="spinner" />
+      <p>Loading predictor...</p>
+    </div>
+  ),
+});
+
 const StockChart = dynamic(() => import('./components/StockChart'), {
   ssr: false,
   loading: () => (
@@ -78,6 +88,11 @@ export default function Page() {
           {/* Hero: Stock Chart */}
           <section aria-label="Stock performance chart" style={{ marginBottom: 'var(--space-7)' }}>
             <StockChart onLiveDataLoaded={handleLiveData} />
+          </section>
+
+          {/* Publix Price Predictor */}
+          <section aria-label="Publix price prediction">
+            <PredictionPanel />
           </section>
 
           {/* Company Cards */}

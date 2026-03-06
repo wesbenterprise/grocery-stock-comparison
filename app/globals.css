@@ -1217,3 +1217,201 @@ h1, h2, h3, h4, h5, h6 {
     font-size: var(--text-xs);
   }
 }
+
+/* ── Prediction Panel ──────────────────────────────── */
+.prediction-panel {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.prediction-panel.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem;
+  color: #8080a0;
+}
+.prediction-panel .spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(255,255,255,0.1);
+  border-top-color: #22d3ee;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.prediction-header h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f0f0f5;
+  margin: 0;
+}
+.prediction-header .subtitle {
+  font-size: 0.75rem;
+  color: #505068;
+  margin: 0.25rem 0 0;
+}
+
+/* Projection callout */
+.projection-callout {
+  margin: 1.25rem 0;
+  padding: 1rem 1.25rem;
+  background: rgba(250, 204, 21, 0.04);
+  border: 1px solid rgba(250, 204, 21, 0.15);
+  border-radius: 8px;
+  text-align: center;
+}
+.proj-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #8080a0;
+}
+.proj-price {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #facc15;
+  font-family: 'Space Grotesk', monospace;
+  margin: 0.25rem 0;
+}
+.proj-change {
+  font-size: 0.8rem;
+  font-family: 'Space Grotesk', monospace;
+}
+.proj-change.up { color: #4ade80; }
+.proj-change.down { color: #f87171; }
+
+/* Chart */
+.prediction-chart-container {
+  position: relative;
+  height: 300px;
+  margin: 1rem 0;
+}
+@media (min-width: 768px) {
+  .prediction-chart-container { height: 380px; }
+}
+
+/* Model stats */
+.model-stats {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin: 1rem 0;
+}
+.model-stats .stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  min-width: 80px;
+}
+.stat-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #505068;
+}
+.stat-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f0f0f5;
+  font-family: 'Space Grotesk', monospace;
+}
+
+/* Weights */
+.weights-section {
+  margin: 1.25rem 0 0.5rem;
+}
+.weights-section h3 {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #505068;
+  margin: 0 0 0.75rem;
+}
+.weights-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.weight-bar { }
+.weight-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+.weight-label {
+  font-size: 0.8rem;
+  color: #c0c0d0;
+}
+.weight-pct {
+  font-size: 0.8rem;
+  color: #f0f0f5;
+  font-family: 'Space Grotesk', monospace;
+  font-weight: 600;
+}
+.weight-track {
+  height: 6px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.weight-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #22d3ee, #f472b6);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+/* Quarter table */
+.quarters-detail {
+  margin-top: 1rem;
+}
+.quarters-detail summary {
+  font-size: 0.8rem;
+  color: #8080a0;
+  cursor: pointer;
+  padding: 0.5rem 0;
+}
+.quarters-detail summary:hover {
+  color: #c0c0d0;
+}
+.quarters-table-wrap {
+  overflow-x: auto;
+  margin-top: 0.5rem;
+}
+.quarters-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+.quarters-table th {
+  text-align: left;
+  padding: 0.5rem;
+  color: #505068;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+  border-bottom: 1px solid var(--border);
+}
+.quarters-table td {
+  padding: 0.5rem;
+  color: #c0c0d0;
+  font-family: 'Space Grotesk', monospace;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.quarters-table .pos { color: #4ade80; }
+.quarters-table .neg { color: #f87171; }
+.quarters-table .projection-row td {
+  color: #facc15;
+  font-weight: 600;
+  border-top: 1px solid rgba(250, 204, 21, 0.2);
+}
