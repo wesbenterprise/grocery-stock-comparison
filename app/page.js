@@ -46,7 +46,7 @@ function ChangeTag({ pct, isGain }) {
 }
 
 export default function Page() {
-  const [liveStocks, setLiveStocks] = useState({ KR: null, WMT: null });
+  const [liveStocks, setLiveStocks] = useState({ KR: null, WMT: null, ADRNY: null, ACI: null, WMK: null });
 
   const handleLiveData = useCallback((data) => {
     setLiveStocks(data);

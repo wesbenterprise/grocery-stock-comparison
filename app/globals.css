@@ -20,6 +20,15 @@
   --color-kroger:       #e31837;
   --color-kroger-dark:  #b8112b;
   --color-kroger-glow:  rgba(227, 24, 55, 0.20);
+  --color-ahold:        #ff6f00;
+  --color-ahold-dark:   #e65100;
+  --color-ahold-glow:   rgba(255, 111, 0, 0.20);
+  --color-albertsons:   #9c27b0;
+  --color-albertsons-dark: #7b1fa2;
+  --color-albertsons-glow: rgba(156, 39, 176, 0.20);
+  --color-weis:         #00bcd4;
+  --color-weis-dark:    #0097a7;
+  --color-weis-glow:    rgba(0, 188, 212, 0.20);
 
   /* Feedback */
   --color-gain:         #4caf50;
@@ -273,6 +282,14 @@ h1, h2, h3, h4, h5, h6 {
   white-space: nowrap;
 }
 
+.year-range-dash {
+  color: var(--color-text-dim);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  line-height: 1;
+  user-select: none;
+}
+
 .year-dropdown {
   font-family: var(--font-mono);
   font-size: var(--text-sm);
@@ -483,9 +500,12 @@ h1, h2, h3, h4, h5, h6 {
   flex-shrink: 0;
 }
 
-.legend-dot.publix  { background: var(--color-publix); box-shadow: 0 0 6px var(--color-publix); }
-.legend-dot.walmart { background: var(--color-walmart); box-shadow: 0 0 6px var(--color-walmart); }
-.legend-dot.kroger  { background: var(--color-kroger); box-shadow: 0 0 6px var(--color-kroger); }
+.legend-dot.publix     { background: var(--color-publix); box-shadow: 0 0 6px var(--color-publix); }
+.legend-dot.walmart    { background: var(--color-walmart); box-shadow: 0 0 6px var(--color-walmart); }
+.legend-dot.kroger     { background: var(--color-kroger); box-shadow: 0 0 6px var(--color-kroger); }
+.legend-dot.ahold      { background: var(--color-ahold); box-shadow: 0 0 6px var(--color-ahold); }
+.legend-dot.albertsons { background: var(--color-albertsons); box-shadow: 0 0 6px var(--color-albertsons); }
+.legend-dot.weis       { background: var(--color-weis); box-shadow: 0 0 6px var(--color-weis); }
 
 /* ============================================================
    COMPANY CARDS

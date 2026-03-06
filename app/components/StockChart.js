@@ -59,9 +59,22 @@ const COLORS = {
   publix:  '#4caf50',
   walmart: '#0071ce',
   kroger:  '#e31837',
+  ahold:   '#ff6f00',
+  albertsons: '#9c27b0',
+  weis:    '#00bcd4',
 };
 
-function getDateRange(year, periodLabel) {
+function getDateRange(year, periodLabel, rangeEndYear) {
+  // Multi-year range: full years from startYear through endYear
+  if (rangeEndYear != null && rangeEndYear !== year) {
+    const start = new Date(Date.UTC(year, 0, 1, 5));
+    const now = new Date();
+    const endYr = rangeEndYear;
+    const end = endYr >= now.getFullYear()
+      ? now
+      : new Date(Date.UTC(endYr, 11, 31, 23, 59, 59, 999));
+    return { start, end };
+  }
   const period = PERIODS.find(p => p.label === periodLabel);
   if (!period) return { start: null, end: null };
   // Range boundaries at midnight ET (05:00 UTC) for start, 11:59pm ET for end
@@ -116,14 +129,15 @@ export default function StockChart({ onLiveDataLoaded }) {
   const chartRef     = useRef(null);
 
   const [loading, setLoading]               = useState(true);
-  const [liveData, setLiveData]             = useState({ KR: null, WMT: null });
+  const [liveData, setLiveData]             = useState({ KR: null, WMT: null, ADRNY: null, ACI: null, WMK: null });
   const [allTime, setAllTime]               = useState(true);
   const [selectedYear, setSelectedYear]     = useState(MAX_YEAR);
+  const [endYear, setEndYear]               = useState(MAX_YEAR);
   const [selectedPeriod, setSelectedPeriod] = useState('Full Year');
   const [viewMode, setViewMode]             = useState('percent');
-  const [hidden, setHidden]                 = useState({ publix: false, walmart: false, kroger: false });
+  const [hidden, setHidden]                 = useState({ publix: false, walmart: false, kroger: false, ahold: false, albertsons: false, weis: false });
   const [chartReady, setChartReady]         = useState(false);
-  const [noData, setNoData]                 = useState({ KR: false, WMT: false });
+  const [noData, setNoData]                 = useState({ KR: false, WMT: false, ADRNY: false, ACI: false, WMK: false });
 
   // Fetch Yahoo Finance daily data for accurate prices
   useEffect(() => {
@@ -149,15 +163,21 @@ export default function StockChart({ onLiveDataLoaded }) {
       }
     }
 
-    Promise.all([fetchSymbol('KR'), fetchSymbol('WMT')]).then(([kr, wmt]) => {
+    Promise.all([
+      fetchSymbol('KR'), fetchSymbol('WMT'),
+      fetchSymbol('ADRNY'), fetchSymbol('ACI'), fetchSymbol('WMK'),
+    ]).then(([kr, wmt, adrny, aci, wmk]) => {
       if (cancelled) return;
-      setLiveData({ KR: kr, WMT: wmt });
+      setLiveData({ KR: kr, WMT: wmt, ADRNY: adrny, ACI: aci, WMK: wmk });
       setLoading(false);
 
       if (onLiveDataLoaded) {
         onLiveDataLoaded({
-          KR:  { price: kr?.at(-1)?.y,  prev: kr?.at(-5)?.y  },
-          WMT: { price: wmt?.at(-1)?.y, prev: wmt?.at(-5)?.y },
+          KR:    { price: kr?.at(-1)?.y,    prev: kr?.at(-5)?.y    },
+          WMT:   { price: wmt?.at(-1)?.y,   prev: wmt?.at(-5)?.y   },
+          ADRNY: { price: adrny?.at(-1)?.y, prev: adrny?.at(-5)?.y },
+          ACI:   { price: aci?.at(-1)?.y,   prev: aci?.at(-5)?.y   },
+          WMK:   { price: wmk?.at(-1)?.y,   prev: wmk?.at(-5)?.y   },
         });
       }
     });
@@ -167,37 +187,61 @@ export default function StockChart({ onLiveDataLoaded }) {
 
   // Build datasets from current selection
   // Returns { datasets, dateRange } where dateRange is { start, end } or null for all-time
-  const buildDatasets = useCallback((viewModeArg, allTimeArg, yearArg, periodArg, hiddenArg, liveArg) => {
-    let publixPts, krPts, wmtPts;
+  const buildDatasets = useCallback((viewModeArg, allTimeArg, yearArg, periodArg, hiddenArg, liveArg, endYearArg) => {
+    let publixPts, krPts, wmtPts, adrnyPts, aciPts, wmkPts;
     let dateRange = null;
+
+    const live = (sym) => liveArg[sym] ? [...liveArg[sym]] : [];
+    const liveFilter = (sym, s, e) => liveArg[sym] ? filterByDateRange(liveArg[sym], s, e) : [];
 
     if (allTimeArg) {
       publixPts = [...PUBLIX_POINTS];
-      krPts     = liveArg.KR  ? [...liveArg.KR]  : [];
-      wmtPts    = liveArg.WMT ? [...liveArg.WMT] : [];
+      krPts = live('KR'); wmtPts = live('WMT');
+      adrnyPts = live('ADRNY'); aciPts = live('ACI'); wmkPts = live('WMK');
     } else {
-      const { start, end } = getDateRange(yearArg, periodArg);
+      const isRange = endYearArg != null && endYearArg !== yearArg;
+      const { start, end } = getDateRange(yearArg, periodArg, isRange ? endYearArg : undefined);
       dateRange = { start, end };
       publixPts = filterWithNeighbors(PUBLIX_POINTS, start, end);
-      krPts     = liveArg.KR  ? filterByDateRange(liveArg.KR,  start, end) : [];
-      wmtPts    = liveArg.WMT ? filterByDateRange(liveArg.WMT, start, end) : [];
+      krPts = liveFilter('KR', start, end); wmtPts = liveFilter('WMT', start, end);
+      adrnyPts = liveFilter('ADRNY', start, end); aciPts = liveFilter('ACI', start, end);
+      wmkPts = liveFilter('WMK', start, end);
     }
 
     // Track which live series have no data for the selected range
-    const emptyKR  = !allTimeArg && liveArg.KR  && krPts.length === 0;
-    const emptyWMT = !allTimeArg && liveArg.WMT && wmtPts.length === 0;
+    const noDataMap = {
+      KR:    !allTimeArg && liveArg.KR    && krPts.length === 0,
+      WMT:   !allTimeArg && liveArg.WMT   && wmtPts.length === 0,
+      ADRNY: !allTimeArg && liveArg.ADRNY && adrnyPts.length === 0,
+      ACI:   !allTimeArg && liveArg.ACI   && aciPts.length === 0,
+      WMK:   !allTimeArg && liveArg.WMK   && wmkPts.length === 0,
+    };
 
     if (viewModeArg === 'percent') {
-      // Normalize each series from its own first data point in the range.
-      // (No common-start alignment — Publix is quarterly while KR/WMT are
-      // weekly, so forcing alignment to the latest first date would discard
-      // most KR/WMT data in Q1/H1/First-3Q views.)
       publixPts = normalizeArr(publixPts);
       krPts     = normalizeArr(krPts);
       wmtPts    = normalizeArr(wmtPts);
+      adrnyPts  = normalizeArr(adrnyPts);
+      aciPts    = normalizeArr(aciPts);
+      wmkPts    = normalizeArr(wmkPts);
     }
 
-    return { dateRange, emptyKR, emptyWMT, datasets: [
+    const makeLiveDataset = (label, data, color, hiddenKey, order) => ({
+      label, data,
+      borderColor: color,
+      backgroundColor: 'transparent',
+      borderWidth: 2,
+      pointRadius: 0,
+      pointHoverRadius: 6,
+      pointHoverBackgroundColor: color,
+      pointHoverBorderColor: '#16161f',
+      pointHoverBorderWidth: 2,
+      tension: 0.15,
+      hidden: hiddenArg[hiddenKey],
+      order,
+    });
+
+    return { dateRange, noDataMap, datasets: [
       {
         label: 'Publix',
         data: publixPts,
@@ -216,36 +260,11 @@ export default function StockChart({ onLiveDataLoaded }) {
         hidden: hiddenArg.publix,
         order: 1,
       },
-      {
-        label: 'Walmart',
-        data: wmtPts,
-        borderColor: COLORS.walmart,
-        backgroundColor: 'transparent',
-        borderWidth: 2,
-        pointRadius: 0,
-        pointHoverRadius: 6,
-        pointHoverBackgroundColor: COLORS.walmart,
-        pointHoverBorderColor: '#16161f',
-        pointHoverBorderWidth: 2,
-        tension: 0.15,
-        hidden: hiddenArg.walmart,
-        order: 2,
-      },
-      {
-        label: 'Kroger',
-        data: krPts,
-        borderColor: COLORS.kroger,
-        backgroundColor: 'transparent',
-        borderWidth: 2,
-        pointRadius: 0,
-        pointHoverRadius: 6,
-        pointHoverBackgroundColor: COLORS.kroger,
-        pointHoverBorderColor: '#16161f',
-        pointHoverBorderWidth: 2,
-        tension: 0.15,
-        hidden: hiddenArg.kroger,
-        order: 3,
-      },
+      makeLiveDataset('Walmart',    wmtPts,   COLORS.walmart,    'walmart',    2),
+      makeLiveDataset('Kroger',     krPts,    COLORS.kroger,     'kroger',     3),
+      makeLiveDataset('Ahold',      adrnyPts, COLORS.ahold,      'ahold',      4),
+      makeLiveDataset('Albertsons', aciPts,   COLORS.albertsons, 'albertsons', 5),
+      makeLiveDataset('Weis',       wmkPts,   COLORS.weis,       'weis',       6),
     ] };
   }, []);
 
@@ -271,8 +290,8 @@ export default function StockChart({ onLiveDataLoaded }) {
         ? (val >= 0 ? '+' : '') + val.toFixed(1) + '%'
         : '$' + val.toFixed(2);
 
-      const { datasets, dateRange, emptyKR, emptyWMT } = buildDatasets(viewMode, allTime, selectedYear, selectedPeriod, hidden, liveData);
-      setNoData({ KR: emptyKR, WMT: emptyWMT });
+      const { datasets, dateRange, noDataMap } = buildDatasets(viewMode, allTime, selectedYear, selectedPeriod, hidden, liveData, endYear);
+      setNoData(noDataMap || {});
 
       chartRef.current = new Chart(canvasRef.current, {
         type: 'line',
@@ -367,7 +386,7 @@ export default function StockChart({ onLiveDataLoaded }) {
       ? (val >= 0 ? '+' : '') + val.toFixed(1) + '%'
       : '$' + val.toFixed(2);
 
-    const { datasets, dateRange, emptyKR, emptyWMT } = buildDatasets(viewMode, allTime, selectedYear, selectedPeriod, hidden, liveData);
+    const { datasets, dateRange, noDataMap } = buildDatasets(viewMode, allTime, selectedYear, selectedPeriod, hidden, liveData, endYear);
     chartRef.current.data.datasets = datasets;
 
     // Set x-axis max to end of selected period (don't set min so data starts at left edge)
@@ -388,18 +407,22 @@ export default function StockChart({ onLiveDataLoaded }) {
       return `  ${ctx.dataset.label}:  ${fmt}`;
     };
 
-    setNoData({ KR: emptyKR, WMT: emptyWMT });
+    setNoData(noDataMap || {});
 
     chartRef.current.update('active');
-  }, [allTime, selectedYear, selectedPeriod, viewMode, hidden, chartReady, buildDatasets, liveData]);
+  }, [allTime, selectedYear, endYear, selectedPeriod, viewMode, hidden, chartReady, buildDatasets, liveData]);
 
   const toggleSeries = (key) => {
     setHidden(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const isRange = !allTime && selectedYear !== endYear;
+
   const handleYearSelect = (year) => {
     setAllTime(false);
     setSelectedYear(year);
+    // If the new start year is after endYear, move endYear to match
+    if (year > endYear) setEndYear(year);
     // If the current period isn't available for this year, pick the best default
     const available = getAvailablePeriods(year);
     if (!available.find(p => p.label === selectedPeriod)) {
@@ -408,11 +431,15 @@ export default function StockChart({ onLiveDataLoaded }) {
     }
   };
 
+  const handleEndYearSelect = (year) => {
+    setEndYear(year);
+  };
+
   return (
     <div className="chart-section">
       <div className="section-header">
         <h2 className="section-title">Stock Performance</h2>
-        <span className="section-subtitle">Publix (quarterly) · KR &amp; WMT live</span>
+        <span className="section-subtitle">Publix (quarterly) · KR, WMT, ADRNY, ACI &amp; WMK live</span>
       </div>
 
       <div className="chart-controls">
@@ -433,7 +460,7 @@ export default function StockChart({ onLiveDataLoaded }) {
               const val = e.target.value;
               if (val) handleYearSelect(Number(val));
             }}
-            aria-label="Select year"
+            aria-label="Select start year"
           >
             <option value="" disabled>Year…</option>
             {YEARS.map(year => (
@@ -442,6 +469,22 @@ export default function StockChart({ onLiveDataLoaded }) {
           </select>
 
           {!allTime && (
+            <>
+              <span className="year-range-dash">–</span>
+              <select
+                className="year-dropdown"
+                value={endYear}
+                onChange={(e) => handleEndYearSelect(Number(e.target.value))}
+                aria-label="Select end year"
+              >
+                {YEARS.filter(y => y >= selectedYear).map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </>
+          )}
+
+          {!allTime && !isRange && (
             <select
               className="year-dropdown"
               value={selectedPeriod}
@@ -474,7 +517,7 @@ export default function StockChart({ onLiveDataLoaded }) {
 
       {viewMode === 'price' && (
         <div className="chart-price-note">
-          ⚠️ Note: Different price scales (Publix ~$12–20, Kroger ~$38–68, Walmart ~$47–127). Use <strong>% Change</strong> for direct comparison.
+          ⚠️ Note: Stocks have very different price scales. Use <strong>% Change</strong> for direct comparison.
         </div>
       )}
 
@@ -494,19 +537,26 @@ export default function StockChart({ onLiveDataLoaded }) {
           />
         </div>
 
-        {(noData.KR || noData.WMT) && (
+        {Object.values(noData).some(Boolean) && (
           <div className="chart-no-data-notice">
             No data available for{' '}
-            {[noData.KR && 'Kroger (KR)', noData.WMT && 'Walmart (WMT)'].filter(Boolean).join(' and ')}{' '}
-            in {selectedYear} {selectedPeriod !== 'Full Year' ? selectedPeriod : ''}
+            {[
+              noData.KR && 'Kroger (KR)', noData.WMT && 'Walmart (WMT)',
+              noData.ADRNY && 'Ahold (ADRNY)', noData.ACI && 'Albertsons (ACI)',
+              noData.WMK && 'Weis (WMK)',
+            ].filter(Boolean).join(', ')}{' '}
+            in {isRange ? `${selectedYear}–${endYear}` : `${selectedYear} ${selectedPeriod !== 'Full Year' ? selectedPeriod : ''}`}
           </div>
         )}
 
         <div className="chart-legend" role="list">
           {[
-            { key: 'publix',  label: 'Publix',  note: 'quarterly' },
-            { key: 'walmart', label: 'Walmart', note: 'WMT' },
-            { key: 'kroger',  label: 'Kroger',  note: 'KR' },
+            { key: 'publix',     label: 'Publix',     note: 'quarterly' },
+            { key: 'walmart',    label: 'Walmart',    note: 'WMT' },
+            { key: 'kroger',     label: 'Kroger',     note: 'KR' },
+            { key: 'ahold',      label: 'Ahold',      note: 'ADRNY' },
+            { key: 'albertsons', label: 'Albertsons', note: 'ACI' },
+            { key: 'weis',       label: 'Weis',       note: 'WMK' },
           ].map(({ key, label, note }) => (
             <button
               key={key}
