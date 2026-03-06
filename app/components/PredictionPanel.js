@@ -305,6 +305,103 @@ export default function PredictionPanel() {
         </div>
       </div>
 
+      {/* Methodology Explainer */}
+      <details className="methodology-detail" open>
+        <summary>How this works</summary>
+        <div className="methodology-content">
+
+          <div className="method-section">
+            <h4>
+              <span className="method-icon" style={{ color: '#f472b6' }}>━ ━</span>
+              {' '}1. Best-Fit Regression Model
+            </h4>
+            <p>
+              We take 5 publicly traded grocery stocks — Kroger, Walmart, Ahold Delhaize,
+              Albertsons, and Weis Markets — and ask: <em>what blend of these stocks best
+              explains Publix's quarterly share price over the last 5 years?</em>
+            </p>
+            <p>
+              First, every stock (including Publix) is <strong>normalized to an index</strong> starting
+              at 1.0 in Q1 2021. This removes the dollar-price distortion (Walmart at $90 vs Publix
+              at $12) and focuses purely on <em>how each stock has grown</em> over time.
+            </p>
+            <p>
+              Then we run <strong>constrained least-squares regression</strong> to find the weight for
+              each stock that minimizes the squared error between the weighted basket and actual Publix.
+              The constraints: all weights must be ≥ 0 (no shorting) and must sum to exactly 100%
+              (a real portfolio). This uses simplex-projected gradient descent — think of it as
+              repeatedly adjusting the dial on each stock until the error can't get any smaller.
+            </p>
+            <p>
+              The result: Kroger gets the highest weight because its growth trajectory most closely
+              mirrors Publix's. The <strong>R² of {(data.r2 * 100).toFixed(1)}%</strong> means this
+              basket explains {(data.r2 * 100).toFixed(0)}% of Publix's price movement. The <strong>RMSE
+              of ${data.rmse}</strong> is the average dollar error per quarter — how far off the
+              prediction typically is.
+            </p>
+          </div>
+
+          <div className="method-section">
+            <h4>
+              <span className="method-icon" style={{ color: '#facc15' }}>★</span>
+              {' '}2. Five-Year Trend Projection (yellow)
+            </h4>
+            <p>
+              The yellow number (${projPrice?.toFixed(2)}) answers: <em>based on the full 5-year
+              relationship between these stocks and Publix, where does the model say Publix should
+              be right now?</em>
+            </p>
+            <p>
+              It takes today's price for each basket stock, normalizes it to the same Q1 2021 index,
+              applies the model weights, and converts back to a dollar price. This captures the
+              <strong> cumulative growth</strong> of the basket vs Publix over the entire period.
+            </p>
+            <p>
+              If this number is significantly higher than the last actual Publix price, it suggests
+              Publix is <strong>underpriced relative to peers</strong> — either the public stocks
+              ran ahead, or Publix is due for a correction upward. If it's lower, the reverse.
+              Currently showing a ${projPrice ? ('$' + Math.abs(projPrice - lastActual).toFixed(2)) : ''} gap.
+            </p>
+          </div>
+
+          <div className="method-section">
+            <h4>
+              <span className="method-icon" style={{ color: '#4ade80' }}>━━</span>
+              {' '}3. Q1 Weighted Tracker (green)
+            </h4>
+            <p>
+              The green line answers a different question: <em>if Publix moved in exact lockstep
+              with the weighted basket during Q1 2026, where would it be today?</em>
+            </p>
+            <p>
+              Starting from the last known Publix price (${lastActual.toFixed(2)} as of Q4 2025),
+              we fetch <strong>daily closing prices</strong> for each basket stock from January 1, 2026
+              to today. For each trading day, we compute each stock's return since Q1 open, weight
+              them by the model weights, and apply that blended return to ${lastActual.toFixed(2)}.
+            </p>
+            <p>
+              This is a <strong>pure return-based projection</strong> — it doesn't carry the 5-year
+              cumulative gap. If Kroger is up 5% this quarter and has 37% weight, it contributes
+              +1.85% to the tracker. The green number reflects what the market is doing <em>right
+              now</em>, not the historical trend.
+            </p>
+            <p>
+              <strong>Key difference:</strong> The yellow number says "Publix should be <em>here</em>
+              based on 5 years of data." The green number says "Publix has probably moved <em>this
+              much</em> since last quarter, based on what peers did this quarter." When the actual
+              Q1 2026 price is announced (March 31), we'll see which signal was closer.
+            </p>
+          </div>
+
+          <div className="method-note">
+            <strong>⚠️ Limitations:</strong> This is a first-pass price-only model. It doesn't
+            account for EBITDA, earnings, margins, or Publix-specific factors (employee ownership,
+            regional concentration, no debt). The next iteration will incorporate fundamental data.
+            Not financial advice — just math.
+          </div>
+        </div>
+      </details>
+
       {/* Quarter-by-quarter table */}
       <details className="quarters-detail">
         <summary>Quarter-by-quarter breakdown</summary>

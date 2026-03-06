@@ -1430,3 +1430,66 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
   border-top: 1px solid rgba(250, 204, 21, 0.2);
 }
+
+/* ── Methodology Explainer ──────────────────────────── */
+.methodology-detail {
+  margin-top: 1rem;
+}
+.methodology-detail summary {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #c0c0d0;
+  cursor: pointer;
+  padding: 0.5rem 0;
+}
+.methodology-detail summary:hover {
+  color: #f0f0f5;
+}
+.methodology-content {
+  margin-top: 0.75rem;
+}
+.method-section {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.method-section:last-of-type {
+  border-bottom: none;
+}
+.method-section h4 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #e0e0f0;
+  margin: 0 0 0.5rem;
+}
+.method-icon {
+  font-weight: 700;
+  font-family: 'Space Grotesk', monospace;
+}
+.method-section p {
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: #8080a0;
+  margin: 0.4rem 0;
+}
+.method-section em {
+  color: #b0b0c8;
+  font-style: italic;
+}
+.method-section strong {
+  color: #c0c0d0;
+  font-weight: 600;
+}
+.method-note {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: #606078;
+  padding: 0.75rem 1rem;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 6px;
+  margin-top: 0.5rem;
+}
+.method-note strong {
+  color: #8080a0;
+}
