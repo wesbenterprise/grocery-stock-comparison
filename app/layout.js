@@ -17,6 +17,7 @@ export default function RootLayout({ children }) {
     <html lang="en" style={{ colorScheme: 'dark' }}>
       <head>
         <meta name="color-scheme" content="dark" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
       </head>
       <body>{children}</body>
     </html>
