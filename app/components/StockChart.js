@@ -130,8 +130,8 @@ export default function StockChart({ onLiveDataLoaded }) {
 
   const [loading, setLoading]               = useState(true);
   const [liveData, setLiveData]             = useState({ KR: null, WMT: null, ADRNY: null, ACI: null, WMK: null });
-  const [allTime, setAllTime]               = useState(true);
-  const [selectedYear, setSelectedYear]     = useState(MAX_YEAR);
+  const [allTime, setAllTime]               = useState(false);
+  const [selectedYear, setSelectedYear]     = useState(MAX_YEAR - 1);
   const [endYear, setEndYear]               = useState(MAX_YEAR);
   const [selectedPeriod, setSelectedPeriod] = useState('Full Year');
   const [viewMode, setViewMode]             = useState('percent');
