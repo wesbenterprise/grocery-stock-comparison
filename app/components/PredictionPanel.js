@@ -171,6 +171,8 @@ export default function PredictionPanel() {
               color: '#505068',
               font: { family: "'Space Grotesk', monospace", size: 11 },
               maxRotation: 0,
+              autoSkip: true,
+              maxTicksLimit: 6,
             },
           },
           y: {
