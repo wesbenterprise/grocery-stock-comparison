@@ -261,38 +261,51 @@ export default function PredictionPanel() {
         )}
       </div>
 
-      {/* Chart */}
-      <div className="prediction-chart-container">
-        <div className="view-toggle" role="group" aria-label="Chart zoom">
+      {/* Chart toggle */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+        {[['full', 'Full'], ['zoom', '6-Month Focus']].map(([mode, label]) => (
           <button
-            className={`view-toggle-btn${viewMode === 'full' ? ' active' : ''}`}
-            onClick={() => setViewMode('full')}
+            key={mode}
+            onClick={() => setViewMode(mode)}
+            style={{
+              padding: '8px 20px',
+              borderRadius: '999px',
+              border: viewMode === mode ? '1px solid rgba(255,255,255,0.3)' : '1px solid rgba(255,255,255,0.1)',
+              background: viewMode === mode ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.03)',
+              color: viewMode === mode ? '#f0f0f5' : '#8080a0',
+              fontFamily: "'Space Grotesk', sans-serif",
+              fontSize: '13px',
+              fontWeight: viewMode === mode ? 600 : 400,
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+              minWidth: '80px',
+            }}
           >
-            Full
+            {label}
           </button>
-          <button
-            className={`view-toggle-btn${viewMode === 'zoom' ? ' active' : ''}`}
-            onClick={() => setViewMode('zoom')}
-          >
-            6-Month Focus
-          </button>
-        </div>
-        <div className="chart-legend" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 20px', padding: '4px 0 8px', justifyContent: 'center' }}>
-          {[
-            { color: COLORS.actual, label: 'Actual Publix', dash: false },
-            { color: COLORS.predicted, label: 'Predicted (Weighted Basket)', dash: true },
-            { color: COLORS.projection, label: 'Q1 2026 Trend (5yr model)', dash: true, star: true },
-            { color: COLORS.q1tracker, label: 'Q1 Weighted Tracker (live)', dash: false },
-          ].map(item => (
-            <span key={item.label} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#8080a0', fontFamily: "'Space Grotesk', sans-serif" }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
-                {item.star && <span style={{ color: item.color, fontSize: '10px', lineHeight: 1 }}>★</span>}
-                <span style={{ display: 'inline-block', width: '20px', height: '2px', background: item.color, ...(item.dash ? { backgroundImage: `repeating-linear-gradient(90deg, ${item.color} 0 4px, transparent 4px 8px)`, backgroundColor: 'transparent' } : {}) }} />
-              </span>
-              {item.label}
+        ))}
+      </div>
+
+      {/* Legend */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 18px', marginBottom: '10px' }}>
+        {[
+          { color: COLORS.actual, label: 'Actual Publix', dash: false },
+          { color: COLORS.predicted, label: 'Predicted (Weighted Basket)', dash: true },
+          { color: COLORS.projection, label: 'Q1 2026 Trend (5yr model)', dash: true, star: true },
+          { color: COLORS.q1tracker, label: 'Q1 Weighted Tracker (live)', dash: false },
+        ].map(item => (
+          <span key={item.label} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#8080a0', fontFamily: "'Space Grotesk', sans-serif" }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+              {item.star && <span style={{ color: item.color, fontSize: '10px', lineHeight: 1 }}>★</span>}
+              <span style={{ display: 'inline-block', width: '20px', height: '2px', background: item.color, ...(item.dash ? { backgroundImage: `repeating-linear-gradient(90deg, ${item.color} 0 4px, transparent 4px 8px)`, backgroundColor: 'transparent' } : {}) }} />
             </span>
-          ))}
-        </div>
+            {item.label}
+          </span>
+        ))}
+      </div>
+
+      {/* Chart canvas — bordered card */}
+      <div className="prediction-chart-container">
         <canvas ref={canvasRef} />
       </div>
 
