@@ -1303,12 +1303,11 @@ h1, h2, h3, h4, h5, h6 {
 /* Chart */
 .prediction-chart-container {
   position: relative;
-  height: 300px;
-  margin: 1rem 0;
-  padding-bottom: 1rem;
+  height: 380px;
+  margin: 1rem 0 2.5rem;
 }
 @media (min-width: 768px) {
-  .prediction-chart-container { height: 380px; }
+  .prediction-chart-container { height: 460px; }
 }
 
 /* Model stats */
@@ -1316,7 +1315,7 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   gap: 1rem;
   justify-content: center;
-  margin: 1.5rem 0 1rem;
+  margin: 2.5rem 0 1rem;
 }
 .model-stats .stat {
   display: flex;
