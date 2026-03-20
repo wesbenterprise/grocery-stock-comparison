@@ -172,7 +172,12 @@ export default function PredictionPanel() {
               font: { family: "'Space Grotesk', monospace", size: 11 },
               maxRotation: 0,
               autoSkip: true,
-              maxTicksLimit: 6,
+              maxTicksLimit: 8,
+              callback: (val) => {
+                const d = new Date(val);
+                const q = Math.floor(d.getMonth() / 3) + 1;
+                return [`Q${q}`, d.getFullYear()];
+              },
             },
           },
           y: {
