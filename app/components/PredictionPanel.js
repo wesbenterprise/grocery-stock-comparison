@@ -15,6 +15,7 @@ export default function PredictionPanel() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [viewMode, setViewMode] = useState('full');
   const chartRef = useRef(null);
   const canvasRef = useRef(null);
 
@@ -77,13 +78,24 @@ export default function PredictionPanel() {
       }
     }
 
+    // Zoom mode: constrain to 6 months before today through Mar 31 2026
+    const isZoom = viewMode === 'zoom';
+    const zoomMax = new Date('2026-03-31').getTime();
+    const zoomMin = new Date(new Date().getTime() - 6 * 30 * 24 * 60 * 60 * 1000).getTime();
+
+    const inWindow = (pt) => pt.x >= zoomMin && pt.x <= zoomMax;
+    const filteredActual = isZoom ? actualPts.filter(inWindow) : actualPts;
+    const filteredPredicted = isZoom ? predictedPts.filter(inWindow) : predictedPts;
+    const filteredProjection = isZoom ? projectionPts.filter(inWindow) : projectionPts;
+    const filteredTracker = isZoom ? q1TrackerPts.filter(inWindow) : q1TrackerPts;
+
     chartRef.current = new Chart(canvasRef.current, {
       type: 'line',
       data: {
         datasets: [
           {
             label: 'Actual Publix',
-            data: actualPts,
+            data: filteredActual,
             borderColor: COLORS.actual,
             backgroundColor: 'transparent',
             borderWidth: 2.5,
@@ -98,7 +110,7 @@ export default function PredictionPanel() {
           },
           {
             label: 'Predicted (Weighted Basket)',
-            data: predictedPts,
+            data: filteredPredicted,
             borderColor: COLORS.predicted,
             backgroundColor: 'transparent',
             borderWidth: 2,
@@ -114,7 +126,7 @@ export default function PredictionPanel() {
           },
           {
             label: 'Q1 2026 Trend (5yr model)',
-            data: projectionPts,
+            data: filteredProjection,
             borderColor: COLORS.projection,
             backgroundColor: 'transparent',
             borderWidth: 2.5,
@@ -131,7 +143,7 @@ export default function PredictionPanel() {
           },
           {
             label: 'Q1 Weighted Tracker (live)',
-            data: q1TrackerPts,
+            data: filteredTracker,
             borderColor: COLORS.q1tracker,
             backgroundColor: 'transparent',
             borderWidth: 2.5,
@@ -156,8 +168,9 @@ export default function PredictionPanel() {
             time: {
               displayFormats: { quarter: 'QQQ yyyy', month: 'MMM yyyy' },
               tooltipFormat: 'MMM d, yyyy',
-              unit: 'quarter',
+              unit: isZoom ? 'month' : 'quarter',
             },
+            ...(isZoom ? { min: zoomMin, max: zoomMax } : {}),
             grid: { color: 'rgba(255,255,255,0.04)' },
             border: { display: false },
             ticks: {
@@ -205,7 +218,7 @@ export default function PredictionPanel() {
     return () => {
       if (chartRef.current) chartRef.current.destroy();
     };
-  }, [data]);
+  }, [data, viewMode]);
 
   if (loading) {
     return (
@@ -265,6 +278,20 @@ export default function PredictionPanel() {
 
       {/* Chart */}
       <div className="prediction-chart-container">
+        <div className="view-toggle" role="group" aria-label="Chart zoom">
+          <button
+            className={`view-toggle-btn${viewMode === 'full' ? ' active' : ''}`}
+            onClick={() => setViewMode('full')}
+          >
+            Full
+          </button>
+          <button
+            className={`view-toggle-btn${viewMode === 'zoom' ? ' active' : ''}`}
+            onClick={() => setViewMode('zoom')}
+          >
+            6-Month Focus
+          </button>
+        </div>
         <canvas ref={canvasRef} />
       </div>
 
