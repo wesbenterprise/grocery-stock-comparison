@@ -83,19 +83,13 @@ export default function PredictionPanel() {
     const zoomMax = new Date('2026-03-31').getTime();
     const zoomMin = new Date(new Date().getTime() - 6 * 30 * 24 * 60 * 60 * 1000).getTime();
 
-    const inWindow = (pt) => pt.x >= zoomMin && pt.x <= zoomMax;
-    const filteredActual = isZoom ? actualPts.filter(inWindow) : actualPts;
-    const filteredPredicted = isZoom ? predictedPts.filter(inWindow) : predictedPts;
-    const filteredProjection = isZoom ? projectionPts.filter(inWindow) : projectionPts;
-    const filteredTracker = isZoom ? q1TrackerPts.filter(inWindow) : q1TrackerPts;
-
     chartRef.current = new Chart(canvasRef.current, {
       type: 'line',
       data: {
         datasets: [
           {
             label: 'Actual Publix',
-            data: filteredActual,
+            data: actualPts,
             borderColor: COLORS.actual,
             backgroundColor: 'transparent',
             borderWidth: 2.5,
@@ -110,7 +104,7 @@ export default function PredictionPanel() {
           },
           {
             label: 'Predicted (Weighted Basket)',
-            data: filteredPredicted,
+            data: predictedPts,
             borderColor: COLORS.predicted,
             backgroundColor: 'transparent',
             borderWidth: 2,
@@ -126,7 +120,7 @@ export default function PredictionPanel() {
           },
           {
             label: 'Q1 2026 Trend (5yr model)',
-            data: filteredProjection,
+            data: projectionPts,
             borderColor: COLORS.projection,
             backgroundColor: 'transparent',
             borderWidth: 2.5,
@@ -143,7 +137,7 @@ export default function PredictionPanel() {
           },
           {
             label: 'Q1 Weighted Tracker (live)',
-            data: filteredTracker,
+            data: q1TrackerPts,
             borderColor: COLORS.q1tracker,
             backgroundColor: 'transparent',
             borderWidth: 2.5,
