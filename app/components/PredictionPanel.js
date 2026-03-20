@@ -185,16 +185,7 @@ export default function PredictionPanel() {
           },
         },
         plugins: {
-          legend: {
-            display: true,
-            position: 'top',
-            labels: {
-              color: '#8080a0',
-              font: { family: "'Space Grotesk', sans-serif", size: 11 },
-              usePointStyle: true,
-              padding: 16,
-            },
-          },
+          legend: { display: false },
           tooltip: {
             backgroundColor: 'rgba(18, 18, 28, 0.97)',
             titleColor: '#8080a0',
@@ -285,6 +276,22 @@ export default function PredictionPanel() {
           >
             6-Month Focus
           </button>
+        </div>
+        <div className="chart-legend" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 20px', padding: '4px 0 8px', justifyContent: 'center' }}>
+          {[
+            { color: COLORS.actual, label: 'Actual Publix', dash: false },
+            { color: COLORS.predicted, label: 'Predicted (Weighted Basket)', dash: true },
+            { color: COLORS.projection, label: 'Q1 2026 Trend (5yr model)', dash: true, star: true },
+            { color: COLORS.q1tracker, label: 'Q1 Weighted Tracker (live)', dash: false },
+          ].map(item => (
+            <span key={item.label} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#8080a0', fontFamily: "'Space Grotesk', sans-serif" }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                {item.star && <span style={{ color: item.color, fontSize: '10px', lineHeight: 1 }}>★</span>}
+                <span style={{ display: 'inline-block', width: '20px', height: '2px', background: item.color, ...(item.dash ? { backgroundImage: `repeating-linear-gradient(90deg, ${item.color} 0 4px, transparent 4px 8px)`, backgroundColor: 'transparent' } : {}) }} />
+              </span>
+              {item.label}
+            </span>
+          ))}
         </div>
         <canvas ref={canvasRef} />
       </div>
