@@ -98,8 +98,99 @@ export default function PublixTimeline() {
         {isWide ? <DesktopTable /> : <MobileCards />}
         <Footer isWide={isWide} />
         <LogoHistory isWide={isWide} />
+        <Slogan isWide={isWide} />
         <div style={{ textAlign: "center", marginTop: 24, fontSize: 11, color: "#6b6b6b", paddingBottom: 20 }}>
           Sources: SEC filings, Publix corporate reports, FundingUniverse, Wikipedia · Compiled March 2026
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Slogan({ isWide }) {
+  return (
+    <div style={{
+      background: "#1a3a1a",
+      borderRadius: 16,
+      marginTop: 24,
+      padding: isWide ? "48px 40px" : "36px 24px",
+      boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 8px 32px rgba(0,0,0,0.12)",
+      textAlign: "center",
+      position: "relative",
+      overflow: "hidden",
+    }}>
+      {/* Decorative top rule */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginBottom: isWide ? 32 : 24 }}>
+        <div style={{ flex: 1, maxWidth: 120, height: 1, background: "rgba(201,168,76,0.4)" }} />
+        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#c9a84c" }} />
+        <div style={{ flex: 1, maxWidth: 120, height: 1, background: "rgba(201,168,76,0.4)" }} />
+      </div>
+
+      {/* Eyebrow */}
+      <div style={{ fontSize: 10, letterSpacing: 4, textTransform: "uppercase", color: "rgba(201,168,76,0.7)", fontWeight: 700, marginBottom: 20 }}>
+        The Publix Promise · Since 1954
+      </div>
+
+      {/* Main slogan — rendered as display typography */}
+      <div style={{
+        fontFamily: "'Playfair Display', Georgia, serif",
+        fontSize: isWide ? 52 : 32,
+        fontWeight: 400,
+        fontStyle: "italic",
+        color: "#fff",
+        lineHeight: 1.2,
+        letterSpacing: "-0.01em",
+        marginBottom: 8,
+      }}>
+        Where Shopping
+      </div>
+      <div style={{
+        fontFamily: "'Playfair Display', Georgia, serif",
+        fontSize: isWide ? 52 : 32,
+        fontWeight: 900,
+        fontStyle: "italic",
+        color: "#c9a84c",
+        lineHeight: 1.2,
+        letterSpacing: "-0.01em",
+        marginBottom: isWide ? 32 : 24,
+      }}>
+        Is a Pleasure.
+      </div>
+
+      {/* Decorative bottom rule */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginBottom: isWide ? 28 : 20 }}>
+        <div style={{ flex: 1, maxWidth: 120, height: 1, background: "rgba(201,168,76,0.4)" }} />
+        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#c9a84c" }} />
+        <div style={{ flex: 1, maxWidth: 120, height: 1, background: "rgba(201,168,76,0.4)" }} />
+      </div>
+
+      {/* Origin story */}
+      <div style={{
+        maxWidth: 580,
+        margin: "0 auto",
+        fontSize: isWide ? 14 : 13,
+        lineHeight: 1.75,
+        color: "rgba(255,255,255,0.65)",
+        fontFamily: "'DM Sans', system-ui, sans-serif",
+      }}>
+        In 1954, advertising director <span style={{ color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Bill Schroter</span> listened to customers saying
+        "Publix is such a pleasant place to shop" and brought a new slogan to founder George Jenkins.
+        After a long, silent pause, Jenkins said: <span style={{ color: "#c9a84c", fontStyle: "italic" }}>"I like it. I like the promise. I like the meaning. Let's adopt it."</span>
+      </div>
+
+      {/* Jenkins quote */}
+      <div style={{
+        maxWidth: 560,
+        margin: isWide ? "24px auto 0" : "20px auto 0",
+        padding: "16px 20px",
+        borderLeft: "3px solid rgba(201,168,76,0.5)",
+        textAlign: "left",
+      }}>
+        <div style={{ fontSize: isWide ? 13 : 12, lineHeight: 1.7, color: "rgba(255,255,255,0.5)", fontStyle: "italic" }}>
+          "This isn't something we dreamed up out of blue sky and white Florida sand. It's a philosophy that has guided all our decisions and policies ever since we opened our first food store."
+        </div>
+        <div style={{ fontSize: 11, color: "rgba(201,168,76,0.7)", fontWeight: 600, marginTop: 8, letterSpacing: 1 }}>
+          — George W. Jenkins, Founder
         </div>
       </div>
     </div>
