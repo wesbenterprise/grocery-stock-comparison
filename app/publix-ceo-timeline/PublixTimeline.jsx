@@ -248,14 +248,14 @@ function LogoHistory({ isWide }) {
           <div key={i} style={{ textAlign: "center" }}>
             <div style={{
               width: "100%", aspectRatio: "1", background: "#fff", borderRadius: 12,
-              display: "flex", alignItems: "center", justifyContent: "center", padding: 10,
+              display: "flex", alignItems: "center", justifyContent: "center", padding: (i === 2 || i === 5) ? 4 : 10,
               border: l.current ? "3px solid #3B7C3B" : "2px solid #d0ccc6",
               position: "relative", overflow: "hidden",
             }}>
               <img
                 src={l.img}
                 alt={`Publix logo ${l.era}`}
-                style={{ maxWidth: "90%", maxHeight: "90%", objectFit: "contain" }}
+                style={{ maxWidth: (i === 2 || i === 5) ? "98%" : "90%", maxHeight: (i === 2 || i === 5) ? "98%" : "90%", objectFit: "contain" }}
               />
               {l.current && (
                 <div style={{
