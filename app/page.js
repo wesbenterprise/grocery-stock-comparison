@@ -322,6 +322,23 @@ export default function Page() {
               KR &amp; WMT prices via Yahoo Finance API (server-side proxy, cached 1hr).<br />
               Financial figures from public earnings reports. For informational purposes only — not financial advice.
             </p>
+            <p style={{ marginTop: 'var(--space-3)', textAlign: 'center' }}>
+              <Link
+                href="/publix-ceo-timeline"
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 'var(--text-xs)',
+                  color: 'var(--color-text-dim)',
+                  textDecoration: 'none',
+                  opacity: 0.6,
+                  transition: 'opacity 0.2s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                onMouseLeave={e => e.currentTarget.style.opacity = '0.6'}
+              >
+                Publix CEO Timeline
+              </Link>
+            </p>
           </footer>
 
         </div>
