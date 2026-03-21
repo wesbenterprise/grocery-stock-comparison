@@ -141,7 +141,7 @@ function Footer({ isWide }) {
 function LogoHistory({ isWide }) {
   return (
     <div style={{
-      background: "#fff", borderRadius: 16, marginTop: 24, padding: isWide ? "36px 40px" : "28px 20px",
+      background: "#f0f7f0", borderRadius: 16, marginTop: 24, padding: isWide ? "36px 40px" : "28px 20px",
       boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.06)",
     }}>
       <div style={{ textAlign: "center", marginBottom: isWide ? 28 : 20 }}>
@@ -156,9 +156,9 @@ function LogoHistory({ isWide }) {
         {logos.map((l, i) => (
           <div key={i} style={{ textAlign: "center" }}>
             <div style={{
-              width: "100%", aspectRatio: "1", background: "#faf8f4", borderRadius: 12,
+              width: "100%", aspectRatio: "1", background: "#fff", borderRadius: 12,
               display: "flex", alignItems: "center", justifyContent: "center", padding: 10,
-              border: l.current ? "2px solid #3B7C3B" : "1px solid #e8e4de",
+              border: l.current ? "3px solid #3B7C3B" : "2px solid #d0ccc6",
               position: "relative", overflow: "hidden",
             }}>
               <img
