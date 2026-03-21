@@ -99,7 +99,7 @@ export default function Page() {
           <section aria-label="Company financials" style={{ marginBottom: 'var(--space-7)' }}>
             <div className="section-header">
               <h2 className="section-title">Latest Results</h2>
-              <span className="section-subtitle">Q4 2025 / Most Recent</span>
+              <span className="section-subtitle">Q4 2025 / Full-Year Results</span>
             </div>
 
             <div className="cards-grid">
@@ -124,12 +124,12 @@ export default function Page() {
 
                 <div className="card-metrics">
                   <div className="metric-row">
-                    <span className="metric-label">Revenue (Q4 2025)</span>
-                    <span className="metric-value">~$14.4B</span>
+                    <span className="metric-label">Revenue (Full-Year 2025)</span>
+                    <span className="metric-value">$62.7B</span>
                   </div>
                   <div className="metric-row">
                     <span className="metric-label">Implied Market Cap</span>
-                    <span className="metric-value">~$51B</span>
+                    <span className="metric-value">~$63B</span>
                   </div>
                   <div className="metric-row">
                     <span className="metric-label">Share Price</span>
@@ -175,25 +175,25 @@ export default function Page() {
 
                 <div className="card-metrics">
                   <div className="metric-row">
-                    <span className="metric-label">Revenue (Q4 FY2026)</span>
-                    <span className="metric-value">$190.7B</span>
+                    <span className="metric-label">Revenue (Full-Year FY2026)</span>
+                    <span className="metric-value">$713.2B</span>
                   </div>
                   <div className="metric-row">
                     <span className="metric-label">Revenue Growth YoY</span>
-                    <span className="metric-value gain">+5.6%</span>
+                    <span className="metric-value gain">+4.7%</span>
                   </div>
                   <div className="metric-row">
-                    <span className="metric-label">Operating Income</span>
-                    <span className="metric-value">$8.7B</span>
+                    <span className="metric-label">Q4 Revenue</span>
+                    <span className="metric-value">$190.7B</span>
                   </div>
                   <div className="metric-row">
-                    <span className="metric-label">Gross Margin</span>
-                    <span className="metric-value">24.67%</span>
+                    <span className="metric-label">eCommerce Growth (Q4)</span>
+                    <span className="metric-value gain">+24%</span>
                   </div>
                 </div>
 
                 <div className="card-divider" />
-                <span className="card-note">Q4 FY2026 ended January 2026</span>
+                <span className="card-note">FY2026 ended January 31, 2026</span>
               </article>
 
               {/* Kroger */}
@@ -220,21 +220,21 @@ export default function Page() {
 
                 <div className="card-metrics">
                   <div className="metric-row">
-                    <span className="metric-label">Revenue (Q3 FY2025) *</span>
-                    <span className="metric-value">$33.6B</span>
+                    <span className="metric-label">Revenue (Full-Year FY2025)</span>
+                    <span className="metric-value">$147.6B</span>
                   </div>
                   <div className="metric-row">
-                    <span className="metric-label">Operating Profit</span>
-                    <span className="metric-value">~$1.0B</span>
+                    <span className="metric-label">Q4 Revenue</span>
+                    <span className="metric-value">$34.7B</span>
                   </div>
                   <div className="metric-row">
-                    <span className="metric-label">Quarter Ended</span>
-                    <span className="metric-value">Nov 2025</span>
+                    <span className="metric-label">Adjusted FIFO Op. Profit</span>
+                    <span className="metric-value">$4.9B</span>
                   </div>
                 </div>
 
                 <div className="card-divider" />
-                <span className="card-note">* Q4 FY2025 not yet reported</span>
+                <span className="card-note">FY2025 ended January 31, 2026</span>
               </article>
 
             </div>
@@ -259,9 +259,9 @@ export default function Page() {
                 {[
                   {
                     label: 'Annual Revenue',
-                    publix:  '~$57.6B',
-                    walmart: '$680B+',
-                    kroger:  '~$148B',
+                    publix:  '$62.7B',
+                    walmart: '$713.2B',
+                    kroger:  '$147.6B',
                   },
                   {
                     label: 'Operating Margin',
@@ -281,15 +281,15 @@ export default function Page() {
                   },
                   {
                     label: 'Market Cap',
-                    publix:  '~$51B',
-                    walmart: '~$750B',
+                    publix:  '~$63B',
+                    walmart: '~$950B',
                     kroger:  '~$45B',
                   },
                   {
                     label: 'Stores (US)',
-                    publix:  '~1,370',
+                    publix:  '1,461',
                     walmart: '~4,600',
-                    kroger:  '~2,750',
+                    kroger:  '~2,700',
                   },
                   {
                     label: 'Exchange',
