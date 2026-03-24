@@ -1222,32 +1222,16 @@ function renderCFOcfChart() {
     fcf = ann.map(d => d.free_cash_flow / 1e9);
   }
 
-  // FCF trendline (linear regression) — shown on annual view only for clarity
+  // FCF trendline (linear regression) — both quarterly and annual
+  const { slope, intercept } = linearRegression(fcf);
+  const trendData = fcf.map((_, i) => parseFloat((intercept + slope * i).toFixed(3)));
+
   const datasets = [
     { label: 'Operating CF', data: ocf, backgroundColor: 'rgba(200,160,80,.45)', borderColor: '#C8A050', borderWidth: 1, borderRadius: 3, yAxisID: 'y', order: 2 },
     { label: 'Capex', data: capex, backgroundColor: 'rgba(239,83,80,.4)', borderColor: '#ef5350', borderWidth: 1, borderRadius: 3, yAxisID: 'y', order: 3 },
-    { label: 'Free Cash Flow', data: fcf, type: 'line', borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.1)', borderWidth: 2, pointRadius: cfOcfMode === 'annual' ? 4 : 2, pointHoverRadius: 5, fill: false, tension: 0.3, yAxisID: 'y', order: 1 }
+    { label: 'Free Cash Flow', data: fcf, type: 'line', borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.1)', borderWidth: 2, pointRadius: cfOcfMode === 'annual' ? 4 : 2, pointHoverRadius: 5, fill: false, tension: 0.3, yAxisID: 'y', order: 1 },
+    { label: 'FCF Trend', data: trendData, type: 'line', borderColor: 'rgba(45,212,191,.45)', backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [6, 4], pointRadius: 0, pointHoverRadius: 0, fill: false, tension: 0, yAxisID: 'y', order: 4 }
   ];
-
-  if (cfOcfMode === 'annual') {
-    const { slope, intercept } = linearRegression(fcf);
-    const trendData = fcf.map((_, i) => parseFloat((intercept + slope * i).toFixed(3)));
-    datasets.push({
-      label: 'FCF Trend',
-      data: trendData,
-      type: 'line',
-      borderColor: 'rgba(45,212,191,.45)',
-      backgroundColor: 'transparent',
-      borderWidth: 1.5,
-      borderDash: [6, 4],
-      pointRadius: 0,
-      pointHoverRadius: 0,
-      fill: false,
-      tension: 0,
-      yAxisID: 'y',
-      order: 4,
-    });
-  }
 
   charts.cfOcf = new Chart(ctx, {
     type: 'bar',
