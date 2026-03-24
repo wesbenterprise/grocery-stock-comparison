@@ -404,20 +404,41 @@ const QUARTERS = initializeQuarters(RAW_QUARTERS);
 // ──────────────────────────────────────────────────────────────
 // Operating Net Income — strip after-tax unrealized securities G/L
 // ──────────────────────────────────────────────────────────────
+// Q1-Q3: EDGAR XBRL EquitySecuritiesFvNiUnrealizedGainLoss, 25.4% statutory rate
+// Q4:    Derived directly from Publix official annual press release non-GAAP tables
+//        (FY total adjusted NI minus Q1+Q2+Q3 adjusted NI). Sourced 2026-03-24.
 const UNREALIZED_GL = {
-  '2018-Q1': -26000000, '2018-Q2': 77000000, '2018-Q3': 166000000, '2018-Q4': -325000000,
-  '2019-Q1': 314000000, '2019-Q2': 5000000, '2019-Q3': -27000000, '2019-Q4': 180000000,
-  '2020-Q1': -387000000, '2020-Q2': 597000000, '2020-Q3': 131000000, '2020-Q4': 214000000,
-  '2021-Q1': 785000000, '2021-Q2': 129000000, '2021-Q3': 73000000, '2021-Q4': 122000000,
-  '2022-Q1': -581000000, '2022-Q2': -358000000, '2022-Q3': -556000000, '2022-Q4': -21000000,
-  '2023-Q1': 246000000, '2023-Q2': 123000000, '2023-Q3': -144000000, '2023-Q4': 173000000,
-  '2024-Q1': 387000000, '2024-Q2': 43000000, '2024-Q3': 224000000, '2024-Q4': 134000000,
-  '2025-Q1': -223000000, '2025-Q2': 446000000, '2025-Q3': 272000000, '2025-Q4': 218000000,
+  '2018-Q1': -26000000, '2018-Q2': 77000000, '2018-Q3': 166000000,
+  '2019-Q1': 314000000, '2019-Q2': 5000000, '2019-Q3': -27000000,
+  '2020-Q1': -387000000, '2020-Q2': 597000000, '2020-Q3': 131000000,
+  '2021-Q1': 785000000, '2021-Q2': 129000000, '2021-Q3': 73000000,
+  '2022-Q1': -581000000, '2022-Q2': -358000000, '2022-Q3': -556000000,
+  '2023-Q1': 246000000, '2023-Q2': 123000000, '2023-Q3': -144000000,
+  '2024-Q1': 387000000, '2024-Q2': 43000000, '2024-Q3': 224000000,
+  '2025-Q1': -223000000, '2025-Q2': 446000000, '2025-Q3': 272000000,
+};
+// Q4 operating NI sourced directly from Publix annual press release non-GAAP tables.
+// These override the back-calculation for Q4 only.
+const Q4_OPERATING_NI_OVERRIDE = {
+  '2018-Q4': 704500000,   // derived: FY $2,517.5M - Q1-Q3 $1,813M
+  '2019-Q4': 618600000,   // derived: FY $2,615.6M - Q1-Q3 $1,997M
+  '2020-Q4': 918500000,   // press release Q4 table (more reliable than derived $992M)
+  '2021-Q4': 959700000,   // press release Q4 table (more reliable than derived $967M)
+  '2022-Q4': 1293000000,  // press release Q4 table — exact match with derived
+  '2023-Q4': 1050000000,  // press release Q4 table
+  '2024-Q4': 1100000000,  // derived = press release Q4 table — exact match
+  '2025-Q4': 1003000000,  // press release Q4 table ($1,003M ≈ derived $1,004M)
 };
 const TAX_RATE = 0.254;
 QUARTERS.forEach(q => {
-  const gl = UNREALIZED_GL[q.period] || 0;
-  q.operatingNetIncome = q.netIncome - (gl * (1 - TAX_RATE));
+  if (Q4_OPERATING_NI_OVERRIDE[q.period] !== undefined) {
+    // Q4: use press-release-sourced figure directly
+    q.operatingNetIncome = Q4_OPERATING_NI_OVERRIDE[q.period];
+  } else {
+    // Q1-Q3: back-calculate from EDGAR unrealized GL at 25.4% statutory rate
+    const gl = UNREALIZED_GL[q.period] || 0;
+    q.operatingNetIncome = q.netIncome - (gl * (1 - TAX_RATE));
+  }
   q.operatingNetMarginPct = (q.operatingNetIncome / q.revenue) * 100;
 });
 
