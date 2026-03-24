@@ -395,8 +395,8 @@ function initializeQuarters(raw) {
     };
   });
   const yoyRev = withStores.map((q,i) => i < 4 ? null : ((q.revenue - withStores[i-4].revenue) / Math.abs(withStores[i-4].revenue)) * 100);
-  const yoyNI = withStores.map((q,i) => i < 4 ? null : ((q.netIncome - withStores[i-4].netIncome) / Math.abs(withStores[i-4].netIncome)) * 100);
-  return withStores.map((q,i) => ({ ...q, yoyRevenueGrowth: yoyRev[i], yoyNetIncomeGrowth: yoyNI[i] }));
+  // yoyNetIncomeGrowth computed AFTER operatingNetIncome is attached — see below
+  return withStores.map((q,i) => ({ ...q, yoyRevenueGrowth: yoyRev[i] }));
 }
 
 const QUARTERS = initializeQuarters(RAW_QUARTERS);
@@ -440,6 +440,13 @@ QUARTERS.forEach(q => {
     q.operatingNetIncome = q.netIncome - (gl * (1 - TAX_RATE));
   }
   q.operatingNetMarginPct = (q.operatingNetIncome / q.revenue) * 100;
+});
+
+// YoY Operating Net Income Growth — computed after operatingNetIncome is set
+QUARTERS.forEach((q, i) => {
+  if (i < 4) { q.yoyNetIncomeGrowth = null; return; }
+  const prior = QUARTERS[i - 4];
+  q.yoyNetIncomeGrowth = ((q.operatingNetIncome - prior.operatingNetIncome) / Math.abs(prior.operatingNetIncome)) * 100;
 });
 
 // ──────────────────────────────────────────────────────────────
