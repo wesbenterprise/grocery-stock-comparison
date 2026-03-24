@@ -113,6 +113,15 @@ tr:hover td{background:rgba(200,160,80,.03)}
 .narrative-card .narrative-header{font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--amber);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
 .narrative-card .narrative-text{font-family:var(--font-body);font-size:13px;font-style:italic;color:var(--text-secondary);line-height:1.7}
 
+/* Tab Switcher */
+.tab-switcher{display:flex;gap:0;margin-bottom:28px;border-bottom:2px solid var(--border)}
+.tab-btn{background:transparent;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--muted);padding:12px 28px;font-family:var(--font-display);font-size:16px;font-weight:800;cursor:pointer;letter-spacing:-.01em;transition:color .15s,border-color .15s}
+.tab-btn:hover{color:var(--text-secondary)}
+.tab-btn.active{color:var(--amber);border-bottom-color:var(--amber)}
+
+/* Cash Flow Section */
+#cf-section{display:none}
+
 /* Responsive */
 @media(max-width:900px){
   .kpi-grid{grid-template-columns:repeat(2,1fr)}
@@ -151,16 +160,25 @@ tr:hover td{background:rgba(200,160,80,.03)}
     <button class="logout-btn" id="logout-btn">Logout</button>
   </header>
 
+  <!-- Tab Switcher -->
+  <div class="tab-switcher">
+    <button class="tab-btn active" id="tab-is" onclick="switchTab('is')">Income Statement</button>
+    <button class="tab-btn" id="tab-cf" onclick="switchTab('cf')">Cash Flow</button>
+  </div>
+
+  <!-- Income Statement Section -->
+  <div id="is-section">
+
   <!-- Year Selector -->
   <div class="year-selector" id="year-selector"></div>
 
   <!-- KPI Cards -->
   <div class="kpi-grid" id="kpi-grid"></div>
 
-  <!-- Revenue & Net Income -->
+  <!-- Revenue & Operating Net Income -->
   <div class="chart-card">
-    <h3>Revenue &amp; Net Income</h3>
-    <div class="chart-subtitle">Quarterly revenue (bars) and net income (line) with key event annotations</div>
+    <h3>Revenue &amp; Operating Net Income</h3>
+    <div class="chart-subtitle">Quarterly revenue (bars) and operating net income ex. securities G/L (line) with key event annotations</div>
     <div class="chart-toggle" id="rev-toggle">
       <button class="toggle-btn active" data-mode="quarterly">Quarterly</button>
       <button class="toggle-btn" data-mode="annual">Annual</button>
@@ -169,7 +187,7 @@ tr:hover td{background:rgba(200,160,80,.03)}
     <div style="position:relative;height:320px"><canvas id="chart-revenue"></canvas></div>
     <div class="narrative-card">
       <div class="narrative-header">&#9670; Anderson's Take</div>
-      <div class="narrative-text">Revenue has compounded at 6.8% annually over the decade — steady, not spectacular. The story is really in earnings: net income CAGR of 9.2% means Publix has consistently grown the bottom line faster than the top. That gap is operational discipline. The 2022 earnings collapse (&minus;33.9% YoY) despite accelerating revenue is the single most important chart on this page — it shows exactly how inflation squeezed margins even as customers kept spending.</div>
+      <div class="narrative-text">Revenue has compounded at 6.8% annually over the decade — steady, not spectacular. The story is really in operating earnings (stripped of unrealized securities G/L): operating net income CAGR of ~8.5% means Publix has consistently grown the bottom line faster than the top through actual business operations. The 2022 earnings compression despite accelerating revenue is the single most important chart on this page — it shows exactly how inflation squeezed margins even as customers kept spending. Post-2022 recovery has been strong on an operating basis.</div>
     </div>
   </div>
 
@@ -240,6 +258,57 @@ tr:hover td{background:rgba(200,160,80,.03)}
       </table>
     </div>
   </div>
+
+  </div><!-- end #is-section -->
+
+  <!-- Cash Flow Section -->
+  <div id="cf-section">
+    <!-- CF KPI Cards -->
+    <div class="kpi-grid" id="cf-kpi-grid"></div>
+
+    <!-- OCF / Capex / FCF Chart -->
+    <div class="chart-card">
+      <h3>Operating Cash Flow, Capex &amp; Free Cash Flow</h3>
+      <div class="chart-subtitle">Quarterly cash generation and capital deployment</div>
+      <div class="chart-toggle" id="cf-ocf-toggle">
+        <button class="toggle-btn active" data-mode="quarterly">Quarterly</button>
+        <button class="toggle-btn" data-mode="annual">Annual</button>
+      </div>
+      <div style="position:relative;height:380px"><canvas id="chart-cf-ocf"></canvas></div>
+    </div>
+
+    <!-- Capital Allocation Chart -->
+    <div class="chart-card">
+      <h3>Capital Allocation</h3>
+      <div class="chart-subtitle">How Publix deploys capital — capex, dividends, and buybacks</div>
+      <div class="chart-toggle" id="cf-alloc-toggle">
+        <button class="toggle-btn active" data-mode="quarterly">Quarterly</button>
+        <button class="toggle-btn" data-mode="annual">Annual</button>
+      </div>
+      <div style="position:relative;height:300px"><canvas id="chart-cf-alloc"></canvas></div>
+    </div>
+
+    <!-- Cash Conversion Chart -->
+    <div class="chart-card">
+      <h3>Cash Conversion</h3>
+      <div class="chart-subtitle">Operating cash flow and free cash flow as % of revenue</div>
+      <div style="position:relative;height:280px"><canvas id="chart-cf-conversion"></canvas></div>
+    </div>
+
+    <!-- CF Data Table -->
+    <div class="chart-card">
+      <div class="table-toggle" id="cf-table-toggle">
+        <span class="arrow" id="cf-table-arrow">&#9654;</span> Cash Flow Quarterly Data (44 Quarters)
+      </div>
+      <div class="data-table-wrap" id="cf-table-wrap">
+        <table>
+          <thead id="cf-table-head"></thead>
+          <tbody id="cf-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div><!-- end #cf-section -->
+
 </div>
 
 <script>
@@ -333,16 +402,101 @@ function initializeQuarters(raw) {
 const QUARTERS = initializeQuarters(RAW_QUARTERS);
 
 // ──────────────────────────────────────────────────────────────
+// Operating Net Income — strip after-tax unrealized securities G/L
+// ──────────────────────────────────────────────────────────────
+const UNREALIZED_GL = {
+  '2018-Q1': -26000000, '2018-Q2': 77000000, '2018-Q3': 166000000, '2018-Q4': -325000000,
+  '2019-Q1': 314000000, '2019-Q2': 5000000, '2019-Q3': -27000000, '2019-Q4': 180000000,
+  '2020-Q1': -387000000, '2020-Q2': 597000000, '2020-Q3': 131000000, '2020-Q4': 214000000,
+  '2021-Q1': 785000000, '2021-Q2': 129000000, '2021-Q3': 73000000, '2021-Q4': 122000000,
+  '2022-Q1': -581000000, '2022-Q2': -358000000, '2022-Q3': -556000000, '2022-Q4': -21000000,
+  '2023-Q1': 246000000, '2023-Q2': 123000000, '2023-Q3': -144000000, '2023-Q4': 173000000,
+  '2024-Q1': 387000000, '2024-Q2': 43000000, '2024-Q3': 224000000, '2024-Q4': 134000000,
+  '2025-Q1': -223000000, '2025-Q2': 446000000, '2025-Q3': 272000000, '2025-Q4': 218000000,
+};
+const TAX_RATE = 0.254;
+QUARTERS.forEach(q => {
+  const gl = UNREALIZED_GL[q.period] || 0;
+  q.operatingNetIncome = q.netIncome - (gl * (1 - TAX_RATE));
+  q.operatingNetMarginPct = (q.operatingNetIncome / q.revenue) * 100;
+});
+
+// ──────────────────────────────────────────────────────────────
+// Cash Flow Data (SEC EDGAR)
+// ──────────────────────────────────────────────────────────────
+const CASHFLOW_DATA = [
+  {period:"2015-Q1",fiscal_year:2015,quarter:1,operating_cash_flow:1135388000,capex:-221571000,free_cash_flow:913817000,depreciation_amortization:134073000,stock_repurchases:-277730000,dividends_paid:0,cash_end_of_period:455751000},
+  {period:"2015-Q2",fiscal_year:2015,quarter:2,operating_cash_flow:543040000,capex:-283365000,free_cash_flow:259675000,depreciation_amortization:135693000,stock_repurchases:-204220000,dividends_paid:-303354000,cash_end_of_period:277244000},
+  {period:"2015-Q3",fiscal_year:2015,quarter:3,operating_cash_flow:699169000,capex:-274100000,free_cash_flow:425069000,depreciation_amortization:152361000,stock_repurchases:-200217000,dividends_paid:-154968000,cash_end_of_period:327498000},
+  {period:"2015-Q4",fiscal_year:2015,quarter:4,operating_cash_flow:563768000,capex:-456612000,free_cash_flow:107156000,depreciation_amortization:159765000,stock_repurchases:-173634000,dividends_paid:-154444000,cash_end_of_period:352176000},
+  {period:"2016-Q1",fiscal_year:2016,quarter:1,operating_cash_flow:1248417000,capex:-336682000,free_cash_flow:911735000,depreciation_amortization:149934000,stock_repurchases:-277919000,dividends_paid:-153957000,cash_end_of_period:493677000},
+  {period:"2016-Q2",fiscal_year:2016,quarter:2,operating_cash_flow:567006000,capex:-394054000,free_cash_flow:172952000,depreciation_amortization:157733000,stock_repurchases:-245482000,dividends_paid:-172116000,cash_end_of_period:304762000},
+  {period:"2016-Q3",fiscal_year:2016,quarter:3,operating_cash_flow:803340000,capex:-379780000,free_cash_flow:423560000,depreciation_amortization:151027000,stock_repurchases:-199240000,dividends_paid:-171245000,cash_end_of_period:304561000},
+  {period:"2016-Q4",fiscal_year:2016,quarter:4,operating_cash_flow:634192000,capex:-333311000,free_cash_flow:300881000,depreciation_amortization:165509000,stock_repurchases:-237621000,dividends_paid:-170584000,cash_end_of_period:438319000},
+  {period:"2017-Q1",fiscal_year:2017,quarter:1,operating_cash_flow:1161526000,capex:-287654000,free_cash_flow:873872000,depreciation_amortization:157291000,stock_repurchases:-287451000,dividends_paid:-169722000,cash_end_of_period:568632000},
+  {period:"2017-Q2",fiscal_year:2017,quarter:2,operating_cash_flow:494424000,capex:-441600000,free_cash_flow:52824000,depreciation_amortization:160383000,stock_repurchases:-306793000,dividends_paid:-176410000,cash_end_of_period:253725000},
+  {period:"2017-Q3",fiscal_year:2017,quarter:3,operating_cash_flow:1157065000,capex:-333898000,free_cash_flow:823167000,depreciation_amortization:166633000,stock_repurchases:-844384000,dividends_paid:-173655000,cash_end_of_period:670695000},
+  {period:"2017-Q4",fiscal_year:2017,quarter:4,operating_cash_flow:767266000,capex:-365907000,free_cash_flow:401359000,depreciation_amortization:179702000,stock_repurchases:-313236000,dividends_paid:-169873000,cash_end_of_period:579925000},
+  {period:"2018-Q1",fiscal_year:2018,quarter:1,operating_cash_flow:1104802000,capex:-449980000,free_cash_flow:654822000,depreciation_amortization:160170000,stock_repurchases:-432894000,dividends_paid:-168597000,cash_end_of_period:644355000},
+  {period:"2018-Q2",fiscal_year:2018,quarter:2,operating_cash_flow:728659000,capex:-281393000,free_cash_flow:447266000,depreciation_amortization:168211000,stock_repurchases:-317877000,dividends_paid:-190655000,cash_end_of_period:561930000},
+  {period:"2018-Q3",fiscal_year:2018,quarter:3,operating_cash_flow:1029530000,capex:-367472000,free_cash_flow:662058000,depreciation_amortization:172717000,stock_repurchases:-441275000,dividends_paid:-188441000,cash_end_of_period:616283000},
+  {period:"2018-Q4",fiscal_year:2018,quarter:4,operating_cash_flow:768935000,capex:-251244000,free_cash_flow:517691000,depreciation_amortization:176056000,stock_repurchases:-213826000,dividends_paid:-186817000,cash_end_of_period:599264000},
+  {period:"2019-Q1",fiscal_year:2019,quarter:1,operating_cash_flow:1428356000,capex:-254836000,free_cash_flow:1173520000,depreciation_amortization:174049000,stock_repurchases:-333857000,dividends_paid:-185835000,cash_end_of_period:1012142000},
+  {period:"2019-Q2",fiscal_year:2019,quarter:2,operating_cash_flow:833608000,capex:-396377000,free_cash_flow:437231000,depreciation_amortization:176927000,stock_repurchases:-256851000,dividends_paid:-215552000,cash_end_of_period:820610000},
+  {period:"2019-Q3",fiscal_year:2019,quarter:3,operating_cash_flow:905024000,capex:-234173000,free_cash_flow:670851000,depreciation_amortization:183771000,stock_repurchases:-223598000,dividends_paid:-214162000,cash_end_of_period:1294010000},
+  {period:"2019-Q4",fiscal_year:2019,quarter:4,operating_cash_flow:857443000,capex:-255732000,free_cash_flow:601711000,depreciation_amortization:181922000,stock_repurchases:-274264000,dividends_paid:-213184000,cash_end_of_period:763000000},
+  {period:"2020-Q1",fiscal_year:2020,quarter:1,operating_cash_flow:2292505000,capex:-269288000,free_cash_flow:2023217000,depreciation_amortization:178969000,stock_repurchases:-442509000,dividends_paid:-211847000,cash_end_of_period:1618875000},
+  {period:"2020-Q2",fiscal_year:2020,quarter:2,operating_cash_flow:1251193000,capex:-304715000,free_cash_flow:946478000,depreciation_amortization:180299000,stock_repurchases:-332605000,dividends_paid:-225495000,cash_end_of_period:1423493000},
+  {period:"2020-Q3",fiscal_year:2020,quarter:3,operating_cash_flow:736222000,capex:-320316000,free_cash_flow:415906000,depreciation_amortization:185912000,stock_repurchases:-316031000,dividends_paid:-224264000,cash_end_of_period:602798000},
+  {period:"2020-Q4",fiscal_year:2020,quarter:4,operating_cash_flow:1144080000,capex:-333681000,free_cash_flow:810399000,depreciation_amortization:191820000,stock_repurchases:-348855000,dividends_paid:-222394000,cash_end_of_period:673000000},
+  {period:"2021-Q1",fiscal_year:2021,quarter:1,operating_cash_flow:1488297000,capex:-345933000,free_cash_flow:1142364000,depreciation_amortization:192241000,stock_repurchases:-340092000,dividends_paid:-220975000,cash_end_of_period:979059000},
+  {period:"2021-Q2",fiscal_year:2021,quarter:2,operating_cash_flow:1090980000,capex:-303989000,free_cash_flow:786991000,depreciation_amortization:196849000,stock_repurchases:-248145000,dividends_paid:-256562000,cash_end_of_period:903810000},
+  {period:"2021-Q3",fiscal_year:2021,quarter:3,operating_cash_flow:1547444000,capex:-333409000,free_cash_flow:1214035000,depreciation_amortization:199246000,stock_repurchases:-244209000,dividends_paid:-255349000,cash_end_of_period:1171532000},
+  {period:"2021-Q4",fiscal_year:2021,quarter:4,operating_cash_flow:1262279000,capex:-304669000,free_cash_flow:957610000,depreciation_amortization:205664000,stock_repurchases:-304554000,dividends_paid:-254114000,cash_end_of_period:1132000000},
+  {period:"2022-Q1",fiscal_year:2022,quarter:1,operating_cash_flow:1573000000,capex:-402000000,free_cash_flow:1171000000,depreciation_amortization:202000000,stock_repurchases:-538000000,dividends_paid:-253000000,cash_end_of_period:680000000},
+  {period:"2022-Q2",fiscal_year:2022,quarter:2,operating_cash_flow:1204000000,capex:-386000000,free_cash_flow:818000000,depreciation_amortization:206000000,stock_repurchases:-733000000,dividends_paid:-307000000,cash_end_of_period:1028000000},
+  {period:"2022-Q3",fiscal_year:2022,quarter:3,operating_cash_flow:1310000000,capex:-498000000,free_cash_flow:812000000,depreciation_amortization:211000000,stock_repurchases:-375000000,dividends_paid:-304000000,cash_end_of_period:1599000000},
+  {period:"2022-Q4",fiscal_year:2022,quarter:4,operating_cash_flow:1417000000,capex:-482000000,free_cash_flow:935000000,depreciation_amortization:219000000,stock_repurchases:-491000000,dividends_paid:-302000000,cash_end_of_period:1336000000},
+  {period:"2023-Q1",fiscal_year:2023,quarter:1,operating_cash_flow:1509000000,capex:-492000000,free_cash_flow:1017000000,depreciation_amortization:222000000,stock_repurchases:-317000000,dividends_paid:-299000000,cash_end_of_period:1561000000},
+  {period:"2023-Q2",fiscal_year:2023,quarter:2,operating_cash_flow:1221000000,capex:-392000000,free_cash_flow:829000000,depreciation_amortization:225000000,stock_repurchases:-258000000,dividends_paid:-334000000,cash_end_of_period:1563000000},
+  {period:"2023-Q3",fiscal_year:2023,quarter:3,operating_cash_flow:1527000000,capex:-441000000,free_cash_flow:1086000000,depreciation_amortization:229000000,stock_repurchases:-320000000,dividends_paid:-332000000,cash_end_of_period:1089000000},
+  {period:"2023-Q4",fiscal_year:2023,quarter:4,operating_cash_flow:1343000000,capex:-668000000,free_cash_flow:675000000,depreciation_amortization:238000000,stock_repurchases:-270000000,dividends_paid:-331000000,cash_end_of_period:865000000},
+  {period:"2024-Q1",fiscal_year:2024,quarter:1,operating_cash_flow:1675000000,capex:-792000000,free_cash_flow:883000000,depreciation_amortization:258000000,stock_repurchases:-394000000,dividends_paid:-329000000,cash_end_of_period:756000000},
+  {period:"2024-Q2",fiscal_year:2024,quarter:2,operating_cash_flow:1057000000,capex:-407000000,free_cash_flow:650000000,depreciation_amortization:236000000,stock_repurchases:-421000000,dividends_paid:-356000000,cash_end_of_period:485000000},
+  {period:"2024-Q3",fiscal_year:2024,quarter:3,operating_cash_flow:1565000000,capex:-792000000,free_cash_flow:773000000,depreciation_amortization:258000000,stock_repurchases:-287000000,dividends_paid:-352000000,cash_end_of_period:945000000},
+  {period:"2024-Q4",fiscal_year:2024,quarter:4,operating_cash_flow:1271000000,capex:-621000000,free_cash_flow:650000000,depreciation_amortization:256000000,stock_repurchases:-291000000,dividends_paid:-351000000,cash_end_of_period:856000000},
+  {period:"2025-Q1",fiscal_year:2025,quarter:1,operating_cash_flow:2076000000,capex:-555000000,free_cash_flow:1521000000,depreciation_amortization:285000000,stock_repurchases:-453000000,dividends_paid:-351000000,cash_end_of_period:1184000000},
+  {period:"2025-Q2",fiscal_year:2025,quarter:2,operating_cash_flow:1164000000,capex:-463000000,free_cash_flow:701000000,depreciation_amortization:242000000,stock_repurchases:-413000000,dividends_paid:-360000000,cash_end_of_period:656000000},
+  {period:"2025-Q3",fiscal_year:2025,quarter:3,operating_cash_flow:1534000000,capex:-555000000,free_cash_flow:979000000,depreciation_amortization:285000000,stock_repurchases:-487000000,dividends_paid:-359000000,cash_end_of_period:859000000},
+  {period:"2025-Q4",fiscal_year:2025,quarter:4,operating_cash_flow:1134000000,capex:-679000000,free_cash_flow:455000000,depreciation_amortization:279000000,stock_repurchases:-345000000,dividends_paid:-356000000,cash_end_of_period:632000000},
+];
+
+// ──────────────────────────────────────────────────────────────
 // Annual aggregation
 // ──────────────────────────────────────────────────────────────
 function computeAnnualTotals(quarters) {
   const byYear = {};
   quarters.forEach(q => {
-    if (!byYear[q.fiscalYear]) byYear[q.fiscalYear] = {year: q.fiscalYear, revenue: 0, netIncome: 0, grossProfit: 0, operatingIncome: 0};
+    if (!byYear[q.fiscalYear]) byYear[q.fiscalYear] = {year: q.fiscalYear, revenue: 0, netIncome: 0, operatingNetIncome: 0, grossProfit: 0, operatingIncome: 0};
     byYear[q.fiscalYear].revenue += q.revenue;
     byYear[q.fiscalYear].netIncome += q.netIncome;
+    byYear[q.fiscalYear].operatingNetIncome += q.operatingNetIncome;
     byYear[q.fiscalYear].grossProfit += q.grossProfit;
     byYear[q.fiscalYear].operatingIncome += q.operatingIncome;
+  });
+  return Object.values(byYear).sort((a,b) => a.year - b.year);
+}
+
+function computeCashflowAnnualTotals(data) {
+  const byYear = {};
+  data.forEach(d => {
+    if (!byYear[d.fiscal_year]) byYear[d.fiscal_year] = {year: d.fiscal_year, operating_cash_flow:0, capex:0, free_cash_flow:0, depreciation_amortization:0, stock_repurchases:0, dividends_paid:0};
+    byYear[d.fiscal_year].operating_cash_flow += d.operating_cash_flow;
+    byYear[d.fiscal_year].capex += d.capex;
+    byYear[d.fiscal_year].free_cash_flow += d.free_cash_flow;
+    byYear[d.fiscal_year].depreciation_amortization += d.depreciation_amortization;
+    byYear[d.fiscal_year].stock_repurchases += d.stock_repurchases;
+    byYear[d.fiscal_year].dividends_paid += d.dividends_paid;
   });
   return Object.values(byYear).sort((a,b) => a.year - b.year);
 }
@@ -467,8 +621,8 @@ function renderKPIs() {
 
   const kpis = [
     { label: 'Total Revenue', value: fmtB(latest.revenue), change: changePct(latest.revenue, prev?.revenue), spark: last8.map(q => q.revenue) },
-    { label: 'Net Income', value: fmtM(latest.netIncome), change: changePct(latest.netIncome, prev?.netIncome), spark: last8.map(q => q.netIncome) },
-    { label: 'Net Margin %', value: fmtPct(latest.netMarginPct, 2), change: prev ? latest.netMarginPct - prev.netMarginPct : null, spark: last8.map(q => q.netMarginPct), isDelta: true },
+    { label: 'Operating Net Income', value: fmtM(latest.operatingNetIncome), change: changePct(latest.operatingNetIncome, prev?.operatingNetIncome), spark: last8.map(q => q.operatingNetIncome) },
+    { label: 'OPERATING NET MARGIN', subtitle: '(ex. securities G/L)', value: fmtPct(latest.operatingNetMarginPct, 2), change: prev ? latest.operatingNetMarginPct - prev.operatingNetMarginPct : null, spark: last8.map(q => q.operatingNetMarginPct), isDelta: true },
     { label: 'Store Count', value: fmtNum(latest.storeCount), change: changePct(latest.storeCount, prev?.storeCount), spark: last8.map(q => q.storeCount) },
   ];
 
@@ -479,7 +633,8 @@ function renderKPIs() {
     card.className = 'kpi-card';
     const chVal = k.change != null ? (k.isDelta ? (k.change >= 0 ? '+' : '') + k.change.toFixed(2) + 'pp' : (k.change >= 0 ? '+' : '') + k.change.toFixed(1) + '%') : '';
     const chClass = k.change != null ? (k.change >= 0 ? 'up' : 'down') : '';
-    card.innerHTML = `<div class="label">${k.label}</div><div class="value">${k.value}</div><div class="change ${chClass}">${chVal} QoQ</div><canvas id="spark-${idx}" width="100" height="40"></canvas>`;
+    const subtitleHtml = k.subtitle ? `<div style="color:var(--muted);font-size:10px;font-family:var(--font-body);margin-top:-4px;margin-bottom:4px">${k.subtitle}</div>` : '';
+    card.innerHTML = `<div class="label">${k.label}</div>${subtitleHtml}<div class="value">${k.value}</div><div class="change ${chClass}">${chVal} QoQ</div><canvas id="spark-${idx}" width="100" height="40"></canvas>`;
     grid.appendChild(card);
   });
 
@@ -582,7 +737,7 @@ function renderRevenueChart() {
         labels,
         datasets: [
           { label: 'Revenue', data: filteredData.map(q => q.revenue / 1e9), backgroundColor: 'rgba(200,160,80,.35)', borderColor: '#C8A050', borderWidth: 1, borderRadius: 3, yAxisID: 'y', order: 2 },
-          { label: 'Net Income', data: filteredData.map(q => q.netIncome / 1e9), type: 'line', borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.1)', borderWidth: 2, pointRadius: 2, pointHoverRadius: 5, fill: true, tension: 0.3, yAxisID: 'y1', order: 1 }
+          { label: 'Operating Net Income', data: filteredData.map(q => q.operatingNetIncome / 1e9), type: 'line', borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.1)', borderWidth: 2, pointRadius: 2, pointHoverRadius: 5, fill: true, tension: 0.3, yAxisID: 'y1', order: 1 }
         ]
       },
       options: {
@@ -608,7 +763,7 @@ function renderRevenueChart() {
         labels,
         datasets: [
           { label: 'Revenue', data: annualData.map(d => d.revenue / 1e9), backgroundColor: 'rgba(200,160,80,.35)', borderColor: '#C8A050', borderWidth: 1, borderRadius: 4, yAxisID: 'y', order: 2 },
-          { label: 'Net Income', data: annualData.map(d => d.netIncome / 1e9), type: 'line', borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.1)', borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 7, pointBackgroundColor: '#2DD4BF', fill: true, tension: 0.3, yAxisID: 'y1', order: 1 }
+          { label: 'Operating Net Income', data: annualData.map(d => d.operatingNetIncome / 1e9), type: 'line', borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.1)', borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 7, pointBackgroundColor: '#2DD4BF', fill: true, tension: 0.3, yAxisID: 'y1', order: 1 }
         ]
       },
       options: {
@@ -636,7 +791,7 @@ function renderRevenueChart() {
         labels,
         datasets: [
           { label: 'Revenue YoY %', data: yoyRev, backgroundColor: yoyRev.map(v => v != null && v >= 0 ? 'rgba(200,160,80,.5)' : 'rgba(239,83,80,.4)'), borderColor: yoyRev.map(v => v != null && v >= 0 ? '#C8A050' : '#ef5350'), borderWidth: 1, borderRadius: 3, order: 2 },
-          { label: 'Net Income YoY %', data: yoyNI, type: 'line', borderColor: '#2DD4BF', borderWidth: 2, pointRadius: 2, tension: 0.3, order: 1 }
+          { label: 'Op. Net Income YoY %', data: yoyNI, type: 'line', borderColor: '#2DD4BF', borderWidth: 2, pointRadius: 2, tension: 0.3, order: 1 }
         ]
       },
       options: {
@@ -673,7 +828,7 @@ function renderMarginsChart() {
       datasets: [
         { label: 'Gross Margin', data: filteredData.map(q => q.grossMarginPct), borderColor: '#C8A050', backgroundColor: 'rgba(200,160,80,.08)', borderWidth: 2, pointRadius: 1.5, fill: true, tension: 0.3 },
         { label: 'Operating Margin', data: filteredData.map(q => q.operatingMarginPct), borderColor: '#2DD4BF', borderWidth: 2, pointRadius: 1.5, tension: 0.3 },
-        { label: 'Net Margin', data: filteredData.map(q => q.netMarginPct), borderColor: '#818cf8', borderWidth: 2, pointRadius: 1.5, tension: 0.3 }
+        { label: 'Op. Net Margin (ex. G/L)', data: filteredData.map(q => q.operatingNetMarginPct), borderColor: '#818cf8', borderWidth: 2, pointRadius: 1.5, tension: 0.3 }
       ]
     },
     options: {
@@ -838,8 +993,10 @@ const TABLE_COLS = [
   { key: 'grossMarginPct', label: 'Gross %', fmt: v => fmtPct(v, 2) },
   { key: 'operatingIncome', label: 'Op. Income', fmt: fmtM },
   { key: 'operatingMarginPct', label: 'Op. %', fmt: v => fmtPct(v, 2) },
-  { key: 'netIncome', label: 'Net Income', fmt: fmtM },
-  { key: 'netMarginPct', label: 'Net %', fmt: v => fmtPct(v, 2) },
+  { key: 'operatingNetIncome', label: 'Operating NI', fmt: fmtM },
+  { key: 'operatingNetMarginPct', label: 'Op. NI %', fmt: v => fmtPct(v, 2) },
+  { key: 'netIncome', label: 'Reported NI', fmt: fmtM },
+  { key: 'netMarginPct', label: 'Reported NI %', fmt: v => fmtPct(v, 2) },
   { key: 'storeCount', label: 'Stores', fmt: fmtNum },
   { key: 'totalAssets', label: 'Assets', fmt: fmtB },
   { key: 'stockholdersEquity', label: 'Equity', fmt: fmtB },
@@ -878,6 +1035,233 @@ document.getElementById('table-toggle').addEventListener('click', () => {
   const arrow = document.getElementById('table-arrow');
   const isOpen = wrap.classList.toggle('open');
   arrow.classList.toggle('open', isOpen);
+});
+
+// ──────────────────────────────────────────────────────────────
+// Tab Switching
+// ──────────────────────────────────────────────────────────────
+let activeTab = 'is';
+let cfOcfMode = 'quarterly';
+let cfAllocMode = 'quarterly';
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('is-section').style.display = tab === 'is' ? 'block' : 'none';
+  document.getElementById('cf-section').style.display = tab === 'cf' ? 'block' : 'none';
+  document.getElementById('tab-is').classList.toggle('active', tab === 'is');
+  document.getElementById('tab-cf').classList.toggle('active', tab === 'cf');
+  if (tab === 'cf') renderCashFlowTab();
+}
+
+// ──────────────────────────────────────────────────────────────
+// Cash Flow Tab Rendering
+// ──────────────────────────────────────────────────────────────
+function renderCashFlowTab() {
+  renderCFKPIs();
+  renderCFOcfChart();
+  renderCFAllocChart();
+  renderCFConversionChart();
+  renderCFTable();
+}
+
+function renderCFKPIs() {
+  const last4cf = CASHFLOW_DATA.slice(-4);
+  const ttmOCF = last4cf.reduce((s,d) => s + d.operating_cash_flow, 0);
+  const ttmFCF = last4cf.reduce((s,d) => s + d.free_cash_flow, 0);
+  const ttmCapex = last4cf.reduce((s,d) => s + d.capex, 0);
+  const last4is = QUARTERS.slice(-4);
+  const ttmRev = last4is.reduce((s,q) => s + q.revenue, 0);
+  const fcfMargin = (ttmFCF / ttmRev) * 100;
+
+  const prev4cf = CASHFLOW_DATA.slice(-8, -4);
+  const prevOCF = prev4cf.reduce((s,d) => s + d.operating_cash_flow, 0);
+  const prevFCF = prev4cf.reduce((s,d) => s + d.free_cash_flow, 0);
+  const prevCapex = prev4cf.reduce((s,d) => s + d.capex, 0);
+  const prev4is = QUARTERS.slice(-8, -4);
+  const prevRev = prev4is.reduce((s,q) => s + q.revenue, 0);
+  const prevFcfMargin = (prevFCF / prevRev) * 100;
+
+  function chg(cur, prev) { return prev ? ((cur - prev) / Math.abs(prev)) * 100 : null; }
+
+  const kpis = [
+    { label: 'TTM OPERATING CF', value: fmtB(ttmOCF), change: chg(ttmOCF, prevOCF) },
+    { label: 'TTM FREE CASH FLOW', value: fmtB(ttmFCF), change: chg(ttmFCF, prevFCF) },
+    { label: 'TTM CAPEX', value: fmtB(Math.abs(ttmCapex)), change: chg(Math.abs(ttmCapex), Math.abs(prevCapex)), invertChange: true },
+    { label: 'TTM FCF MARGIN', value: fmtPct(fcfMargin, 1), change: fcfMargin - prevFcfMargin, isDelta: true },
+  ];
+
+  const grid = document.getElementById('cf-kpi-grid');
+  grid.innerHTML = '';
+  kpis.forEach((k, idx) => {
+    const card = document.createElement('div');
+    card.className = 'kpi-card';
+    const rawChg = k.change != null ? (k.invertChange ? -k.change : k.change) : null;
+    const chVal = k.change != null ? (k.isDelta ? (rawChg >= 0 ? '+' : '') + rawChg.toFixed(2) + 'pp' : (rawChg >= 0 ? '+' : '') + rawChg.toFixed(1) + '%') : '';
+    const chClass = rawChg != null ? (rawChg >= 0 ? 'up' : 'down') : '';
+    card.innerHTML = `<div class="label">${k.label}</div><div class="value">${k.value}</div><div class="change ${chClass}">${chVal} YoY TTM</div>`;
+    grid.appendChild(card);
+  });
+}
+
+function renderCFOcfChart() {
+  const ctx = document.getElementById('chart-cf-ocf');
+  if (charts.cfOcf) charts.cfOcf.destroy();
+
+  let labels, ocf, capex, fcf;
+  if (cfOcfMode === 'quarterly') {
+    labels = CASHFLOW_DATA.map(d => d.period);
+    ocf = CASHFLOW_DATA.map(d => d.operating_cash_flow / 1e9);
+    capex = CASHFLOW_DATA.map(d => Math.abs(d.capex) / 1e9);
+    fcf = CASHFLOW_DATA.map(d => d.free_cash_flow / 1e9);
+  } else {
+    const ann = computeCashflowAnnualTotals(CASHFLOW_DATA);
+    labels = ann.map(d => String(d.year));
+    ocf = ann.map(d => d.operating_cash_flow / 1e9);
+    capex = ann.map(d => Math.abs(d.capex) / 1e9);
+    fcf = ann.map(d => d.free_cash_flow / 1e9);
+  }
+
+  charts.cfOcf = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Operating CF', data: ocf, backgroundColor: 'rgba(200,160,80,.45)', borderColor: '#C8A050', borderWidth: 1, borderRadius: 3, yAxisID: 'y', order: 2 },
+        { label: 'Capex', data: capex, backgroundColor: 'rgba(239,83,80,.4)', borderColor: '#ef5350', borderWidth: 1, borderRadius: 3, yAxisID: 'y', order: 3 },
+        { label: 'Free Cash Flow', data: fcf, type: 'line', borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.1)', borderWidth: 2, pointRadius: 2, pointHoverRadius: 5, fill: false, tension: 0.3, yAxisID: 'y', order: 1 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { ...chartDefaults.plugins, tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: ctx => ctx.dataset.label + ': $' + ctx.parsed.y.toFixed(2) + 'B' } } },
+      scales: {
+        x: chartDefaults.scales.x,
+        y: { ...chartDefaults.scales.y, ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v.toFixed(1) + 'B' }, title: { display: true, text: '($B)', color: '#606080' } }
+      }
+    }
+  });
+}
+
+function renderCFAllocChart() {
+  const ctx = document.getElementById('chart-cf-alloc');
+  if (charts.cfAlloc) charts.cfAlloc.destroy();
+
+  let labels, capex, divs, buybacks;
+  if (cfAllocMode === 'quarterly') {
+    labels = CASHFLOW_DATA.map(d => d.period);
+    capex = CASHFLOW_DATA.map(d => Math.abs(d.capex) / 1e9);
+    divs = CASHFLOW_DATA.map(d => Math.abs(d.dividends_paid) / 1e9);
+    buybacks = CASHFLOW_DATA.map(d => Math.abs(d.stock_repurchases) / 1e9);
+  } else {
+    const ann = computeCashflowAnnualTotals(CASHFLOW_DATA);
+    labels = ann.map(d => String(d.year));
+    capex = ann.map(d => Math.abs(d.capex) / 1e9);
+    divs = ann.map(d => Math.abs(d.dividends_paid) / 1e9);
+    buybacks = ann.map(d => Math.abs(d.stock_repurchases) / 1e9);
+  }
+
+  charts.cfAlloc = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Capex', data: capex, backgroundColor: 'rgba(200,160,80,.55)', borderColor: '#C8A050', borderWidth: 1, borderRadius: 3, stack: 'alloc' },
+        { label: 'Dividends', data: divs, backgroundColor: 'rgba(45,212,191,.45)', borderColor: '#2DD4BF', borderWidth: 1, borderRadius: 3, stack: 'alloc' },
+        { label: 'Buybacks', data: buybacks, backgroundColor: 'rgba(76,175,80,.45)', borderColor: '#4caf50', borderWidth: 1, borderRadius: 3, stack: 'alloc' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { ...chartDefaults.plugins, tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: ctx => ctx.dataset.label + ': $' + ctx.parsed.y.toFixed(2) + 'B' } } },
+      scales: {
+        x: { ...chartDefaults.scales.x, stacked: true },
+        y: { ...chartDefaults.scales.y, stacked: true, ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v.toFixed(1) + 'B' }, title: { display: true, text: '($B)', color: '#606080' } }
+      }
+    }
+  });
+}
+
+function renderCFConversionChart() {
+  const ctx = document.getElementById('chart-cf-conversion');
+  if (charts.cfConversion) charts.cfConversion.destroy();
+
+  const labels = CASHFLOW_DATA.map(d => d.period);
+  const ocfPct = CASHFLOW_DATA.map(d => {
+    const q = QUARTERS.find(q => q.period === d.period);
+    return q ? (d.operating_cash_flow / q.revenue) * 100 : null;
+  });
+  const fcfPct = CASHFLOW_DATA.map(d => {
+    const q = QUARTERS.find(q => q.period === d.period);
+    return q ? (d.free_cash_flow / q.revenue) * 100 : null;
+  });
+
+  charts.cfConversion = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'OCF % of Revenue', data: ocfPct, borderColor: '#C8A050', backgroundColor: 'rgba(200,160,80,.1)', borderWidth: 2, pointRadius: 2, fill: true, tension: 0.3 },
+        { label: 'FCF % of Revenue', data: fcfPct, borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.08)', borderWidth: 2, pointRadius: 2, fill: true, tension: 0.3 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { ...chartDefaults.plugins, tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.parsed.y != null ? ctx.parsed.y.toFixed(1) + '%' : 'N/A') } } },
+      scales: {
+        x: chartDefaults.scales.x,
+        y: { ...chartDefaults.scales.y, ticks: { ...chartDefaults.scales.y.ticks, callback: v => v + '%' }, title: { display: true, text: '% of Revenue', color: '#606080' } }
+      }
+    }
+  });
+}
+
+const CF_TABLE_COLS = [
+  { key: 'period', label: 'Quarter', fmt: v => v, align: 'left' },
+  { key: 'operating_cash_flow', label: 'OCF', fmt: fmtM },
+  { key: 'capex', label: 'Capex', fmt: v => fmtM(Math.abs(v)) },
+  { key: 'free_cash_flow', label: 'FCF', fmt: fmtM },
+  { key: 'fcf_margin', label: 'FCF Margin', fmt: v => fmtPct(v, 1) },
+  { key: 'depreciation_amortization', label: 'D&A', fmt: fmtM },
+  { key: 'stock_repurchases', label: 'Buybacks', fmt: v => fmtM(Math.abs(v)) },
+  { key: 'dividends_paid', label: 'Dividends', fmt: v => fmtM(Math.abs(v)) },
+  { key: 'cash_end_of_period', label: 'Cash Balance', fmt: fmtM },
+];
+
+function renderCFTable() {
+  const thead = document.getElementById('cf-table-head');
+  const tbody = document.getElementById('cf-table-body');
+  thead.innerHTML = '<tr>' + CF_TABLE_COLS.map(c => `<th>${c.label}</th>`).join('') + '</tr>';
+
+  const rows = CASHFLOW_DATA.map(d => {
+    const q = QUARTERS.find(q => q.period === d.period);
+    const fcf_margin = q ? (d.free_cash_flow / q.revenue) * 100 : 0;
+    return { ...d, fcf_margin };
+  }).reverse();
+
+  tbody.innerHTML = rows.map(d => '<tr>' + CF_TABLE_COLS.map(c => `<td>${c.fmt(d[c.key])}</td>`).join('') + '</tr>').join('');
+}
+
+document.getElementById('cf-table-toggle').addEventListener('click', () => {
+  const wrap = document.getElementById('cf-table-wrap');
+  const arrow = document.getElementById('cf-table-arrow');
+  const isOpen = wrap.classList.toggle('open');
+  arrow.classList.toggle('open', isOpen);
+});
+
+document.getElementById('cf-ocf-toggle').addEventListener('click', e => {
+  const btn = e.target.closest('.toggle-btn');
+  if (!btn) return;
+  cfOcfMode = btn.dataset.mode;
+  document.querySelectorAll('#cf-ocf-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+  renderCFOcfChart();
+});
+
+document.getElementById('cf-alloc-toggle').addEventListener('click', e => {
+  const btn = e.target.closest('.toggle-btn');
+  if (!btn) return;
+  cfAllocMode = btn.dataset.mode;
+  document.querySelectorAll('#cf-alloc-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+  renderCFAllocChart();
 });
 
 // ──────────────────────────────────────────────────────────────
