@@ -310,9 +310,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .page-container {
-  max-width: 1100px;
+  max-width: 1400px;
+  width: 100%;
   margin: 0 auto;
-  padding: var(--space-5) var(--space-5) calc(var(--space-8) + env(safe-area-inset-bottom));
+  padding: var(--space-5) var(--space-6) calc(var(--space-8) + env(safe-area-inset-bottom));
+  box-sizing: border-box;
 }
 
 /* ============================================================
