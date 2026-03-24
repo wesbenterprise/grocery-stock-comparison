@@ -10,6 +10,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Space+Grotesk:wght@500;600;700&display=swap");
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{overflow-x:hidden}
 :root{
   --bg:#0a0a0f;
   --bg-surface:#111118;
@@ -32,7 +33,7 @@
   --font-body:"DM Sans", system-ui, sans-serif;
   --font-mono:"Space Grotesk", monospace;
 }
-body{font-family:var(--font-body);background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{font-family:var(--font-body);background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow-x:hidden}
 a{color:var(--amber)}
 h1,h2,h3,h4,h5,h6{font-family:var(--font-display);font-weight:800;line-height:1.2;letter-spacing:-0.01em}
 
@@ -49,7 +50,7 @@ h1,h2,h3,h4,h5,h6{font-family:var(--font-display);font-weight:800;line-height:1.
 .shake{animation:shake .4s ease-in-out}
 
 /* Dashboard */
-#dashboard{display:none;max-width:1400px;margin:0 auto;padding:80px 24px 72px}
+#dashboard{display:none;max-width:1400px;width:100%;margin:0 auto;padding:80px 24px 72px;box-sizing:border-box}
 .app-header{position:fixed;top:0;left:0;right:0;z-index:100;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:rgba(10,10,15,.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
 .header-brand{display:flex;align-items:center;gap:12px}
 .header-brand h1{color:var(--text);font-size:16px;font-weight:800;letter-spacing:-.3px}
