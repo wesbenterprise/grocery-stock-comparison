@@ -1033,11 +1033,13 @@ function buildAnnotations(data) {
   ANNOTATIONS.forEach(a => {
     const idx = data.findIndex(q => q.period === a.quarter);
     if (idx < 0) return;
+    const stagger = Object.keys(result).length % 3; // 3-level stagger: 0, -28, -56
+    const yAdjust = stagger === 0 ? 0 : stagger === 1 ? -28 : -56;
     result[a.id] = {
       type: 'line', xMin: idx, xMax: idx,
       borderColor: a.color + '60', borderWidth: 1.5, borderDash: [6, 3],
       label: {
-        display: true, content: a.label, position: 'start',
+        display: true, content: a.label, position: 'start', yAdjust,
         color: a.color, font: { size: 10, weight: '500' },
         backgroundColor: '#0a0a0fCC', padding: { top: 2, bottom: 2, left: 6, right: 6 }, borderRadius: 4
       }
@@ -1052,13 +1054,14 @@ function buildAnnualAnnotations(annualData) {
     const year = parseInt(a.quarter.split('-')[0]);
     const idx = annualData.findIndex(d => d.year === year);
     if (idx < 0) return;
-    // Only show one annotation per year (first match wins)
     if (result['ann_' + year]) return;
+    const stagger = Object.keys(result).length % 3;
+    const yAdjust = stagger === 0 ? 0 : stagger === 1 ? -28 : -56;
     result['ann_' + year] = {
       type: 'line', xMin: idx, xMax: idx,
       borderColor: a.color + '60', borderWidth: 1.5, borderDash: [6, 3],
       label: {
-        display: true, content: a.label, position: 'start',
+        display: true, content: a.label, position: 'start', yAdjust,
         color: a.color, font: { size: 10, weight: '500' },
         backgroundColor: '#0a0a0fCC', padding: { top: 2, bottom: 2, left: 6, right: 6 }, borderRadius: 4
       }
