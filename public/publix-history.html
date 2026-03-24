@@ -132,7 +132,7 @@ tr:hover td{background:rgba(200,160,80,.04)}
       <button class="toggle-btn active" data-mode="absolute">Absolute</button>
       <button class="toggle-btn" data-mode="yoy">YoY %</button>
     </div>
-    <canvas id="chart-revenue" height="320"></canvas>
+    <div style="position:relative;height:320px"><canvas id="chart-revenue"></canvas></div>
   </div>
 
   <div class="chart-grid">
@@ -140,14 +140,14 @@ tr:hover td{background:rgba(200,160,80,.04)}
     <div class="chart-card">
       <h3>Margin Analysis</h3>
       <div class="chart-subtitle">Gross, operating &amp; net margins with industry reference lines</div>
-      <canvas id="chart-margins" height="280"></canvas>
+      <div style="position:relative;height:280px"><canvas id="chart-margins"></canvas></div>
     </div>
 
     <!-- Revenue Per Store -->
     <div class="chart-card">
       <h3>Revenue Per Store</h3>
       <div class="chart-subtitle">Quarterly revenue divided by interpolated store count</div>
-      <canvas id="chart-rps" height="280"></canvas>
+      <div style="position:relative;height:280px"><canvas id="chart-rps"></canvas></div>
     </div>
   </div>
 
@@ -163,14 +163,14 @@ tr:hover td{background:rgba(200,160,80,.04)}
     <div class="chart-card">
       <h3>Balance Sheet</h3>
       <div class="chart-subtitle">Total assets, liabilities &amp; stockholders' equity over time</div>
-      <canvas id="chart-balance" height="280"></canvas>
+      <div style="position:relative;height:280px"><canvas id="chart-balance"></canvas></div>
     </div>
 
     <!-- Store Expansion -->
     <div class="chart-card">
       <h3>Store Expansion</h3>
       <div class="chart-subtitle">Store count growth with net new stores per year</div>
-      <canvas id="chart-stores" height="280"></canvas>
+      <div style="position:relative;height:280px"><canvas id="chart-stores"></canvas></div>
     </div>
   </div>
 
