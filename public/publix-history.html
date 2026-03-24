@@ -7,7 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0/dist/chartjs-plugin-annotation.min.js"></script>
 <style>
-@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Space+Grotesk:wght@500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400;1,700&family=Nunito:wght@700;800;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Space+Grotesk:wght@500;600;700&display=swap");
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{overflow-x:hidden}
@@ -30,6 +30,7 @@ html{overflow-x:hidden}
   --publix:#4caf50;
   --publix-glow:rgba(76,175,80,0.15);
   --font-display:"Nunito", system-ui, sans-serif;
+  --font-serif:"Playfair Display", Georgia, "Times New Roman", serif;
   --font-body:"DM Sans", system-ui, sans-serif;
   --font-mono:"Space Grotesk", monospace;
 }
@@ -51,13 +52,16 @@ h1,h2,h3,h4,h5,h6{font-family:var(--font-display);font-weight:800;line-height:1.
 
 /* Dashboard */
 #dashboard{display:none;max-width:1400px;width:100%;margin:0 auto;padding:80px 24px 72px;box-sizing:border-box}
-.app-header{position:fixed;top:0;left:0;right:0;z-index:100;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:rgba(10,10,15,.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
-.header-brand{display:flex;align-items:center;gap:12px}
-.header-brand h1{color:var(--text);font-size:16px;font-weight:800;letter-spacing:-.3px}
+.app-header{position:fixed;top:0;left:0;right:0;z-index:100;height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:rgba(10,10,15,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.07)}
+.header-brand{display:flex;align-items:center;gap:12px;text-decoration:none}
+.header-brand-p{font-family:var(--font-serif);font-size:26px;font-weight:900;color:var(--amber);line-height:1;letter-spacing:-.02em;margin-right:2px}
+.header-brand-sub{font-family:var(--font-mono);font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;display:block}
+.header-nav{display:flex;align-items:center;gap:4px}
+.header-nav-link{font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--muted);text-decoration:none;padding:6px 12px;border-radius:7px;letter-spacing:.03em;transition:color .15s,background .15s}
+.header-nav-link:hover{color:var(--text);background:rgba(255,255,255,.05)}
+.header-nav-link.active{color:var(--amber);background:rgba(76,175,80,.1)}
+.header-live{display:flex;align-items:center;gap:8px;padding-left:12px;margin-left:8px;border-left:1px solid var(--border)}
 .header-badge{font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--muted);background:#1e1e2a;border:1px solid var(--border);padding:2px 10px;border-radius:6px;letter-spacing:.04em;text-transform:uppercase}
-.header-right{display:flex;align-items:center;gap:12px}
-.header-nav-link{font-family:var(--font-mono);font-size:12px;color:var(--muted);text-decoration:none;opacity:.7;transition:opacity .2s}
-.header-nav-link:hover{opacity:1;color:var(--text)}
 .logout-btn{background:transparent;border:1px solid var(--border);color:var(--text-secondary);padding:6px 14px;border-radius:8px;cursor:pointer;font-family:var(--font-mono);font-size:12px;font-weight:600;transition:all .2s}
 .logout-btn:hover{border-color:var(--red);color:var(--red)}
 
@@ -73,7 +77,7 @@ h1,h2,h3,h4,h5,h6{font-family:var(--font-display);font-weight:800;line-height:1.
 .kpi-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 22px;position:relative;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.05);transition:border-color .2s}
 .kpi-card:hover{border-color:var(--border-hover)}
 .kpi-card .label{color:var(--text-secondary);font-family:var(--font-body);font-size:12px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;font-weight:500}
-.kpi-card .value{font-family:var(--font-mono);font-size:28px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+.kpi-card .value{font-family:var(--font-serif);font-size:28px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .kpi-card .change{font-family:var(--font-mono);font-size:12px;margin-top:4px;font-weight:600}
 .kpi-card .change.up{color:var(--green)}
 .kpi-card .change.down{color:var(--red)}
@@ -82,7 +86,8 @@ h1,h2,h3,h4,h5,h6{font-family:var(--font-display);font-weight:800;line-height:1.
 /* Chart Cards */
 .chart-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.05);position:relative;overflow:hidden}
 .chart-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(76,175,80,0.025) 0%,transparent 50%);pointer-events:none}
-.chart-card h3{font-family:var(--font-display);color:var(--text);font-size:17px;font-weight:800;margin-bottom:4px;letter-spacing:-0.01em}
+.chart-card h3{font-family:var(--font-serif);color:var(--text);font-size:18px;font-weight:700;margin-bottom:4px;letter-spacing:-0.01em}
+.chart-card .chart-eyebrow{font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--amber);margin-bottom:5px;display:block}
 .chart-card .chart-subtitle{color:var(--muted);font-family:var(--font-body);font-size:12px;margin-bottom:16px;font-weight:400}
 .chart-toggle{display:flex;gap:4px;margin-bottom:14px;background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:3px;width:fit-content}
 .toggle-btn{background:transparent;border:none;color:var(--text-secondary);padding:5px 14px;border-radius:6px;cursor:pointer;font-family:var(--font-mono);font-size:12px;font-weight:600;transition:all .15s;letter-spacing:.02em}
@@ -115,13 +120,15 @@ td:first-child{text-align:left;color:var(--amber);font-weight:600}
 tr:hover td{background:rgba(76,175,80,.03)}
 
 /* Anderson Narrative Cards */
-.narrative-card{background:#0d0d14;border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:16px 20px;margin-top:16px;margin-bottom:8px}
-.narrative-card .narrative-header{font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--amber);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+.narrative-card{background:#0d0d14;border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:18px 22px;margin-top:16px;margin-bottom:8px}
+.narrative-card .narrative-header{font-family:var(--font-serif);font-size:13px;font-weight:700;font-style:italic;color:var(--amber);letter-spacing:.01em;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.narrative-card .narrative-header::after{content:'';flex:1;height:1px;background:rgba(76,175,80,.15)}
+.narrative-card .narrative-text{font-family:var(--font-body);font-size:13.5px;line-height:1.75;color:rgba(240,240,245,0.72)}
 .narrative-card .narrative-text{font-family:var(--font-body);font-size:13px;font-style:italic;color:var(--text-secondary);line-height:1.7}
 
 /* Tab Switcher */
 .tab-switcher{display:flex;gap:0;margin-bottom:28px;border-bottom:2px solid var(--border)}
-.tab-btn{background:transparent;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--muted);padding:12px 28px;font-family:var(--font-display);font-size:16px;font-weight:800;cursor:pointer;letter-spacing:-.01em;transition:color .15s,border-color .15s}
+.tab-btn{background:transparent;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--muted);padding:12px 28px;font-family:var(--font-serif);font-size:15px;font-weight:700;cursor:pointer;letter-spacing:-.01em;transition:color .15s,border-color .15s}
 .tab-btn:hover{color:var(--text-secondary)}
 .tab-btn.active{color:var(--amber);border-bottom-color:var(--amber)}
 
@@ -179,14 +186,21 @@ tr:hover td{background:rgba(76,175,80,.03)}
 <!-- Dashboard -->
 <div id="dashboard">
   <header class="app-header">
-    <div class="header-brand">
-      <h1>Publix Financial History</h1>
-      <span class="header-badge">SEC EDGAR · 44 Quarters</span>
-    </div>
-    <div class="header-right">
-      <a class="header-nav-link" href="/">← Grocery Compare</a>
-      <button class="logout-btn" id="logout-btn">Logout</button>
-    </div>
+    <a class="header-brand" href="/" style="text-decoration:none">
+      <span class="header-brand-p">P</span>
+      <div>
+        <div style="font-family:var(--font-serif);font-size:15px;font-weight:700;color:var(--text);line-height:1.1">Publix Intelligence</div>
+        <span class="header-brand-sub">Grocery Stock Compare</span>
+      </div>
+    </a>
+    <nav class="header-nav">
+      <a class="header-nav-link" href="/">Stock Compare</a>
+      <a class="header-nav-link active" href="/publix-history">Financial History</a>
+      <a class="header-nav-link" href="/publix-ceo-timeline">CEO Timeline</a>
+      <div class="header-live">
+        <button class="logout-btn" id="logout-btn">Logout</button>
+      </div>
+    </nav>
   </header>
 
   <!-- Tab Switcher -->

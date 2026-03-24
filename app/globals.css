@@ -4,7 +4,7 @@
    Typography: Romero system (DM Sans + Space Grotesk + Nunito)
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400;1,700&family=Nunito:wght@700;800;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Space+Grotesk:wght@500;600;700&display=swap');
 
 /* ============================================================
    DESIGN TOKENS
@@ -61,6 +61,7 @@
 
   /* Typography */
   --font-display:       'Nunito', system-ui, sans-serif;
+  --font-serif:         'Playfair Display', Georgia, 'Times New Roman', serif;
   --font-body:          'DM Sans', system-ui, sans-serif;
   --font-mono:          'Space Grotesk', monospace;
 
@@ -154,36 +155,99 @@ h1, h2, h3, h4, h5, h6 {
    ============================================================ */
 .app-header {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 0; left: 0; right: 0;
   z-index: 100;
-  height: 56px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--space-5);
-  background: rgba(10, 10, 15, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--color-border);
+  padding: 0 28px;
+  background: rgba(10, 10, 15, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
 }
 
+/* Brand lockup */
 .header-brand {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 12px;
+  text-decoration: none;
+}
+
+.header-brand-p {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--color-publix);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  margin-right: 2px;
 }
 
 .header-brand h1 {
-  font-family: var(--font-display);
-  font-size: var(--text-lg);
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #f0f0f5 0%, #a0a0c0 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--color-text);
+  line-height: 1.1;
+}
+
+.header-brand-sub {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  display: block;
+}
+
+/* Nav */
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.header-nav-link {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 7px;
+  letter-spacing: 0.03em;
+  transition: color 0.15s, background 0.15s;
+}
+
+.header-nav-link:hover {
+  color: var(--color-text);
+  background: rgba(255,255,255,0.05);
+}
+
+.header-nav-link.active {
+  color: var(--color-publix);
+  background: rgba(76,175,80,0.1);
+}
+
+.header-live {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 12px;
+  margin-left: 8px;
+  border-left: 1px solid var(--color-border);
+}
+
+.header-live-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-text-muted);
+  letter-spacing: 0.06em;
 }
 
 .header-badge {
@@ -200,19 +264,48 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .header-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: var(--radius-full);
   background: var(--color-gain);
   box-shadow: 0 0 6px var(--color-gain);
   animation: livePulse 2s ease-in-out infinite;
 }
 
+/* Section headers — Playfair treatment */
+.section-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-publix);
+  margin-bottom: 6px;
+  display: block;
+}
+
+.section-headline {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--color-text);
+  line-height: 1.2;
+}
+
+.section-rule {
+  width: 40px;
+  height: 2px;
+  background: var(--color-publix);
+  border-radius: 1px;
+  margin: 12px 0 0;
+}
+
 /* ============================================================
    MAIN LAYOUT
    ============================================================ */
 .main-content {
-  padding-top: 56px; /* header height */
+  padding-top: 60px; /* header height */
   min-height: 100vh;
 }
 

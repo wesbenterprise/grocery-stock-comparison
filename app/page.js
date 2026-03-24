@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import SiteHeader from './components/SiteHeader';
 
 // Dynamic imports to avoid SSR issues with Chart.js
 const PredictionPanel = dynamic(() => import('./components/PredictionPanel'), {
@@ -133,54 +134,7 @@ export default function Page() {
 
   return (
     <>
-      {/* Fixed Header */}
-      <header className="app-header">
-        <div className="header-brand">
-          <h1>Grocery Stock Compare</h1>
-          <span className="header-badge">Finance</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
-          <Link
-            href="/publix-history"
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 'var(--text-sm)',
-              fontWeight: 600,
-              color: 'var(--color-text-secondary)',
-              textDecoration: 'none',
-              letterSpacing: '0.02em',
-              transition: 'color 0.15s',
-              whiteSpace: 'nowrap',
-            }}
-            onMouseEnter={e => e.currentTarget.style.color = 'var(--color-publix)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'var(--color-text-secondary)'}
-          >
-            Financial History
-          </Link>
-          <Link
-            href="/publix-ceo-timeline"
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 'var(--text-sm)',
-              fontWeight: 600,
-              color: 'var(--color-text-secondary)',
-              textDecoration: 'none',
-              letterSpacing: '0.02em',
-              transition: 'color 0.15s',
-              whiteSpace: 'nowrap',
-            }}
-            onMouseEnter={e => e.currentTarget.style.color = 'var(--color-publix)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'var(--color-text-secondary)'}
-          >
-            CEO Timeline
-          </Link>
-          <div style={{ width: '1px', height: '16px', background: 'var(--color-border)' }} />
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-            LIVE
-          </span>
-          <span className="header-dot" aria-label="Live data indicator" />
-        </div>
-      </header>
+      <SiteHeader />
 
       {/* Main */}
       <main className="main-content">
