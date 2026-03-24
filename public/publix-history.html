@@ -275,9 +275,15 @@ tr:hover td{background:rgba(200,160,80,.03)}
     <div class="chart-card">
       <h3>Operating Cash Flow, Capex &amp; Free Cash Flow</h3>
       <div class="chart-subtitle">Quarterly cash generation and capital deployment</div>
-      <div class="chart-toggle" id="cf-ocf-toggle">
-        <button class="toggle-btn active" data-mode="quarterly">Quarterly</button>
-        <button class="toggle-btn" data-mode="annual">Annual</button>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+        <div class="chart-toggle" id="cf-ocf-period-toggle">
+          <button class="toggle-btn active" data-period="quarterly">Quarterly</button>
+          <button class="toggle-btn" data-period="annual">Annual</button>
+        </div>
+        <div class="chart-toggle" id="cf-ocf-view-toggle">
+          <button class="toggle-btn active" data-view="absolute">Absolute</button>
+          <button class="toggle-btn" data-view="yoy">YoY %</button>
+        </div>
       </div>
       <div style="position:relative;height:380px"><canvas id="chart-cf-ocf"></canvas></div>
       <div class="narrative-card">
@@ -1129,7 +1135,8 @@ document.getElementById('table-toggle').addEventListener('click', () => {
 // Tab Switching
 // ──────────────────────────────────────────────────────────────
 let activeTab = 'is';
-let cfOcfMode = 'quarterly';
+let cfOcfPeriod = 'quarterly'; // 'quarterly' | 'annual'
+let cfOcfView = 'absolute';   // 'absolute' | 'yoy'
 let cfAllocMode = 'quarterly';
 
 function switchTab(tab) {
@@ -1208,54 +1215,79 @@ function renderCFOcfChart() {
   const ctx = document.getElementById('chart-cf-ocf');
   if (charts.cfOcf) charts.cfOcf.destroy();
 
-  let labels, ocf, capex, fcf;
-  if (cfOcfMode === 'quarterly') {
-    labels = CASHFLOW_DATA.map(d => d.period);
-    ocf = CASHFLOW_DATA.map(d => d.operating_cash_flow / 1e9);
-    capex = CASHFLOW_DATA.map(d => Math.abs(d.capex) / 1e9);
-    fcf = CASHFLOW_DATA.map(d => d.free_cash_flow / 1e9);
+  const isAnnual = cfOcfPeriod === 'annual';
+  const isYoY = cfOcfView === 'yoy';
+
+  let labels, ocf, capex, fcf, srcData;
+  if (isAnnual) {
+    srcData = computeCashflowAnnualTotals(CASHFLOW_DATA);
+    labels = srcData.map(d => String(d.year));
+    ocf = srcData.map(d => d.operating_cash_flow / 1e9);
+    capex = srcData.map(d => Math.abs(d.capex) / 1e9);
+    fcf = srcData.map(d => d.free_cash_flow / 1e9);
   } else {
-    const ann = computeCashflowAnnualTotals(CASHFLOW_DATA);
-    labels = ann.map(d => String(d.year));
-    ocf = ann.map(d => d.operating_cash_flow / 1e9);
-    capex = ann.map(d => Math.abs(d.capex) / 1e9);
-    fcf = ann.map(d => d.free_cash_flow / 1e9);
+    srcData = CASHFLOW_DATA;
+    labels = srcData.map(d => d.period);
+    ocf = srcData.map(d => d.operating_cash_flow / 1e9);
+    capex = srcData.map(d => Math.abs(d.capex) / 1e9);
+    fcf = srcData.map(d => d.free_cash_flow / 1e9);
   }
 
-  // FCF trendline (linear regression) — both quarterly and annual
-  const { slope, intercept } = linearRegression(fcf);
-  const trendData = fcf.map((_, i) => parseFloat((intercept + slope * i).toFixed(3)));
-
-  const datasets = [
-    { label: 'Operating CF', data: ocf, backgroundColor: 'rgba(200,160,80,.45)', borderColor: '#C8A050', borderWidth: 1, borderRadius: 3, yAxisID: 'y', order: 2 },
-    { label: 'Capex', data: capex, backgroundColor: 'rgba(239,83,80,.4)', borderColor: '#ef5350', borderWidth: 1, borderRadius: 3, yAxisID: 'y', order: 3 },
-    { label: 'Free Cash Flow', data: fcf, type: 'line', borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.1)', borderWidth: 2, pointRadius: cfOcfMode === 'annual' ? 4 : 2, pointHoverRadius: 5, fill: false, tension: 0.3, yAxisID: 'y', order: 1 },
-    { label: 'FCF Trend', data: trendData, type: 'line', borderColor: 'rgba(45,212,191,.45)', backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [6, 4], pointRadius: 0, pointHoverRadius: 0, fill: false, tension: 0, yAxisID: 'y', order: 4 }
-  ];
-
-  charts.cfOcf = new Chart(ctx, {
-    type: 'bar',
-    data: { labels, datasets },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        ...chartDefaults.plugins,
-        tooltip: {
-          ...chartDefaults.plugins.tooltip,
-          callbacks: {
-            label: ctx => {
-              if (ctx.dataset.label === 'FCF Trend') return `FCF Trend: $${ctx.parsed.y.toFixed(2)}B`;
-              return ctx.dataset.label + ': $' + ctx.parsed.y.toFixed(2) + 'B';
-            }
-          }
-        }
+  if (!isYoY) {
+    // Absolute view — bars + FCF line + trendline
+    const { slope, intercept } = linearRegression(fcf);
+    const trendData = fcf.map((_, i) => parseFloat((intercept + slope * i).toFixed(3)));
+    charts.cfOcf = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Operating CF', data: ocf, backgroundColor: 'rgba(200,160,80,.45)', borderColor: '#C8A050', borderWidth: 1, borderRadius: 3, yAxisID: 'y', order: 2 },
+          { label: 'Capex', data: capex, backgroundColor: 'rgba(239,83,80,.4)', borderColor: '#ef5350', borderWidth: 1, borderRadius: 3, yAxisID: 'y', order: 3 },
+          { label: 'Free Cash Flow', data: fcf, type: 'line', borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.1)', borderWidth: 2, pointRadius: isAnnual ? 4 : 2, pointHoverRadius: 5, fill: false, tension: 0.3, yAxisID: 'y', order: 1 },
+          { label: 'FCF Trend', data: trendData, type: 'line', borderColor: 'rgba(45,212,191,.45)', backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [6, 4], pointRadius: 0, pointHoverRadius: 0, fill: false, tension: 0, yAxisID: 'y', order: 4 }
+        ]
       },
-      scales: {
-        x: chartDefaults.scales.x,
-        y: { ...chartDefaults.scales.y, ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v.toFixed(1) + 'B' }, title: { display: true, text: '($B)', color: '#606080' } }
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          ...chartDefaults.plugins,
+          tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: c => c.dataset.label === 'FCF Trend' ? `FCF Trend: $${c.parsed.y.toFixed(2)}B` : c.dataset.label + ': $' + c.parsed.y.toFixed(2) + 'B' } }
+        },
+        scales: {
+          x: chartDefaults.scales.x,
+          y: { ...chartDefaults.scales.y, ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v.toFixed(1) + 'B' }, title: { display: true, text: '($B)', color: '#606080' } }
+        }
       }
-    }
-  });
+    });
+  } else {
+    // YoY % view
+    const yoyOCF = ocf.map((v, i) => i === 0 ? null : ((v - ocf[i-1]) / Math.abs(ocf[i-1])) * 100);
+    const yoyFCF = fcf.map((v, i) => i === 0 ? null : ((v - fcf[i-1]) / Math.abs(fcf[i-1])) * 100);
+    const yoyCapex = capex.map((v, i) => i === 0 ? null : ((v - capex[i-1]) / Math.abs(capex[i-1])) * 100);
+    charts.cfOcf = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Operating CF YoY %', data: yoyOCF, borderColor: '#C8A050', backgroundColor: 'transparent', borderWidth: 2, pointRadius: isAnnual ? 4 : 2, pointHoverRadius: 5, tension: 0.3, spanGaps: true },
+          { label: 'FCF YoY %', data: yoyFCF, borderColor: '#2DD4BF', backgroundColor: 'transparent', borderWidth: 2, pointRadius: isAnnual ? 4 : 2, pointHoverRadius: 5, tension: 0.3, spanGaps: true },
+          { label: 'Capex YoY %', data: yoyCapex, borderColor: '#ef5350', backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [4, 3], pointRadius: 0, pointHoverRadius: 4, tension: 0.3, spanGaps: true }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          ...chartDefaults.plugins,
+          tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: c => c.parsed.y != null ? c.dataset.label + ': ' + (c.parsed.y >= 0 ? '+' : '') + c.parsed.y.toFixed(1) + '%' : '' } }
+        },
+        scales: {
+          x: chartDefaults.scales.x,
+          y: { ...chartDefaults.scales.y, ticks: { ...chartDefaults.scales.y.ticks, callback: v => v + '%' }, title: { display: true, text: 'YoY Growth %', color: '#606080' } }
+        }
+      }
+    });
+  }
 }
 
 function renderCFAllocChart() {
@@ -1398,11 +1430,18 @@ document.getElementById('cf-table-toggle').addEventListener('click', () => {
   arrow.classList.toggle('open', isOpen);
 });
 
-document.getElementById('cf-ocf-toggle').addEventListener('click', e => {
+document.getElementById('cf-ocf-period-toggle').addEventListener('click', e => {
   const btn = e.target.closest('.toggle-btn');
   if (!btn) return;
-  cfOcfMode = btn.dataset.mode;
-  document.querySelectorAll('#cf-ocf-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+  cfOcfPeriod = btn.dataset.period;
+  document.querySelectorAll('#cf-ocf-period-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+  renderCFOcfChart();
+});
+document.getElementById('cf-ocf-view-toggle').addEventListener('click', e => {
+  const btn = e.target.closest('.toggle-btn');
+  if (!btn) return;
+  cfOcfView = btn.dataset.view;
+  document.querySelectorAll('#cf-ocf-view-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
   renderCFOcfChart();
 });
 
