@@ -7,6 +7,7 @@ import MarginChart from './components/MarginChart';
 import RevenuePerStoreChart from './components/RevenuePerStoreChart';
 import SeasonalHeatmap from './components/SeasonalHeatmap';
 import BalanceSheetChart from './components/BalanceSheetChart';
+import CashFlowChart from './components/CashFlowChart';
 import StoreExpansionChart from './components/StoreExpansionChart';
 import DataTable from './components/DataTable';
 import {
@@ -104,6 +105,11 @@ export default function DashboardContent({
         {/* BALANCE SHEET */}
         <div style={{ marginBottom: 32 }}>
           <BalanceSheetChart data={filteredData} />
+        </div>
+
+        {/* CASH FLOW */}
+        <div style={{ marginBottom: 32 }}>
+          <CashFlowChart data={filteredData} />
         </div>
 
         {/* STORE EXPANSION */}
