@@ -7,91 +7,124 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0/dist/chartjs-plugin-annotation.min.js"></script>
 <style>
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Space+Grotesk:wght@500;600;700&display=swap");
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0a0a0a;--card:#1a1a1a;--border:#2a2a2a;--amber:#C8A050;--teal:#2DD4BF;--text:#e5e5e5;--muted:#a3a3a3;--red:#ef4444;--green:#22c55e}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;min-height:100vh}
+:root{
+  --bg:#0a0a0f;
+  --bg-surface:#111118;
+  --card:#16161f;
+  --card-hover:#1c1c28;
+  --border:rgba(255,255,255,0.08);
+  --border-hover:rgba(255,255,255,0.16);
+  --amber:#C8A050;
+  --amber-glow:rgba(200,160,80,0.15);
+  --teal:#2DD4BF;
+  --text:#f0f0f5;
+  --text-secondary:#a0a0b8;
+  --muted:#606080;
+  --red:#ef5350;
+  --green:#4caf50;
+  --accent:#7c6fff;
+  --font-display:"Nunito", system-ui, sans-serif;
+  --font-body:"DM Sans", system-ui, sans-serif;
+  --font-mono:"Space Grotesk", monospace;
+}
+body{font-family:var(--font-body);background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 a{color:var(--amber)}
+h1,h2,h3,h4,h5,h6{font-family:var(--font-display);font-weight:800;line-height:1.2;letter-spacing:-0.01em}
 
 /* Password Gate */
 #gate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:24px}
 #gate .lock{font-size:64px;opacity:.8}
 #gate .gate-box{display:flex;gap:8px}
-#gate input{background:#111;border:1px solid var(--border);color:var(--text);padding:10px 16px;border-radius:8px;font-size:16px;width:220px;outline:none}
+#gate input{background:var(--bg-surface);border:1px solid var(--border);color:var(--text);padding:12px 18px;border-radius:10px;font-family:var(--font-body);font-size:16px;width:240px;outline:none;transition:border-color .2s}
 #gate input:focus{border-color:var(--amber)}
-#gate button{background:var(--amber);color:#000;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;font-size:15px}
+#gate button{background:var(--amber);color:#000;border:none;padding:12px 24px;border-radius:10px;font-family:var(--font-display);font-weight:700;cursor:pointer;font-size:15px;transition:opacity .2s}
 #gate button:hover{opacity:.9}
-#gate .error{color:var(--red);font-size:14px;height:20px}
+#gate .error{color:var(--red);font-size:14px;height:20px;font-family:var(--font-body)}
 @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 .shake{animation:shake .4s ease-in-out}
 
 /* Dashboard */
-#dashboard{display:none;max-width:1400px;margin:0 auto;padding:24px 20px 60px}
-header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:28px}
-header h1{color:var(--amber);font-size:28px;font-weight:700;letter-spacing:-.5px}
-header .subtitle{color:var(--muted);font-size:14px;margin-top:2px}
-.badge{display:inline-block;background:rgba(200,160,80,.12);color:var(--amber);border:1px solid rgba(200,160,80,.25);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;margin-top:6px}
-.logout-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s}
+#dashboard{display:none;max-width:1400px;margin:0 auto;padding:32px 24px 72px}
+header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:32px}
+header h1{color:var(--amber);font-size:30px;font-weight:900;letter-spacing:-.5px}
+header .subtitle{color:var(--text-secondary);font-family:var(--font-body);font-size:14px;margin-top:4px;font-weight:400}
+.badge{display:inline-block;background:var(--amber-glow);color:var(--amber);border:1px solid rgba(200,160,80,.25);padding:4px 14px;border-radius:20px;font-family:var(--font-mono);font-size:12px;font-weight:600;margin-top:8px;letter-spacing:.02em}
+.logout-btn{background:transparent;border:1px solid var(--border);color:var(--text-secondary);padding:8px 18px;border-radius:10px;cursor:pointer;font-family:var(--font-mono);font-size:13px;font-weight:600;transition:all .2s}
 .logout-btn:hover{border-color:var(--red);color:var(--red)}
 
 /* Year Selector */
-.year-selector{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:24px}
-.year-btn{background:var(--card);border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px;transition:all .15s}
-.year-btn:hover{border-color:var(--amber);color:var(--text)}
-.year-btn.active{background:rgba(200,160,80,.15);border-color:var(--amber);color:var(--amber);font-weight:600}
-.year-btn.preset{font-weight:500}
+.year-selector{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:28px}
+.year-btn{background:var(--card);border:1px solid var(--border);color:var(--text-secondary);padding:6px 14px;border-radius:8px;cursor:pointer;font-family:var(--font-mono);font-size:13px;font-weight:600;transition:all .15s;letter-spacing:.02em}
+.year-btn:hover{border-color:var(--border-hover);color:var(--text)}
+.year-btn.active{background:var(--amber-glow);border-color:var(--amber);color:var(--amber);font-weight:700}
+.year-btn.preset{font-weight:600}
 
 /* KPI Cards */
 .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
-.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 20px;position:relative;overflow:hidden}
-.kpi-card .label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
-.kpi-card .value{font-size:26px;font-weight:700;color:var(--text)}
-.kpi-card .change{font-size:12px;margin-top:2px}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 22px;position:relative;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.05);transition:border-color .2s}
+.kpi-card:hover{border-color:var(--border-hover)}
+.kpi-card .label{color:var(--text-secondary);font-family:var(--font-body);font-size:12px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;font-weight:500}
+.kpi-card .value{font-family:var(--font-mono);font-size:28px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+.kpi-card .change{font-family:var(--font-mono);font-size:12px;margin-top:4px;font-weight:600}
 .kpi-card .change.up{color:var(--green)}
 .kpi-card .change.down{color:var(--red)}
 .kpi-card canvas{position:absolute;bottom:0;right:0;width:100px;height:40px;opacity:.5}
 
 /* Chart Cards */
-.chart-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px}
-.chart-card h3{color:var(--text);font-size:16px;font-weight:600;margin-bottom:4px}
-.chart-card .chart-subtitle{color:var(--muted);font-size:12px;margin-bottom:16px}
-.chart-toggle{display:flex;gap:4px;margin-bottom:12px}
-.toggle-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 12px;border-radius:5px;cursor:pointer;font-size:12px;transition:all .15s}
-.toggle-btn.active{background:rgba(200,160,80,.15);border-color:var(--amber);color:var(--amber)}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.05);position:relative;overflow:hidden}
+.chart-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(124,111,255,0.02) 0%,transparent 50%);pointer-events:none}
+.chart-card h3{font-family:var(--font-display);color:var(--text);font-size:17px;font-weight:800;margin-bottom:4px;letter-spacing:-0.01em}
+.chart-card .chart-subtitle{color:var(--muted);font-family:var(--font-body);font-size:12px;margin-bottom:16px;font-weight:400}
+.chart-toggle{display:flex;gap:4px;margin-bottom:14px;background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:3px;width:fit-content}
+.toggle-btn{background:transparent;border:none;color:var(--text-secondary);padding:5px 14px;border-radius:6px;cursor:pointer;font-family:var(--font-mono);font-size:12px;font-weight:600;transition:all .15s;letter-spacing:.02em}
+.toggle-btn.active{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.3)}
+.toggle-btn:hover:not(.active){color:var(--text)}
 .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 
 /* Heatmap */
 .heatmap{overflow-x:auto}
 .heatmap-grid{display:grid;gap:3px;min-width:600px}
-.hm-cell{padding:8px 6px;text-align:center;font-size:11px;font-weight:500;border-radius:4px;color:var(--text);transition:transform .15s}
+.hm-cell{padding:8px 6px;text-align:center;font-family:var(--font-mono);font-size:11px;font-weight:600;border-radius:6px;color:var(--text);transition:transform .15s}
 .hm-cell:hover{transform:scale(1.08);z-index:1}
-.hm-header{background:transparent;color:var(--muted);font-weight:600;font-size:11px}
-.hm-year{background:transparent;color:var(--muted);font-weight:600;text-align:right;padding-right:10px}
+.hm-header{background:transparent;color:var(--muted);font-weight:700;font-size:11px}
+.hm-year{background:transparent;color:var(--text-secondary);font-weight:700;text-align:right;padding-right:10px}
 
 /* Data Table */
-.table-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--amber);font-size:14px;font-weight:500;margin-bottom:12px;user-select:none}
+.table-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--amber);font-family:var(--font-display);font-size:15px;font-weight:700;margin-bottom:12px;user-select:none}
 .table-toggle .arrow{transition:transform .2s;display:inline-block}
 .table-toggle .arrow.open{transform:rotate(90deg)}
 .data-table-wrap{overflow-x:auto;display:none}
 .data-table-wrap.open{display:block}
 table{width:100%;border-collapse:collapse;font-size:12px}
-th{color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;white-space:nowrap;font-size:11px}
+th{color:var(--muted);font-family:var(--font-mono);font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:10px 10px;text-align:right;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;white-space:nowrap;font-size:10px}
 th:first-child{text-align:left}
 th:hover{color:var(--amber)}
 th .sort-arrow{margin-left:3px;opacity:.4}
 th.sorted .sort-arrow{opacity:1;color:var(--amber)}
-td{padding:7px 10px;text-align:right;border-bottom:1px solid rgba(42,42,42,.5);white-space:nowrap}
-td:first-child{text-align:left;color:var(--amber);font-weight:500}
-tr:hover td{background:rgba(200,160,80,.04)}
+td{font-family:var(--font-mono);padding:8px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.04);white-space:nowrap;font-weight:500;color:var(--text-secondary)}
+td:first-child{text-align:left;color:var(--amber);font-weight:600}
+tr:hover td{background:rgba(200,160,80,.03)}
+
+/* Anderson Narrative Cards */
+.narrative-card{background:#0d0d14;border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:16px 20px;margin-top:16px;margin-bottom:8px}
+.narrative-card .narrative-header{font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--amber);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+.narrative-card .narrative-text{font-family:var(--font-body);font-size:13px;font-style:italic;color:var(--text-secondary);line-height:1.7}
 
 /* Responsive */
 @media(max-width:900px){
   .kpi-grid{grid-template-columns:repeat(2,1fr)}
   .chart-grid{grid-template-columns:1fr}
-  header h1{font-size:22px}
+  header h1{font-size:24px}
 }
 @media(max-width:600px){
   .kpi-grid{grid-template-columns:1fr}
-  #dashboard{padding:16px 12px 40px}
+  #dashboard{padding:16px 14px 48px}
+  .chart-card{padding:16px}
+  .narrative-card{padding:12px 14px}
+  .narrative-card .narrative-text{font-size:12px}
 }
 </style>
 </head>
@@ -129,10 +162,15 @@ tr:hover td{background:rgba(200,160,80,.04)}
     <h3>Revenue &amp; Net Income</h3>
     <div class="chart-subtitle">Quarterly revenue (bars) and net income (line) with key event annotations</div>
     <div class="chart-toggle" id="rev-toggle">
-      <button class="toggle-btn active" data-mode="absolute">Absolute</button>
+      <button class="toggle-btn active" data-mode="quarterly">Quarterly</button>
+      <button class="toggle-btn" data-mode="annual">Annual</button>
       <button class="toggle-btn" data-mode="yoy">YoY %</button>
     </div>
     <div style="position:relative;height:320px"><canvas id="chart-revenue"></canvas></div>
+    <div class="narrative-card">
+      <div class="narrative-header">&#9670; Anderson's Take</div>
+      <div class="narrative-text">Revenue has compounded at 6.8% annually over the decade — steady, not spectacular. The story is really in earnings: net income CAGR of 9.2% means Publix has consistently grown the bottom line faster than the top. That gap is operational discipline. The 2022 earnings collapse (&minus;33.9% YoY) despite accelerating revenue is the single most important chart on this page — it shows exactly how inflation squeezed margins even as customers kept spending.</div>
+    </div>
   </div>
 
   <div class="chart-grid">
@@ -141,6 +179,10 @@ tr:hover td{background:rgba(200,160,80,.04)}
       <h3>Margin Analysis</h3>
       <div class="chart-subtitle">Gross, operating &amp; net margins with industry reference lines</div>
       <div style="position:relative;height:280px"><canvas id="chart-margins"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text">Publix runs 2–4x the operating margins of the typical U.S. grocery chain. The moat is not pricing power — it's cost structure. SG&amp;A efficiency and labor productivity drive the spread. The secular gross margin decline (28.7% → 25.3% over 10 years) is a quiet warning sign: if it continues without offsetting SG&amp;A cuts, operating margins follow. Watch this line. The 2022–2023 compression was inflation-driven and has partially recovered; the underlying downtrend predates it.</div>
+      </div>
     </div>
 
     <!-- Revenue Per Store -->
@@ -148,6 +190,10 @@ tr:hover td{background:rgba(200,160,80,.04)}
       <h3>Revenue Per Store</h3>
       <div class="chart-subtitle">Quarterly revenue divided by interpolated store count</div>
       <div style="position:relative;height:280px"><canvas id="chart-rps"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text">The COVID-era step-change in revenue per store is permanent. Pre-pandemic average was roughly $8–9M/quarter per store. Post-normalization it reset to $11M+. That's not just inflation — it's a structural shift in grocery spend share. Publix captured pandemic pantry-loading and kept it. The implication: Publix's store count growth understates its actual capacity expansion.</div>
+      </div>
     </div>
   </div>
 
@@ -164,6 +210,10 @@ tr:hover td{background:rgba(200,160,80,.04)}
       <h3>Balance Sheet</h3>
       <div class="chart-subtitle">Total assets, liabilities &amp; stockholders' equity over time</div>
       <div style="position:relative;height:280px"><canvas id="chart-balance"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text">The 2019 liability spike looks alarming but is purely accounting: ASC 842 required operating leases onto the balance sheet for the first time. Publix has essentially no traditional debt. The equity growth story (CAGR +10.3%) is clean and consistent — a company that funds everything internally and still compounds equity at double digits is a rare thing in low-margin retail.</div>
+      </div>
     </div>
 
     <!-- Store Expansion -->
@@ -171,6 +221,10 @@ tr:hover td{background:rgba(200,160,80,.04)}
       <h3>Store Expansion</h3>
       <div class="chart-subtitle">Store count growth with net new stores per year</div>
       <div style="position:relative;height:280px"><canvas id="chart-stores"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text">From 1,114 stores in 2015 to 1,432 in 2025 — 29% growth in footprint over a decade. Notably, revenue per store grew faster than store count: the fleet is getting more productive, not just bigger. New stores are opening into markets where Publix's brand already has pricing power. The question for the next decade is whether that productivity premium holds as they push into less-established markets.</div>
+      </div>
     </div>
   </div>
 
@@ -245,10 +299,10 @@ const YEAR_END_STORE_COUNTS = {
 };
 
 const ANNOTATIONS = [
-  { id:'covid_surge', quarter:'2020-Q1', label:'COVID Surge', color:'#ef4444' },
+  { id:'covid_surge', quarter:'2020-Q1', label:'COVID Surge', color:'#ef5350' },
   { id:'portfolio_peak', quarter:'2021-Q1', label:'Portfolio Peak', color:'#2DD4BF' },
   { id:'inflation_surge', quarter:'2022-Q1', label:'Inflation Pass-Through', color:'#C8A050' },
-  { id:'margin_trough', quarter:'2022-Q3', label:'Margin Trough', color:'#ef4444' },
+  { id:'margin_trough', quarter:'2022-Q3', label:'Margin Trough', color:'#ef5350' },
   { id:'normalization', quarter:'2024-Q1', label:'Organic Growth', color:'#C8A050' },
 ];
 
@@ -279,6 +333,21 @@ function initializeQuarters(raw) {
 const QUARTERS = initializeQuarters(RAW_QUARTERS);
 
 // ──────────────────────────────────────────────────────────────
+// Annual aggregation
+// ──────────────────────────────────────────────────────────────
+function computeAnnualTotals(quarters) {
+  const byYear = {};
+  quarters.forEach(q => {
+    if (!byYear[q.fiscalYear]) byYear[q.fiscalYear] = {year: q.fiscalYear, revenue: 0, netIncome: 0, grossProfit: 0, operatingIncome: 0};
+    byYear[q.fiscalYear].revenue += q.revenue;
+    byYear[q.fiscalYear].netIncome += q.netIncome;
+    byYear[q.fiscalYear].grossProfit += q.grossProfit;
+    byYear[q.fiscalYear].operatingIncome += q.operatingIncome;
+  });
+  return Object.values(byYear).sort((a,b) => a.year - b.year);
+}
+
+// ──────────────────────────────────────────────────────────────
 // Helpers
 // ──────────────────────────────────────────────────────────────
 function fmtB(v) { return '$' + (v/1e9).toFixed(1) + 'B'; }
@@ -292,7 +361,7 @@ function fmtNum(v) { return v.toLocaleString('en-US'); }
 let filteredData = [...QUARTERS];
 let activePreset = 'all';
 let yearStart = 2015, yearEnd = 2025;
-let revMode = 'absolute';
+let revMode = 'quarterly';
 let charts = {};
 let tableSortCol = 'period';
 let tableSortAsc = false;
@@ -443,12 +512,12 @@ const chartDefaults = {
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
-    legend: { labels: { color: '#a3a3a3', font: { size: 11 }, boxWidth: 12, padding: 16 } },
-    tooltip: { backgroundColor: '#1a1a1a', borderColor: '#2a2a2a', borderWidth: 1, titleColor: '#e5e5e5', bodyColor: '#a3a3a3', padding: 10, cornerRadius: 8 }
+    legend: { labels: { color: '#a0a0b8', font: { size: 11, family: "'DM Sans', sans-serif" }, boxWidth: 12, padding: 16 } },
+    tooltip: { backgroundColor: '#16161f', borderColor: 'rgba(255,255,255,0.08)', borderWidth: 1, titleColor: '#f0f0f5', bodyColor: '#a0a0b8', padding: 12, cornerRadius: 10, titleFont: { family: "'DM Sans', sans-serif", weight: '600' }, bodyFont: { family: "'Space Grotesk', monospace" } }
   },
   scales: {
-    x: { ticks: { color: '#a3a3a3', font: { size: 10 }, maxRotation: 45 }, grid: { color: 'rgba(42,42,42,.5)' } },
-    y: { ticks: { color: '#a3a3a3', font: { size: 10 } }, grid: { color: 'rgba(42,42,42,.5)' } }
+    x: { ticks: { color: '#606080', font: { size: 10, family: "'Space Grotesk', monospace" }, maxRotation: 45 }, grid: { color: 'rgba(255,255,255,.04)' } },
+    y: { ticks: { color: '#606080', font: { size: 10, family: "'Space Grotesk', monospace" } }, grid: { color: 'rgba(255,255,255,.04)' } }
   }
 };
 
@@ -473,7 +542,28 @@ function buildAnnotations(data) {
       label: {
         display: true, content: a.label, position: 'start',
         color: a.color, font: { size: 10, weight: '500' },
-        backgroundColor: '#0a0a0aCC', padding: { top: 2, bottom: 2, left: 6, right: 6 }, borderRadius: 4
+        backgroundColor: '#0a0a0fCC', padding: { top: 2, bottom: 2, left: 6, right: 6 }, borderRadius: 4
+      }
+    };
+  });
+  return result;
+}
+
+function buildAnnualAnnotations(annualData) {
+  const result = {};
+  ANNOTATIONS.forEach(a => {
+    const year = parseInt(a.quarter.split('-')[0]);
+    const idx = annualData.findIndex(d => d.year === year);
+    if (idx < 0) return;
+    // Only show one annotation per year (first match wins)
+    if (result['ann_' + year]) return;
+    result['ann_' + year] = {
+      type: 'line', xMin: idx, xMax: idx,
+      borderColor: a.color + '60', borderWidth: 1.5, borderDash: [6, 3],
+      label: {
+        display: true, content: a.label, position: 'start',
+        color: a.color, font: { size: 10, weight: '500' },
+        backgroundColor: '#0a0a0fCC', padding: { top: 2, bottom: 2, left: 6, right: 6 }, borderRadius: 4
       }
     };
   });
@@ -484,9 +574,8 @@ function renderRevenueChart() {
   const ctx = document.getElementById('chart-revenue');
   if (charts.revenue) charts.revenue.destroy();
 
-  const labels = filteredData.map(q => q.period);
-
-  if (revMode === 'absolute') {
+  if (revMode === 'quarterly') {
+    const labels = filteredData.map(q => q.period);
     charts.revenue = new Chart(ctx, {
       type: 'bar',
       data: {
@@ -505,12 +594,40 @@ function renderRevenueChart() {
         },
         scales: {
           x: chartDefaults.scales.x,
-          y: { ...chartDefaults.scales.y, position: 'left', title: { display: true, text: 'Revenue ($B)', color: '#a3a3a3' }, ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v + 'B' } },
-          y1: { ...chartDefaults.scales.y, position: 'right', title: { display: true, text: 'Net Income ($B)', color: '#a3a3a3' }, ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v.toFixed(1) + 'B' }, grid: { drawOnChartArea: false } }
+          y: { ...chartDefaults.scales.y, position: 'left', title: { display: true, text: 'Revenue ($B)', color: '#606080' }, ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v + 'B' } },
+          y1: { ...chartDefaults.scales.y, position: 'right', title: { display: true, text: 'Net Income ($B)', color: '#606080' }, ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v.toFixed(1) + 'B' }, grid: { drawOnChartArea: false } }
+        }
+      }
+    });
+  } else if (revMode === 'annual') {
+    const annualData = computeAnnualTotals(filteredData);
+    const labels = annualData.map(d => String(d.year));
+    charts.revenue = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Revenue', data: annualData.map(d => d.revenue / 1e9), backgroundColor: 'rgba(200,160,80,.35)', borderColor: '#C8A050', borderWidth: 1, borderRadius: 4, yAxisID: 'y', order: 2 },
+          { label: 'Net Income', data: annualData.map(d => d.netIncome / 1e9), type: 'line', borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.1)', borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 7, pointBackgroundColor: '#2DD4BF', fill: true, tension: 0.3, yAxisID: 'y1', order: 1 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          ...chartDefaults.plugins,
+          annotation: { annotations: buildAnnualAnnotations(annualData) },
+          tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: ctx => ctx.dataset.label + ': $' + ctx.parsed.y.toFixed(1) + 'B' } }
+        },
+        scales: {
+          x: chartDefaults.scales.x,
+          y: { ...chartDefaults.scales.y, position: 'left', title: { display: true, text: 'Revenue ($B)', color: '#606080' }, ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v + 'B' } },
+          y1: { ...chartDefaults.scales.y, position: 'right', title: { display: true, text: 'Net Income ($B)', color: '#606080' }, ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v.toFixed(1) + 'B' }, grid: { drawOnChartArea: false } }
         }
       }
     });
   } else {
+    // YoY mode
+    const labels = filteredData.map(q => q.period);
     const yoyRev = filteredData.map(q => q.yoyRevenueGrowth);
     const yoyNI = filteredData.map(q => q.yoyNetIncomeGrowth);
     charts.revenue = new Chart(ctx, {
@@ -518,7 +635,7 @@ function renderRevenueChart() {
       data: {
         labels,
         datasets: [
-          { label: 'Revenue YoY %', data: yoyRev, backgroundColor: yoyRev.map(v => v != null && v >= 0 ? 'rgba(200,160,80,.5)' : 'rgba(239,68,68,.4)'), borderColor: yoyRev.map(v => v != null && v >= 0 ? '#C8A050' : '#ef4444'), borderWidth: 1, borderRadius: 3, order: 2 },
+          { label: 'Revenue YoY %', data: yoyRev, backgroundColor: yoyRev.map(v => v != null && v >= 0 ? 'rgba(200,160,80,.5)' : 'rgba(239,83,80,.4)'), borderColor: yoyRev.map(v => v != null && v >= 0 ? '#C8A050' : '#ef5350'), borderWidth: 1, borderRadius: 3, order: 2 },
           { label: 'Net Income YoY %', data: yoyNI, type: 'line', borderColor: '#2DD4BF', borderWidth: 2, pointRadius: 2, tension: 0.3, order: 1 }
         ]
       },
@@ -527,7 +644,7 @@ function renderRevenueChart() {
         plugins: { ...chartDefaults.plugins, annotation: { annotations: buildAnnotations(filteredData) }, tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: ctx => ctx.parsed.y != null ? ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1) + '%' : '' } } },
         scales: {
           x: chartDefaults.scales.x,
-          y: { ...chartDefaults.scales.y, title: { display: true, text: 'YoY Growth %', color: '#a3a3a3' }, ticks: { ...chartDefaults.scales.y.ticks, callback: v => v + '%' } }
+          y: { ...chartDefaults.scales.y, title: { display: true, text: 'YoY Growth %', color: '#606080' }, ticks: { ...chartDefaults.scales.y.ticks, callback: v => v + '%' } }
         }
       }
     });
@@ -565,8 +682,8 @@ function renderMarginsChart() {
         ...chartDefaults.plugins,
         annotation: {
           annotations: {
-            grossRef: { type: 'line', yMin: 27.5, yMax: 27.5, borderColor: 'rgba(200,160,80,.3)', borderWidth: 1, borderDash: [4,4], label: { display: true, content: 'Grocery Avg Gross ~27.5%', position: 'start', color: '#a3a3a3', font: { size: 9 }, backgroundColor: '#0a0a0aCC', padding: 3 } },
-            netRef: { type: 'line', yMin: 2.5, yMax: 2.5, borderColor: 'rgba(239,68,68,.3)', borderWidth: 1, borderDash: [4,4], label: { display: true, content: 'Grocery Avg Net ~2.5%', position: 'end', color: '#a3a3a3', font: { size: 9 }, backgroundColor: '#0a0a0aCC', padding: 3 } }
+            grossRef: { type: 'line', yMin: 27.5, yMax: 27.5, borderColor: 'rgba(200,160,80,.3)', borderWidth: 1, borderDash: [4,4], label: { display: true, content: 'Grocery Avg Gross ~27.5%', position: 'start', color: '#606080', font: { size: 9 }, backgroundColor: '#0a0a0fCC', padding: 3 } },
+            netRef: { type: 'line', yMin: 2.5, yMax: 2.5, borderColor: 'rgba(239,83,80,.3)', borderWidth: 1, borderDash: [4,4], label: { display: true, content: 'Grocery Avg Net ~2.5%', position: 'end', color: '#606080', font: { size: 9 }, backgroundColor: '#0a0a0fCC', padding: 3 } }
           }
         },
         tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(2) + '%' } }
@@ -661,7 +778,7 @@ function renderBalanceChart() {
       datasets: [
         { label: 'Total Assets', data: filteredData.map(q => q.totalAssets / 1e9), borderColor: '#C8A050', backgroundColor: 'rgba(200,160,80,.1)', borderWidth: 2, fill: true, pointRadius: 1, tension: 0.3 },
         { label: 'Stockholders\' Equity', data: filteredData.map(q => q.stockholdersEquity / 1e9), borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.08)', borderWidth: 2, fill: true, pointRadius: 1, tension: 0.3 },
-        { label: 'Total Liabilities', data: filteredData.map(q => q.totalLiabilities / 1e9), borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,.06)', borderWidth: 2, fill: true, pointRadius: 1, tension: 0.3 }
+        { label: 'Total Liabilities', data: filteredData.map(q => q.totalLiabilities / 1e9), borderColor: '#ef5350', backgroundColor: 'rgba(239,83,80,.06)', borderWidth: 2, fill: true, pointRadius: 1, tension: 0.3 }
       ]
     },
     options: {
@@ -705,8 +822,8 @@ function renderStoresChart() {
       plugins: { ...chartDefaults.plugins },
       scales: {
         x: chartDefaults.scales.x,
-        y: { ...chartDefaults.scales.y, position: 'left', title: { display: true, text: 'Net New', color: '#a3a3a3' } },
-        y1: { ...chartDefaults.scales.y, position: 'right', title: { display: true, text: 'Total', color: '#a3a3a3' }, grid: { drawOnChartArea: false } }
+        y: { ...chartDefaults.scales.y, position: 'left', title: { display: true, text: 'Net New', color: '#606080' } },
+        y1: { ...chartDefaults.scales.y, position: 'right', title: { display: true, text: 'Total', color: '#606080' }, grid: { drawOnChartArea: false } }
       }
     }
   });
