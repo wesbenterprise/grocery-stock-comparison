@@ -16,7 +16,7 @@ export default function PublixCEOTimelinePage() {
   return (
     <>
       <SiteHeader />
-      <div style={{ paddingTop: 60 }}>
+      <div style={{ paddingTop: 60, width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
         <PublixTimeline />
       </div>
     </>

@@ -91,9 +91,9 @@ export default function PublixTimeline() {
   }, []);
 
   return (
-    <div ref={containerRef} style={{ fontFamily: "'DM Sans', system-ui, sans-serif", background: "#faf8f4", minHeight: "100vh", padding: isWide ? "40px 24px" : "20px 12px", color: "#2c2c2c" }}>
+    <div ref={containerRef} style={{ fontFamily: "'DM Sans', system-ui, sans-serif", background: "#faf8f4", minHeight: "100vh", padding: isWide ? "40px 24px" : "20px 12px", color: "#2c2c2c", width: "100%", boxSizing: "border-box", overflowX: "hidden" }}>
       <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-      <div style={{ maxWidth: 1060, margin: "0 auto" }}>
+      <div style={{ maxWidth: 1060, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
         <Header isWide={isWide} />
         {isWide ? <DesktopTable /> : <MobileCards />}
         <Footer isWide={isWide} />
