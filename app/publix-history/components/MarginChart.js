@@ -1,14 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  Chart as ChartJS, CategoryScale, LinearScale, LineElement,
-  PointElement, Filler, Tooltip, Legend,
-} from 'chart.js';
-import annotationPlugin from 'chartjs-plugin-annotation';
 import { Line } from 'react-chartjs-2';
+import { setupCharts } from '../ChartSetup';
 
-ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Filler, Tooltip, Legend, annotationPlugin);
+setupCharts();
 
 const LINE_CONFIG = [
   { key: 'gross', label: 'Gross Margin %', field: 'grossMarginPct', color: '#C8A050' },

@@ -1,18 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement,
-  PointElement, Filler, Tooltip, Legend,
-} from 'chart.js';
-import annotationPlugin from 'chartjs-plugin-annotation';
 import { Chart } from 'react-chartjs-2';
+import { setupCharts } from '../ChartSetup';
 import { buildChartAnnotations } from '../../../lib/publix-financials';
 
-ChartJS.register(
-  CategoryScale, LinearScale, BarElement, LineElement,
-  PointElement, Filler, Tooltip, Legend, annotationPlugin
-);
+setupCharts();
 
 const tooltipStyle = {
   backgroundColor: '#1a1a1a', borderColor: '#2a2a2a', borderWidth: 1,

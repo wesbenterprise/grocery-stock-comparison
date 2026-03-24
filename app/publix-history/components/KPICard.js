@@ -1,11 +1,9 @@
 'use client';
 
-import {
-  Chart as ChartJS, CategoryScale, LinearScale, LineElement, PointElement, Filler,
-} from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import { setupCharts } from '../ChartSetup';
 
-ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Filler);
+setupCharts();
 
 export default function KPICard({ label, value, trendValue, trendDirection, sparklineData, sparklineColor, valueColor }) {
   const trendColors = {

@@ -1,12 +1,9 @@
 'use client';
 
-import {
-  Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement,
-  PointElement, Filler, Tooltip, Legend,
-} from 'chart.js';
 import { Chart } from 'react-chartjs-2';
+import { setupCharts } from '../ChartSetup';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Filler, Tooltip, Legend);
+setupCharts();
 
 const STORE_COUNTS = [1114, 1136, 1167, 1211, 1239, 1264, 1293, 1322, 1360, 1390, 1432];
 const REV_PER_STORE = [7.437, 8.100, 7.724, 7.734, 7.940, 8.934, 9.822, 11.698, 10.915, 11.256, 11.233];

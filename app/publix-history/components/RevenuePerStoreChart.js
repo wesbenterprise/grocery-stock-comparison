@@ -1,13 +1,9 @@
 'use client';
 
-import {
-  Chart as ChartJS, CategoryScale, LinearScale, LineElement,
-  PointElement, Filler, Tooltip, Legend,
-} from 'chart.js';
-import annotationPlugin from 'chartjs-plugin-annotation';
 import { Line } from 'react-chartjs-2';
+import { setupCharts } from '../ChartSetup';
 
-ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Filler, Tooltip, Legend, annotationPlugin);
+setupCharts();
 
 export default function RevenuePerStoreChart({ data }) {
   const covidIdx = data.findIndex(q => q.period === '2020-Q1');
