@@ -321,7 +321,7 @@ function DesktopRow({ ceo, isLast, isExpanded, onToggle }) {
       <tr onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onClick={onToggle}>
         <td style={td}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            {CEO_PORTRAITS[ceo.name] && (
+            {CEO_PORTRAITS[ceo.name] && !isExpanded && (
               <img src={CEO_PORTRAITS[ceo.name]} alt={ceo.name}
                 style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", objectPosition: "top", border: "2px solid #3B7C3B", flexShrink: 0 }} />
             )}
@@ -377,7 +377,7 @@ function MobileCard({ ceo, isExpanded, onToggle }) {
       <div onClick={onToggle} style={{ cursor: "pointer" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16, gap: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}>
-            {CEO_PORTRAITS[ceo.name] && (
+            {CEO_PORTRAITS[ceo.name] && !isExpanded && (
               <img src={CEO_PORTRAITS[ceo.name]} alt={ceo.name}
                 style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", objectPosition: "top", border: "2px solid #3B7C3B", flexShrink: 0 }} />
             )}
