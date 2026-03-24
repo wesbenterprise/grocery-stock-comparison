@@ -818,7 +818,7 @@ let tableSortAsc = false;
 // Auth
 // ──────────────────────────────────────────────────────────────
 function checkAuth() {
-  if (localStorage.getItem('publix-auth') === 'authenticated') {
+  if (localStorage.getItem('bfp-auth') === 'authenticated') {
     showDashboard();
   }
 }
@@ -826,7 +826,7 @@ function checkAuth() {
 function tryLogin() {
   const pw = document.getElementById('pw-input').value;
   if (pw === 'bfp2026') {
-    localStorage.setItem('publix-auth', 'authenticated');
+    localStorage.setItem('bfp-auth', 'authenticated');
     showDashboard();
   } else {
     const box = document.querySelector('.gate-box');
@@ -841,7 +841,7 @@ function tryLogin() {
 document.getElementById('pw-btn').addEventListener('click', tryLogin);
 document.getElementById('pw-input').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
 document.getElementById('logout-btn').addEventListener('click', () => {
-  localStorage.removeItem('publix-auth');
+  localStorage.removeItem('bfp-auth');
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('gate').style.display = 'flex';
   document.getElementById('pw-input').value = '';
