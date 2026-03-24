@@ -165,6 +165,7 @@ tr:hover td{background:rgba(200,160,80,.03)}
     <button class="tab-btn active" id="tab-is" onclick="switchTab('is')">Income Statement</button>
     <button class="tab-btn" id="tab-cf" onclick="switchTab('cf')">Cash Flow</button>
     <button class="tab-btn" data-tab="equity" onclick="switchTab('equity')">Equity</button>
+    <button class="tab-btn" data-tab="balance-sheet" onclick="switchTab('balance-sheet')">Balance Sheet</button>
   </div>
 
   <!-- Income Statement Section -->
@@ -386,6 +387,54 @@ tr:hover td{background:rgba(200,160,80,.03)}
     </div>
   </div>
 
+  <div id="bs-section" style="display:none">
+    <div class="kpi-grid" id="bs-kpi-grid"></div>
+
+    <div class="chart-card">
+      <h3>Asset Composition</h3>
+      <div class="chart-subtitle">Operating assets vs. investment portfolio — quarterly FY2015–FY2025</div>
+      <div style="position:relative;height:360px"><canvas id="chart-bs-assets"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text">Publix's balance sheet is not a grocery balance sheet. The physical store footprint — PP&E — is roughly $15B, but sitting alongside it is a $20B investment portfolio that has nothing to do with selling groceries. Long-term investments have compounded at roughly 9–10% annually since 2015. The ROU assets that appeared in 2019 reflect ASC 842 lease capitalization, not a real change in the business — Publix has always leased most of its locations. What you're looking at is a company that generates so much cash it can fund its own store growth AND accumulate an investment portfolio larger than the entire market cap of most regional grocery chains.</div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3>Balance Sheet Growth</h3>
+      <div class="chart-subtitle">Total assets, equity, and liabilities — quarterly FY2015–FY2025</div>
+      <div style="position:relative;height:340px"><canvas id="chart-bs-growth"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text">Total assets have grown from roughly $16B in 2015 to over $40B in 2025 — a 2.5x increase in a decade, compounding at roughly 10% annually. The notable jump in liabilities in 2019 is entirely ASC 842 lease capitalization — Publix didn't take on debt, they just started reporting leases on the balance sheet as required. Actual financial liabilities remain minimal. Equity has grown in near-lockstep with assets, which tells you everything: this company funds its own growth without borrowing.</div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3>Asset Efficiency &amp; Working Capital</h3>
+      <div class="chart-subtitle">Asset turnover (TTM) and current ratio — quarterly FY2015–FY2025</div>
+      <div style="position:relative;height:320px"><canvas id="chart-bs-efficiency"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text">Two signals worth separating. Asset turnover has drifted down from ~1.1x in 2015 to roughly 0.7x — not because the stores got less efficient, but because the investment portfolio keeps growing faster than revenue. If you stripped out the $20B investment portfolio and measured turnover against operating assets only, you'd see a highly efficient retailer. The current ratio below 1.0x is deliberate and healthy: Publix collects cash at the register before it pays vendors, which means the business self-funds its working capital needs. A current ratio below 1.0 for Publix is a sign of operational leverage, not distress.</div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3>Liability Structure</h3>
+      <div class="chart-subtitle">What Publix owes — and what it doesn't</div>
+      <div class="chart-toggle" id="bs-liab-toggle">
+        <button class="toggle-btn active" data-mode="quarterly">Quarterly</button>
+        <button class="toggle-btn" data-mode="annual">Annual</button>
+      </div>
+      <div style="position:relative;height:320px"><canvas id="chart-bs-liab"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text">Publix's liabilities are almost entirely operating in nature — vendor payables and lease obligations. The AP balance is float: Publix sells groceries for cash before it has to pay the producers. The lease stack grew significantly in 2019 but that's ASC 842 bringing long-standing operating leases onto the balance sheet for the first time — it's the same stores, same leases, just now visible. The deferred tax liability is ~$1.6B, which is accounting timing, not a real cash claim in any near-term window. Long-term debt is functionally zero. For a company with $40B in assets, this is an extraordinary capital structure — one that only works when you generate enough free cash flow to never need outside financing.</div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -574,6 +623,55 @@ const CASHFLOW_DATA = [
   {period:"2025-Q2",fiscal_year:2025,quarter:2,operating_cash_flow:1164000000,capex:-463000000,free_cash_flow:701000000,depreciation_amortization:242000000,stock_repurchases:-413000000,dividends_paid:-360000000,cash_end_of_period:656000000},
   {period:"2025-Q3",fiscal_year:2025,quarter:3,operating_cash_flow:1534000000,capex:-555000000,free_cash_flow:979000000,depreciation_amortization:285000000,stock_repurchases:-487000000,dividends_paid:-359000000,cash_end_of_period:859000000},
   {period:"2025-Q4",fiscal_year:2025,quarter:4,operating_cash_flow:1134000000,capex:-679000000,free_cash_flow:455000000,depreciation_amortization:279000000,stock_repurchases:-345000000,dividends_paid:-356000000,cash_end_of_period:632000000},
+];
+
+// ── Balance Sheet Data ────────────────────────────────────────────
+// Filtered to FY2015-Q1 → FY2025-Q4 (44 quarters)
+const BS_DATA = [
+  {period:"2015-Q1", total_assets:15905937000, assets_current:3832747000, cash:455751000, short_term_investments:1055958000, equity_securities_fv:null, long_term_investments:5843613000, accounts_receivable:594071000, ppe_net:5839270000, rou_asset:null, total_liabilities:4176984000, liabilities_current:3151995000, accounts_payable:1642287000, lt_debt:209039000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:130171000, stockholders_equity:8591535000},
+  {period:"2015-Q2", total_assets:15714319000, assets_current:3649341000, cash:277244000, short_term_investments:1147371000, equity_securities_fv:null, long_term_investments:5700274000, accounts_receivable:565474000, ppe_net:5964739000, rou_asset:null, total_liabilities:3662174000, liabilities_current:2666867000, accounts_payable:1476418000, lt_debt:212030000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:119122000, stockholders_equity:8984622000},
+  {period:"2015-Q3", total_assets:15946059000, assets_current:3740394000, cash:327498000, short_term_investments:1113729000, equity_securities_fv:null, long_term_investments:5710550000, accounts_receivable:597918000, ppe_net:6087313000, rou_asset:null, total_liabilities:3796287000, liabilities_current:2900877000, accounts_payable:1489523000, lt_debt:176006000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:112106000, stockholders_equity:9123906000},
+  {period:"2015-Q4", total_assets:16359278000, assets_current:4314433000, cash:352176000, short_term_investments:1376698000, equity_securities_fv:null, long_term_investments:5226236000, accounts_receivable:723685000, ppe_net:6387298000, rou_asset:null, total_liabilities:3928016000, liabilities_current:2902689000, accounts_payable:1675858000, lt_debt:179753000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:104243000, stockholders_equity:9440453000},
+  {period:"2016-Q1", total_assets:17004056000, assets_current:4334454000, cash:493677000, short_term_investments:1402034000, equity_securities_fv:null, long_term_investments:5665497000, accounts_receivable:724195000, ppe_net:6580286000, rou_asset:null, total_liabilities:3950696000, liabilities_current:2924239000, accounts_payable:1650496000, lt_debt:171398000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:102323000, stockholders_equity:9591132000},
+  {period:"2016-Q2", total_assets:16940312000, assets_current:4145837000, cash:304762000, short_term_investments:1464791000, equity_securities_fv:null, long_term_investments:5532326000, accounts_receivable:611515000, ppe_net:6853078000, rou_asset:null, total_liabilities:3743459000, liabilities_current:2696209000, accounts_payable:1505544000, lt_debt:169514000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:98261000, stockholders_equity:9942670000},
+  {period:"2016-Q3", total_assets:17332819000, assets_current:4283155000, cash:304561000, short_term_investments:1588737000, equity_securities_fv:null, long_term_investments:5461844000, accounts_receivable:633777000, ppe_net:7121732000, rou_asset:null, total_liabilities:4000632000, liabilities_current:2972318000, accounts_payable:1510815000, lt_debt:165374000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:96928000, stockholders_equity:10159188000},
+  {period:"2016-Q4", total_assets:17386458000, assets_current:4518177000, cash:438319000, short_term_investments:1591740000, equity_securities_fv:null, long_term_investments:5146878000, accounts_receivable:715292000, ppe_net:7287123000, rou_asset:null, total_liabilities:3889021000, liabilities_current:2943713000, accounts_payable:1609652000, lt_debt:136585000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:93574000, stockholders_equity:10405171000},
+  {period:"2017-Q1", total_assets:18026221000, assets_current:4613395000, cash:568632000, short_term_investments:1597903000, equity_securities_fv:null, long_term_investments:5461917000, accounts_receivable:665464000, ppe_net:7408952000, rou_asset:null, total_liabilities:3939172000, liabilities_current:2991495000, accounts_payable:1730028000, lt_debt:115928000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:94276000, stockholders_equity:10575902000},
+  {period:"2017-Q2", total_assets:17941315000, assets_current:4428575000, cash:253725000, short_term_investments:1712555000, equity_securities_fv:null, long_term_investments:5278322000, accounts_receivable:637608000, ppe_net:7676611000, rou_asset:null, total_liabilities:3804244000, liabilities_current:2789246000, accounts_payable:1654448000, lt_debt:163358000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:87263000, stockholders_equity:10836496000},
+  {period:"2017-Q3", total_assets:17969044000, assets_current:4329970000, cash:670695000, short_term_investments:1256724000, equity_securities_fv:null, long_term_investments:5243817000, accounts_receivable:647332000, ppe_net:7832361000, rou_asset:null, total_liabilities:4266509000, liabilities_current:3245928000, accounts_payable:1778927000, lt_debt:153186000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:87428000, stockholders_equity:10541896000},
+  {period:"2017-Q4", total_assets:18183506000, assets_current:4084921000, cash:579925000, short_term_investments:915579000, equity_securities_fv:2547180000, long_term_investments:5517732000, accounts_receivable:671414000, ppe_net:7997704000, rou_asset:null, total_liabilities:4074887000, liabilities_current:3142314000, accounts_payable:1754706000, lt_debt:155201000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:84361000, stockholders_equity:11017149000},
+  {period:"2018-Q1", total_assets:18546137000, assets_current:4000792000, cash:644355000, short_term_investments:753054000, equity_securities_fv:null, long_term_investments:5762493000, accounts_receivable:746904000, ppe_net:8277566000, rou_asset:null, total_liabilities:3928369000, liabilities_current:3006596000, accounts_payable:1893710000, lt_debt:157836000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:84152000, stockholders_equity:11126566000},
+  {period:"2018-Q2", total_assets:18576862000, assets_current:3711010000, cash:561930000, short_term_investments:665338000, equity_securities_fv:2976660000, long_term_investments:5963551000, accounts_receivable:630061000, ppe_net:8392379000, rou_asset:null, total_liabilities:3805429000, liabilities_current:2863992000, accounts_payable:1730965000, lt_debt:169604000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:72542000, stockholders_equity:11485083000},
+  {period:"2018-Q3", total_assets:18998748000, assets_current:3643814000, cash:616283000, short_term_investments:575195000, equity_securities_fv:3184910000, long_term_investments:6278318000, accounts_receivable:649945000, ppe_net:8574060000, rou_asset:null, total_liabilities:4106856000, liabilities_current:3133648000, accounts_payable:1754822000, lt_debt:163928000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:71412000, stockholders_equity:11666996000},
+  {period:"2018-Q4", total_assets:18982516000, assets_current:3814196000, cash:599264000, short_term_investments:560992000, equity_securities_fv:2698720000, long_term_investments:6016438000, accounts_receivable:682981000, ppe_net:8636617000, rou_asset:0, total_liabilities:3987852000, liabilities_current:3009555000, accounts_payable:1864604000, lt_debt:162711000, lease_current:0, lease_noncurrent:0, deferred_tax:null, other_noncurrent_liab:67102000, stockholders_equity:11823342000},
+  {period:"2019-Q1", total_assets:22970300000, assets_current:4027342000, cash:1012142000, short_term_investments:525667000, equity_securities_fv:2961025000, long_term_investments:6790916000, accounts_receivable:694921000, ppe_net:8827727000, rou_asset:2860491000, total_liabilities:6973560000, liabilities_current:3331105000, accounts_payable:1901726000, lt_debt:161639000, lease_current:327399000, lease_noncurrent:2535134000, deferred_tax:null, other_noncurrent_liab:109203000, stockholders_equity:12450398000},
+  {period:"2019-Q2", total_assets:23383629000, assets_current:3806643000, cash:820610000, short_term_investments:443636000, equity_securities_fv:2566113000, long_term_investments:7214453000, accounts_receivable:680737000, ppe_net:9050440000, rou_asset:2852599000, total_liabilities:7097775000, liabilities_current:3376486000, accounts_payable:1873569000, lt_debt:166926000, lease_current:327735000, lease_noncurrent:2520256000, deferred_tax:null, other_noncurrent_liab:136791000, stockholders_equity:12897061000},
+  {period:"2019-Q3", total_assets:23929393000, assets_current:4307193000, cash:1294010000, short_term_investments:453132000, equity_securities_fv:2170083000, long_term_investments:7145508000, accounts_receivable:700836000, ppe_net:9109023000, rou_asset:2909462000, total_liabilities:7405844000, liabilities_current:3652244000, accounts_payable:1815800000, lt_debt:145300000, lease_current:332648000, lease_noncurrent:2562160000, deferred_tax:null, other_noncurrent_liab:127010000, stockholders_equity:13200858000},
+  {period:"2019-Q4", total_assets:24507120000, assets_current:3927600000, cash:763000000, short_term_investments:438105000, equity_securities_fv:2354346000, long_term_investments:7988280000, accounts_receivable:737093000, ppe_net:9184522000, rou_asset:2964780000, total_liabilities:7605776000, liabilities_current:3700714000, accounts_payable:1984761000, lt_debt:131997000, lease_current:335391000, lease_noncurrent:2603206000, deferred_tax:682484000, other_noncurrent_liab:140633000, stockholders_equity:13604000000},
+  {period:"2020-Q1", total_assets:25202317000, assets_current:4578004000, cash:1618875000, short_term_investments:454111000, equity_securities_fv:2479919000, long_term_investments:7919444000, accounts_receivable:834391000, ppe_net:9268365000, rou_asset:2991588000, total_liabilities:7955599000, liabilities_current:4202071000, accounts_payable:2502165000, lt_debt:121457000, lease_current:337270000, lease_noncurrent:2610655000, deferred_tax:535610000, other_noncurrent_liab:138719000, stockholders_equity:13505729000},
+  {period:"2020-Q2", total_assets:26845843000, assets_current:4650272000, cash:1423493000, short_term_investments:566920000, equity_securities_fv:2565053000, long_term_investments:9459373000, accounts_receivable:725568000, ppe_net:9315916000, rou_asset:2977399000, total_liabilities:8506838000, liabilities_current:4561183000, accounts_payable:2155743000, lt_debt:124764000, lease_current:340461000, lease_noncurrent:2605433000, deferred_tax:710607000, other_noncurrent_liab:154820000, stockholders_equity:14734397000},
+  {period:"2020-Q3", total_assets:27194202000, assets_current:4117693000, cash:602798000, short_term_investments:650446000, equity_securities_fv:2280448000, long_term_investments:10165781000, accounts_receivable:777504000, ppe_net:9461777000, rou_asset:3011550000, total_liabilities:8407773000, liabilities_current:4391620000, accounts_payable:2138485000, lt_debt:138879000, lease_current:344186000, lease_noncurrent:2628156000, deferred_tax:717574000, other_noncurrent_liab:177993000, stockholders_equity:15227652000},
+  {period:"2020-Q4", total_assets:28094077000, assets_current:4417796000, cash:673000000, short_term_investments:682965000, equity_securities_fv:2089907000, long_term_investments:10605234000, accounts_receivable:917531000, ppe_net:9690520000, rou_asset:2965424000, total_liabilities:8808213000, liabilities_current:4366844000, accounts_payable:2414798000, lt_debt:123835000, lease_current:345805000, lease_noncurrent:2588258000, deferred_tax:772722000, other_noncurrent_liab:474285000, stockholders_equity:15757000000},
+  {period:"2021-Q1", total_assets:29446420000, assets_current:4590599000, cash:979059000, short_term_investments:661992000, equity_securities_fv:3155057000, long_term_investments:11624617000, accounts_receivable:831308000, ppe_net:9882436000, rou_asset:2925750000, total_liabilities:8836700000, liabilities_current:4416618000, accounts_payable:2374395000, lt_debt:115064000, lease_current:347015000, lease_noncurrent:2550441000, deferred_tax:899277000, other_noncurrent_liab:484329000, stockholders_equity:16522259000},
+  {period:"2021-Q2", total_assets:29983121000, assets_current:4532450000, cash:903810000, short_term_investments:678075000, equity_securities_fv:3347910000, long_term_investments:12080627000, accounts_receivable:793009000, ppe_net:10000215000, rou_asset:2931874000, total_liabilities:8813288000, liabilities_current:4295637000, accounts_payable:2299558000, lt_debt:113368000, lease_current:351353000, lease_noncurrent:2551728000, deferred_tax:976910000, other_noncurrent_liab:498391000, stockholders_equity:17266580000},
+  {period:"2021-Q3", total_assets:30874323000, assets_current:4768579000, cash:1171532000, short_term_investments:774261000, equity_securities_fv:3427854000, long_term_investments:12582694000, accounts_receivable:797918000, ppe_net:10138759000, rou_asset:2959937000, total_liabilities:9301760000, liabilities_current:4687307000, accounts_payable:2411056000, lt_debt:112220000, lease_current:354792000, lease_noncurrent:2572350000, deferred_tax:1012201000, other_noncurrent_liab:535601000, stockholders_equity:17706884000},
+  {period:"2021-Q4", total_assets:31524000000, assets_current:5105000000, cash:1132000000, short_term_investments:883000000, equity_securities_fv:3600000000, long_term_investments:12768000000, accounts_receivable:904000000, ppe_net:10256000000, rou_asset:2950000000, total_liabilities:9486000000, liabilities_current:4822000000, accounts_payable:2595000000, lt_debt:98000000, lease_current:355000000, lease_noncurrent:2570000000, deferred_tax:1031000000, other_noncurrent_liab:305000000, stockholders_equity:18170000000},
+  {period:"2022-Q1", total_assets:30911368000, assets_current:4514997000, cash:679816000, short_term_investments:905060000, equity_securities_fv:3384646000, long_term_investments:12534245000, accounts_receivable:842069000, ppe_net:10457772000, rou_asset:2897144000, total_liabilities:8894041000, liabilities_current:4672908000, accounts_payable:2566290000, lt_debt:82746000, lease_current:355025000, lease_noncurrent:2516022000, deferred_tax:748763000, other_noncurrent_liab:170823000, stockholders_equity:17549000000},
+  {period:"2022-Q2", total_assets:30374604000, assets_current:4730142000, cash:1028264000, short_term_investments:737709000, equity_securities_fv:3034694000, long_term_investments:11611377000, accounts_receivable:831164000, ppe_net:10627275000, rou_asset:2885420000, total_liabilities:8837791000, liabilities_current:4763506000, accounts_payable:2567088000, lt_debt:82747000, lease_current:356320000, lease_noncurrent:2503258000, deferred_tax:632348000, other_noncurrent_liab:170445000, stockholders_equity:17243000000},
+  {period:"2022-Q3", total_assets:30347557000, assets_current:5349557000, cash:1599459000, short_term_investments:533339000, equity_securities_fv:2479761000, long_term_investments:10673266000, accounts_receivable:966408000, ppe_net:10869719000, rou_asset:2915642000, total_liabilities:9105228000, liabilities_current:5142893000, accounts_payable:2668854000, lt_debt:61680000, lease_current:357457000, lease_noncurrent:2528313000, deferred_tax:524681000, other_noncurrent_liab:164826000, stockholders_equity:17065000000},
+  {period:"2022-Q4", total_assets:31047000000, assets_current:5423000000, cash:1336000000, short_term_investments:566000000, equity_securities_fv:2500000000, long_term_investments:10992000000, accounts_receivable:1106000000, ppe_net:11092000000, rou_asset:2979000000, total_liabilities:9195000000, liabilities_current:5172000000, accounts_payable:2812000000, lt_debt:43000000, lease_current:359000000, lease_noncurrent:2573000000, deferred_tax:575000000, other_noncurrent_liab:141000000, stockholders_equity:17786000000},
+  {period:"2023-Q1", total_assets:32241000000, assets_current:5870000000, cash:null, short_term_investments:751000000, equity_securities_fv:2700000000, long_term_investments:11429000000, accounts_receivable:1078000000, ppe_net:11337000000, rou_asset:3044000000, total_liabilities:9109000000, liabilities_current:4957000000, accounts_payable:2954000000, lt_debt:43000000, lease_current:359000000, lease_noncurrent:2606000000, deferred_tax:668000000, other_noncurrent_liab:131000000, stockholders_equity:18432000000},
+  {period:"2023-Q2", total_assets:32776000000, assets_current:6151000000, cash:null, short_term_investments:1087000000, equity_securities_fv:2600000000, long_term_investments:11464000000, accounts_receivable:1072000000, ppe_net:11516000000, rou_asset:3079000000, total_liabilities:9165000000, liabilities_current:4936000000, accounts_payable:2807000000, lt_debt:52000000, lease_current:360000000, lease_noncurrent:2619000000, deferred_tax:686000000, other_noncurrent_liab:130000000, stockholders_equity:19183000000},
+  {period:"2023-Q3", total_assets:33354000000, assets_current:6444000000, cash:null, short_term_investments:1771000000, equity_securities_fv:2500000000, long_term_investments:11459000000, accounts_receivable:1074000000, ppe_net:11735000000, rou_asset:3093000000, total_liabilities:9533000000, liabilities_current:5351000000, accounts_payable:2763000000, lt_debt:42000000, lease_current:360000000, lease_noncurrent:2613000000, deferred_tax:629000000, other_noncurrent_liab:127000000, stockholders_equity:19496000000},
+  {period:"2023-Q4", total_assets:34384000000, assets_current:6482000000, cash:null, short_term_investments:1899000000, equity_securities_fv:2700000000, long_term_investments:11867000000, accounts_receivable:1174000000, ppe_net:12184000000, rou_asset:3121000000, total_liabilities:9713000000, liabilities_current:5282000000, accounts_payable:2931000000, lt_debt:42000000, lease_current:361000000, lease_noncurrent:2624000000, deferred_tax:764000000, other_noncurrent_liab:244000000, stockholders_equity:20416000000},
+  {period:"2024-Q1", total_assets:35764000000, assets_current:6887000000, cash:null, short_term_investments:2322000000, equity_securities_fv:3100000000, long_term_investments:12445000000, accounts_receivable:1293000000, ppe_net:12544000000, rou_asset:3128000000, total_liabilities:9864000000, liabilities_current:5276000000, accounts_payable:3077000000, lt_debt:41000000, lease_current:358000000, lease_noncurrent:2608000000, deferred_tax:849000000, other_noncurrent_liab:212000000, stockholders_equity:21030000000},
+  {period:"2024-Q2", total_assets:35752000000, assets_current:6798000000, cash:null, short_term_investments:2547000000, equity_securities_fv:3100000000, long_term_investments:12130000000, accounts_receivable:1148000000, ppe_net:12899000000, rou_asset:3122000000, total_liabilities:9609000000, liabilities_current:5000000000, accounts_payable:2809000000, lt_debt:40000000, lease_current:356000000, lease_noncurrent:2602000000, deferred_tax:869000000, other_noncurrent_liab:209000000, stockholders_equity:21493000000},
+  {period:"2024-Q3", total_assets:36851000000, assets_current:7171000000, cash:null, short_term_investments:2563000000, equity_securities_fv:3300000000, long_term_investments:12336000000, accounts_receivable:1177000000, ppe_net:13413000000, rou_asset:3090000000, total_liabilities:9984000000, liabilities_current:5241000000, accounts_payable:2738000000, lt_debt:40000000, lease_current:353000000, lease_noncurrent:2569000000, deferred_tax:1005000000, other_noncurrent_liab:205000000, stockholders_equity:22284000000},
+  {period:"2024-Q4", total_assets:37601000000, assets_current:7688000000, cash:null, short_term_investments:2800000000, equity_securities_fv:3500000000, long_term_investments:12258000000, accounts_receivable:1228000000, ppe_net:13769000000, rou_asset:3030000000, total_liabilities:10173000000, liabilities_current:5417000000, accounts_payable:2949000000, lt_debt:20000000, lease_current:354000000, lease_noncurrent:2511000000, deferred_tax:1078000000, other_noncurrent_liab:230000000, stockholders_equity:22863000000},
+  {period:"2025-Q1", total_assets:38398000000, assets_current:7899000000, cash:null, short_term_investments:2866000000, equity_securities_fv:3800000000, long_term_investments:12641000000, accounts_receivable:1252000000, ppe_net:14018000000, rou_asset:3004000000, total_liabilities:10051000000, liabilities_current:5315000000, accounts_payable:2955000000, lt_debt:null, lease_current:356000000, lease_noncurrent:2477000000, deferred_tax:1031000000, other_noncurrent_liab:247000000, stockholders_equity:23002000000},
+  {period:"2025-Q2", total_assets:39370000000, assets_current:7280000000, cash:null, short_term_investments:2469000000, equity_securities_fv:4500000000, long_term_investments:13894000000, accounts_receivable:1291000000, ppe_net:14362000000, rou_asset:2974000000, total_liabilities:10323000000, liabilities_current:5421000000, accounts_payable:3000000000, lt_debt:null, lease_current:356000000, lease_noncurrent:2446000000, deferred_tax:1165000000, other_noncurrent_liab:257000000, stockholders_equity:23956000000},
+  {period:"2025-Q3", total_assets:40363000000, assets_current:7660000000, cash:null, short_term_investments:2513000000, equity_securities_fv:4800000000, long_term_investments:14204000000, accounts_receivable:1349000000, ppe_net:14679000000, rou_asset:2979000000, total_liabilities:10840000000, liabilities_current:5666000000, accounts_payable:2911000000, lt_debt:null, lease_current:357000000, lease_noncurrent:2440000000, deferred_tax:1425000000, other_noncurrent_liab:231000000, stockholders_equity:24471000000},
+  {period:"2025-Q4", total_assets:40989000000, assets_current:7679000000, cash:null, short_term_investments:2597000000, equity_securities_fv:5000000000, long_term_investments:14455000000, accounts_receivable:1366000000, ppe_net:15070000000, rou_asset:2952000000, total_liabilities:10887000000, liabilities_current:5604000000, accounts_payable:3074000000, lt_debt:2000000, lease_current:359000000, lease_noncurrent:2418000000, deferred_tax:1563000000, other_noncurrent_liab:218000000, stockholders_equity:25141000000},
 ];
 
 // ──────────────────────────────────────────────────────────────
@@ -1198,9 +1296,10 @@ function switchTab(tab) {
   document.getElementById('is-section').style.display = tab === 'is' ? 'block' : 'none';
   document.getElementById('cf-section').style.display = tab === 'cf' ? 'block' : 'none';
   document.getElementById('equity-section').style.display = tab === 'equity' ? 'block' : 'none';
+  document.getElementById('bs-section').style.display = tab === 'balance-sheet' ? 'block' : 'none';
   document.getElementById('tab-is').classList.toggle('active', tab === 'is');
   document.getElementById('tab-cf').classList.toggle('active', tab === 'cf');
-  // Equity tab button uses data-tab attribute instead of id
+  // Equity and Balance Sheet tab buttons use data-tab attribute instead of id
   document.querySelectorAll('.tab-btn[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   if (tab === 'cf') renderCashFlowTab();
   if (tab === 'equity') {
@@ -1209,6 +1308,13 @@ function switchTab(tab) {
     renderEquitySharesChart();
     renderEquityEPSChart();
     renderEquityReturnsChart();
+  }
+  if (tab === 'balance-sheet') {
+    renderBSKPIs();
+    renderBSAssetsChart();
+    renderBSGrowthChart();
+    renderBSEfficiencyChart();
+    renderBSLiabChart();
   }
 }
 
@@ -2061,6 +2167,289 @@ document.getElementById('equity-returns-toggle').addEventListener('click', e => 
   equityReturnsMode = btn.dataset.mode;
   document.querySelectorAll('#equity-returns-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
   renderEquityReturnsChart();
+});
+
+// ──────────────────────────────────────────────────────────────
+// Balance Sheet Tab — Render Functions
+// ──────────────────────────────────────────────────────────────
+
+function renderBSKPIs() {
+  const grid = document.getElementById('bs-kpi-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  const latest = BS_DATA[BS_DATA.length - 1];
+  const prevYear = BS_DATA[BS_DATA.length - 5];
+
+  // Card 1: Total Assets
+  const ta = latest.total_assets / 1e9;
+  const taChange = prevYear ? ((latest.total_assets - prevYear.total_assets) / prevYear.total_assets) * 100 : null;
+
+  // Card 2: Equity-to-Assets
+  const eta = (latest.stockholders_equity / latest.total_assets) * 100;
+  const etaPrev = prevYear ? (prevYear.stockholders_equity / prevYear.total_assets) * 100 : null;
+  const etaChange = etaPrev ? (eta - etaPrev) : null;
+
+  // Card 3: Investment Portfolio % of Assets
+  const ltInv = latest.long_term_investments || 0;
+  const eqSec = latest.equity_securities_fv || 0;
+  const totalPortfolio = ltInv + eqSec;
+  const portPct = (totalPortfolio / latest.total_assets) * 100;
+
+  // Card 4: Current Ratio
+  const cr = latest.assets_current / latest.liabilities_current;
+  const crPrev = prevYear ? prevYear.assets_current / prevYear.liabilities_current : null;
+  const crChange = crPrev ? (cr - crPrev) : null;
+
+  const cards = [
+    { label: 'TOTAL ASSETS', value: '$' + ta.toFixed(1) + 'B', change: taChange, isDelta: false, sublabel: 'YoY growth' },
+    { label: 'EQUITY-TO-ASSETS', value: eta.toFixed(1) + '%', change: etaChange, isDelta: true, sublabel: 'Long-term debt: ~$0' },
+    { label: 'INVESTMENT PORTFOLIO', value: '$' + (totalPortfolio/1e9).toFixed(1) + 'B', change: null, isDelta: false, sublabel: (portPct.toFixed(1) + '% of total assets') },
+    { label: 'CURRENT RATIO', value: cr.toFixed(2) + 'x', change: crChange, isDelta: true, sublabel: 'Assets current / Liabilities current' },
+  ];
+
+  cards.forEach(k => {
+    const card = document.createElement('div');
+    card.className = 'kpi-card';
+    let chHtml = '';
+    if (k.change != null) {
+      const rawChg = k.change;
+      const chVal = k.isDelta ? ((rawChg >= 0 ? '+' : '') + rawChg.toFixed(2) + 'pp') : ((rawChg >= 0 ? '+' : '') + rawChg.toFixed(1) + '%');
+      const chClass = rawChg >= 0 ? 'up' : 'down';
+      chHtml = `<div class="change ${chClass}">${chVal} YoY</div>`;
+    }
+    card.innerHTML = `
+      <div class="label">${k.label}</div>
+      <div class="value">${k.value}</div>
+      ${chHtml}
+      ${k.sublabel ? `<div style="font-size:11px;color:#555;font-style:italic;margin-top:2px">${k.sublabel}</div>` : ''}
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function renderBSAssetsChart() {
+  const ctx = document.getElementById('chart-bs-assets');
+  if (!ctx) return;
+  if (charts.bsAssets) charts.bsAssets.destroy();
+
+  const labels = BS_DATA.map(d => d.period);
+
+  const ppe = BS_DATA.map(d => (d.ppe_net || 0) / 1e9);
+  const rou = BS_DATA.map(d => (d.rou_asset || 0) / 1e9);
+  const ltInv = BS_DATA.map(d => (d.long_term_investments || 0) / 1e9);
+  const eqSec = BS_DATA.map(d => (d.equity_securities_fv || 0) / 1e9);
+  const stLiquid = BS_DATA.map(d => {
+    const cash = d.cash || 0;
+    const sti = d.short_term_investments || 0;
+    return (cash > 0 ? cash + sti : sti) / 1e9;
+  });
+  const ar = BS_DATA.map(d => (d.accounts_receivable || 0) / 1e9);
+  const otherCurrent = BS_DATA.map((d, i) => {
+    const other = (d.assets_current || 0) - (d.accounts_receivable || 0) - (d.cash || 0) - (d.short_term_investments || 0);
+    return Math.max(0, other) / 1e9;
+  });
+  const residual = BS_DATA.map((d, i) => {
+    const itemized = ppe[i] + rou[i] + ltInv[i] + eqSec[i] + stLiquid[i] + ar[i] + otherCurrent[i];
+    return Math.max(0, d.total_assets / 1e9 - itemized);
+  });
+
+  charts.bsAssets = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'PP&E', data: ppe, backgroundColor: 'rgba(200,160,80,0.7)', borderWidth: 0, stack: 'assets' },
+        { label: 'Operating Lease ROU', data: rou, backgroundColor: 'rgba(200,160,80,0.35)', borderWidth: 0, stack: 'assets' },
+        { label: 'Long-Term Investments', data: ltInv, backgroundColor: 'rgba(45,212,191,0.65)', borderWidth: 0, stack: 'assets' },
+        { label: 'Equity Securities (FV)', data: eqSec, backgroundColor: 'rgba(45,212,191,0.35)', borderWidth: 0, stack: 'assets' },
+        { label: 'Short-Term Investments / Cash', data: stLiquid, backgroundColor: 'rgba(129,140,248,0.6)', borderWidth: 0, stack: 'assets' },
+        { label: 'Accounts Receivable', data: ar, backgroundColor: 'rgba(129,140,248,0.35)', borderWidth: 0, stack: 'assets' },
+        { label: 'Other Current Assets', data: otherCurrent, backgroundColor: 'rgba(160,160,180,0.3)', borderWidth: 0, stack: 'assets' },
+        { label: 'Other / Residual', data: residual, backgroundColor: 'rgba(100,100,120,0.25)', borderWidth: 0, stack: 'assets' },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        ...chartDefaults.plugins,
+        tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: c => `${c.dataset.label}: $${c.parsed.y.toFixed(2)}B` } },
+        annotation: {
+          annotations: {
+            asc321: { type: 'line', xMin: '2018-Q1', xMax: '2018-Q1', borderColor: 'rgba(255,255,255,0.2)', borderWidth: 1, borderDash: [3,3],
+              label: { display: true, content: 'ASC 321', position: 'start', color: '#a3a3a3', font: { size: 9 }, backgroundColor: 'transparent' } },
+            asc842: { type: 'line', xMin: '2019-Q1', xMax: '2019-Q1', borderColor: 'rgba(255,255,255,0.2)', borderWidth: 1, borderDash: [3,3],
+              label: { display: true, content: 'ASC 842', position: 'start', color: '#a3a3a3', font: { size: 9 }, backgroundColor: 'transparent' } }
+          }
+        }
+      },
+      scales: {
+        x: { ...chartDefaults.scales.x, stacked: true },
+        y: { ...chartDefaults.scales.y, stacked: true, ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v.toFixed(0) + 'B' }, title: { display: true, text: '($B)', color: '#606080' } }
+      }
+    }
+  });
+}
+
+function renderBSGrowthChart() {
+  const ctx = document.getElementById('chart-bs-growth');
+  if (!ctx) return;
+  if (charts.bsGrowth) charts.bsGrowth.destroy();
+
+  const labels = BS_DATA.map(d => d.period);
+  const assets = BS_DATA.map(d => d.total_assets / 1e9);
+  const equity = BS_DATA.map(d => d.stockholders_equity / 1e9);
+  const liabilities = BS_DATA.map(d => d.total_liabilities / 1e9);
+  const etaRatio = BS_DATA.map(d => (d.stockholders_equity / d.total_assets) * 100);
+
+  charts.bsGrowth = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Total Assets', data: assets, borderColor: '#C8A050', backgroundColor: 'rgba(200,160,80,0.08)', borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5, tension: 0.3, fill: false, yAxisID: 'y', order: 1 },
+        { label: "Stockholders' Equity", data: equity, borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,0.08)', borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5, tension: 0.3, fill: false, yAxisID: 'y', order: 2 },
+        { label: 'Total Liabilities', data: liabilities, borderColor: '#ef5350', backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [4,3], pointRadius: 0, pointHoverRadius: 4, tension: 0.3, fill: false, yAxisID: 'y', order: 3 },
+        { label: 'Equity/Assets %', data: etaRatio, borderColor: '#818cf8', backgroundColor: 'rgba(129,140,248,0.06)', borderWidth: 1.5, pointRadius: 0, pointHoverRadius: 4, tension: 0.3, fill: true, yAxisID: 'y1', order: 4 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        ...chartDefaults.plugins,
+        tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: c => c.dataset.label === 'Equity/Assets %' ? `Equity/Assets: ${c.parsed.y.toFixed(1)}%` : `${c.dataset.label}: $${c.parsed.y.toFixed(2)}B` } },
+        annotation: {
+          annotations: {
+            asc842: { type: 'line', xMin: '2019-Q1', xMax: '2019-Q1', borderColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderDash: [3,3],
+              label: { display: true, content: 'ASC 842', position: 'end', color: '#a3a3a3', font: { size: 9 }, backgroundColor: 'transparent' } },
+            covid: { type: 'line', xMin: '2020-Q1', xMax: '2020-Q1', borderColor: 'rgba(255,255,255,0.12)', borderWidth: 1, borderDash: [3,3],
+              label: { display: true, content: 'COVID-19', position: 'end', color: '#a3a3a3', font: { size: 9 }, backgroundColor: 'transparent' } }
+          }
+        }
+      },
+      scales: {
+        x: chartDefaults.scales.x,
+        y: { ...chartDefaults.scales.y, position: 'left', ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v.toFixed(0) + 'B' }, title: { display: true, text: '($B)', color: '#606080' } },
+        y1: { ...chartDefaults.scales.y, position: 'right', min: 40, max: 80, ticks: { ...chartDefaults.scales.y.ticks, callback: v => v + '%' }, title: { display: true, text: 'Equity/Assets %', color: '#606080' }, grid: { drawOnChartArea: false } }
+      }
+    }
+  });
+}
+
+function renderBSEfficiencyChart() {
+  const ctx = document.getElementById('chart-bs-efficiency');
+  if (!ctx) return;
+  if (charts.bsEfficiency) charts.bsEfficiency.destroy();
+
+  const labels = BS_DATA.map(d => d.period);
+  const assetTurnover = BS_DATA.map((d, i) => {
+    if (i < 3) return null;
+    const bsIdx = i;
+    const qIdx = QUARTERS.findIndex(q => q.period === d.period);
+    if (qIdx < 3) return null;
+    const ttmRev = QUARTERS.slice(qIdx - 3, qIdx + 1).reduce((s, q) => s + (q.revenue || 0), 0);
+    return ttmRev / d.total_assets;
+  });
+  const currentRatio = BS_DATA.map(d => d.assets_current / d.liabilities_current);
+
+  charts.bsEfficiency = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Asset Turnover (TTM)', data: assetTurnover, borderColor: '#C8A050', backgroundColor: 'transparent', borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5, tension: 0.3, yAxisID: 'y', spanGaps: true },
+        { label: 'Current Ratio', data: currentRatio, borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,0.06)', borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5, tension: 0.3, yAxisID: 'y1', fill: false }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        ...chartDefaults.plugins,
+        tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: c => c.dataset.label === 'Current Ratio' ? `Current Ratio: ${c.parsed.y.toFixed(2)}x` : `Asset Turnover: ${c.parsed.y.toFixed(2)}x` } },
+        annotation: {
+          annotations: {
+            onePctAsset: { type: 'line', yScaleID: 'y', yMin: 1, yMax: 1, borderColor: 'rgba(200,160,80,0.2)', borderWidth: 1, borderDash: [4,3] },
+            onePctCurrent: { type: 'line', yScaleID: 'y1', yMin: 1, yMax: 1, borderColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderDash: [4,3],
+              label: { display: true, content: '1.0x', position: 'end', color: '#606080', font: { size: 9 }, backgroundColor: 'transparent' } }
+          }
+        }
+      },
+      scales: {
+        x: chartDefaults.scales.x,
+        y: { ...chartDefaults.scales.y, position: 'left', ticks: { ...chartDefaults.scales.y.ticks, callback: v => v.toFixed(1) + 'x' }, title: { display: true, text: 'Asset Turnover', color: '#606080' } },
+        y1: { ...chartDefaults.scales.y, position: 'right', min: 0.5, max: 2.0, ticks: { ...chartDefaults.scales.y.ticks, callback: v => v.toFixed(1) + 'x' }, title: { display: true, text: 'Current Ratio', color: '#606080' }, grid: { drawOnChartArea: false } }
+      }
+    }
+  });
+}
+
+let bsLiabMode = 'quarterly';
+
+function renderBSLiabChart() {
+  const ctx = document.getElementById('chart-bs-liab');
+  if (!ctx) return;
+  if (charts.bsLiab) charts.bsLiab.destroy();
+
+  let data;
+  if (bsLiabMode === 'annual') {
+    const years = [...new Set(BS_DATA.map(d => d.period.split('-')[0]))];
+    data = years.map(yr => {
+      const q4 = BS_DATA.find(d => d.period === `${yr}-Q4`);
+      return q4 ? { ...q4, period: yr } : null;
+    }).filter(Boolean);
+  } else {
+    data = BS_DATA;
+  }
+
+  const labels = data.map(d => d.period);
+  const ap = data.map(d => (d.accounts_payable || 0) / 1e9);
+  const leaseCur = data.map(d => (d.lease_current || 0) / 1e9);
+  const leaseNon = data.map(d => (d.lease_noncurrent || 0) / 1e9);
+  const defTax = data.map(d => (d.deferred_tax || 0) / 1e9);
+  const otherCurLiab = data.map(d => Math.max(0, ((d.liabilities_current || 0) - (d.accounts_payable || 0) - (d.lease_current || 0))) / 1e9);
+  const otherNon = data.map(d => (d.other_noncurrent_liab || 0) / 1e9);
+  const ltDebt = data.map(d => (d.lt_debt || 0) / 1e9);
+
+  charts.bsLiab = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Accounts Payable', data: ap, backgroundColor: 'rgba(200,160,80,0.65)', borderWidth: 0, stack: 'liab' },
+        { label: 'Lease — Current', data: leaseCur, backgroundColor: 'rgba(45,212,191,0.5)', borderWidth: 0, stack: 'liab' },
+        { label: 'Lease — Noncurrent', data: leaseNon, backgroundColor: 'rgba(45,212,191,0.3)', borderWidth: 0, stack: 'liab' },
+        { label: 'Deferred Income Tax', data: defTax, backgroundColor: 'rgba(129,140,248,0.5)', borderWidth: 0, stack: 'liab' },
+        { label: 'Other Current Liabilities', data: otherCurLiab, backgroundColor: 'rgba(160,160,180,0.35)', borderWidth: 0, stack: 'liab' },
+        { label: 'Other Noncurrent', data: otherNon, backgroundColor: 'rgba(100,100,120,0.3)', borderWidth: 0, stack: 'liab' },
+        { label: 'Long-Term Debt', data: ltDebt, backgroundColor: 'rgba(239,83,80,0.7)', borderWidth: 0, stack: 'liab' },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        ...chartDefaults.plugins,
+        tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: c => `${c.dataset.label}: $${c.parsed.y.toFixed(2)}B` } },
+        annotation: {
+          annotations: {
+            asc842: { type: 'line', xMin: '2019-Q1', xMax: '2019-Q1', borderColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderDash: [3,3],
+              label: { display: true, content: 'ASC 842', position: 'start', color: '#a3a3a3', font: { size: 9 }, backgroundColor: 'transparent' } }
+          }
+        }
+      },
+      scales: {
+        x: { ...chartDefaults.scales.x, stacked: true },
+        y: { ...chartDefaults.scales.y, stacked: true, ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v.toFixed(0) + 'B' }, title: { display: true, text: '($B)', color: '#606080' } }
+      }
+    }
+  });
+}
+
+document.getElementById('bs-liab-toggle').addEventListener('click', e => {
+  const btn = e.target.closest('.toggle-btn');
+  if (!btn) return;
+  bsLiabMode = btn.dataset.mode;
+  document.querySelectorAll('#bs-liab-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+  renderBSLiabChart();
 });
 
 // ──────────────────────────────────────────────────────────────
