@@ -203,7 +203,6 @@ function Header({ isWide }) {
       <div style={{ fontSize: 11, letterSpacing: 4, textTransform: "uppercase", color: "#3B7C3B", fontWeight: 700, marginBottom: 12 }}>Where Shopping Is a Pleasure</div>
       <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: isWide ? 44 : 28, fontWeight: 900, color: "#1a3a1a", lineHeight: 1.15, margin: "0 0 8px 0" }}>Publix Super Markets</h1>
       <div style={{ fontSize: 15, color: "#6b6b6b" }}>CEO Timeline & Revenue · <span style={{ color: "#3B7C3B", fontWeight: 600 }}>1930 – Present</span></div>
-      <div style={{ width: 60, height: 3, background: "#c9a84c", margin: "20px auto 0", borderRadius: 2 }} />
     </div>
   );
 }
