@@ -164,6 +164,7 @@ tr:hover td{background:rgba(200,160,80,.03)}
   <div class="tab-switcher">
     <button class="tab-btn active" id="tab-is" onclick="switchTab('is')">Income Statement</button>
     <button class="tab-btn" id="tab-cf" onclick="switchTab('cf')">Cash Flow</button>
+    <button class="tab-btn" data-tab="equity" onclick="switchTab('equity')">Equity</button>
   </div>
 
   <!-- Income Statement Section -->
@@ -331,6 +332,59 @@ tr:hover td{background:rgba(200,160,80,.03)}
       </div>
     </div>
   </div><!-- end #cf-section -->
+
+  <div id="equity-section" style="display:none">
+    <!-- Equity KPI Cards -->
+    <div class="kpi-grid" id="equity-kpi-grid"></div>
+
+    <!-- Chart 1: Equity Compounding -->
+    <div class="chart-card">
+      <h3>Equity Compounding</h3>
+      <div class="chart-subtitle">Total stockholders' equity and book value per share</div>
+      <div style="position:relative;height:340px"><canvas id="chart-equity-compound"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text" id="narrative-equity-compound">Publix has grown book equity from roughly $8.6B in 2015 to over $26B by 2025 — a ~11.6% CAGR in absolute terms. But that understates the per-shareholder story. Book value per share has compounded faster over the same period, the difference attributable almost entirely to a sustained buyback program that has retired roughly 17% of split-adjusted float. Equity isn't just growing — it's concentrating. Each remaining share commands a larger claim on the balance sheet than it did a decade ago, and that gap widens each year repurchases continue.</div>
+      </div>
+    </div>
+
+    <!-- Chart 2: Share Count & Buybacks -->
+    <div class="chart-card">
+      <h3>Share Count &amp; Buybacks</h3>
+      <div class="chart-subtitle">Split-adjusted shares outstanding and quarterly buyback spend (pre-2022 figures ×5 for split)</div>
+      <div style="position:relative;height:340px"><canvas id="chart-equity-shares"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text">Publix has been a consistent repurchaser. On a split-adjusted basis, shares outstanding have declined from approximately 3,851M in 2015 to roughly 3,216M by 2025 — a reduction of ~16.5% over a decade, retiring roughly 60–70M shares per year on average. Publix is private; these repurchases represent buybacks from departing associates and estate transactions, not open-market buying. The mechanical effect on per-share metrics is identical to a public company buyback. When buyback spend spikes relative to share reduction, the implicit price paid per share rose — Publix was buying at higher valuations.</div>
+      </div>
+    </div>
+
+    <!-- Chart 3: EPS vs NI Indexed -->
+    <div class="chart-card">
+      <h3>EPS vs Operating NI — Indexed Growth</h3>
+      <div class="chart-subtitle">Both rebased to 100 at 2015-Q1. The gap is the buyback accretion premium.</div>
+      <div style="position:relative;height:320px"><canvas id="chart-equity-eps"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text">Operating net income has grown significantly since 2015, but split-adjusted EPS has grown faster. The spread between the two indexed lines is the mechanical output of ten years of share count reduction. Publix hasn't just grown earnings — it's grown earnings per remaining share faster than earnings grew in absolute terms. For an associate-owned company where the shareholders are employees, this compounds directly in their favor: each associate's stake earns more not just because the business is more profitable, but because there are fewer shares dividing that profit.</div>
+      </div>
+    </div>
+
+    <!-- Chart 4: Shareholder Returns Composition -->
+    <div class="chart-card">
+      <h3>Shareholder Returns Composition</h3>
+      <div class="chart-subtitle">Dividends and buybacks vs operating net income — Capital Return Rate</div>
+      <div class="chart-toggle" id="equity-returns-toggle">
+        <button class="toggle-btn active" data-mode="quarterly">Quarterly</button>
+        <button class="toggle-btn" data-mode="annual">Annual</button>
+      </div>
+      <div style="position:relative;height:320px"><canvas id="chart-equity-returns"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text">Publix returns capital through both dividends and buybacks, and the Capital Return Rate — total returns as a percentage of operating net income — tells the real story about management's capital philosophy. In years where it exceeds 100%, Publix is returning more than it earned: drawing on operating cash flow above the net income line. This is not financial stress — OCF consistently exceeds net income due to D&A and working capital dynamics. It is a deliberate signal: Publix is not building a war chest. It is returning capital to its associates. The consistency of that commitment, year after year, is the policy.</div>
+      </div>
+    </div>
+  </div>
 
 </div>
 
@@ -1143,9 +1197,19 @@ function switchTab(tab) {
   activeTab = tab;
   document.getElementById('is-section').style.display = tab === 'is' ? 'block' : 'none';
   document.getElementById('cf-section').style.display = tab === 'cf' ? 'block' : 'none';
+  document.getElementById('equity-section').style.display = tab === 'equity' ? 'block' : 'none';
   document.getElementById('tab-is').classList.toggle('active', tab === 'is');
   document.getElementById('tab-cf').classList.toggle('active', tab === 'cf');
+  // Equity tab button uses data-tab attribute instead of id
+  document.querySelectorAll('.tab-btn[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   if (tab === 'cf') renderCashFlowTab();
+  if (tab === 'equity') {
+    renderEquityKPIs();
+    renderEquityCompoundChart();
+    renderEquitySharesChart();
+    renderEquityEPSChart();
+    renderEquityReturnsChart();
+  }
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -1478,6 +1542,525 @@ document.getElementById('cf-alloc-toggle').addEventListener('click', e => {
   cfAllocMode = btn.dataset.mode;
   document.querySelectorAll('#cf-alloc-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
   renderCFAllocChart();
+});
+
+// ──────────────────────────────────────────────────────────────
+// Equity Data
+// ──────────────────────────────────────────────────────────────
+
+// Split-adjusted year-end shares outstanding (millions)
+// Pre-2022 values multiplied by 5 for 5-for-1 split (April 14, 2022)
+const SHARES_OUTSTANDING_ANNUAL = {
+  2015: 770.2 * 5,   // 3851M split-adjusted
+  2016: 763.2 * 5,   // 3816M
+  2017: 733.4 * 5,   // 3667M
+  2018: 715.4 * 5,   // 3577M
+  2019: 706.6 * 5,   // 3533M
+  2020: 691.0 * 5,   // 3455M
+  2021: 3418.0,      // post-split (5-for-1 effective in 2021 annual filing)
+  2022: 3324.0,
+  2023: 3294.0,
+  2024: 3258.0,
+  2025: 3216.0,
+};
+
+// Retained earnings quarterly balance (from EDGAR, 2021-Q1 onward, $B)
+// Pre-2021: approximate via stockholders_equity growth proxy
+const RETAINED_EARNINGS = {
+  '2021-Q1': 15.62e9, '2021-Q2': 16.37e9, '2021-Q3': 16.97e9, '2021-Q4': 17.16e9,
+  '2022-Q1': 17.39e9, '2022-Q2': 17.84e9, '2022-Q3': 17.93e9, '2022-Q4': 17.41e9,
+  '2023-Q1': 18.36e9, '2023-Q2': 19.12e9, '2023-Q3': 19.62e9, '2023-Q4': 19.74e9,
+  '2024-Q1': 20.78e9, '2024-Q2': 21.39e9, '2024-Q3': 22.14e9, '2024-Q4': 22.09e9,
+  '2025-Q1': 22.75e9, '2025-Q2': 23.76e9, '2025-Q3': 24.59e9, '2025-Q4': 24.24e9,
+};
+
+// Interpolate shares outstanding quarterly (linear between year-end points)
+function interpolateSharesQuarterly(period) {
+  // period like "2022-Q3"
+  const [yearStr, qStr] = period.split('-');
+  const year = parseInt(yearStr);
+  const quarter = parseInt(qStr.replace('Q',''));
+  const startShares = SHARES_OUTSTANDING_ANNUAL[year];
+  const endShares = SHARES_OUTSTANDING_ANNUAL[year + 1] || startShares;
+  // Interpolate: Q1=25%, Q2=50%, Q3=75%, Q4=100% of way through year
+  const t = quarter / 4;
+  return startShares + (endShares - startShares) * t;
+}
+
+// Split-adjusted EPS: pre-2022 eps_basic was on pre-split basis, divide by 5
+function splitAdjustedEPS(q) {
+  // Split effective April 2022 (Q2 2022 onward is post-split)
+  const year = q.fiscal_year !== undefined ? q.fiscal_year : q.fiscalYear;
+  const quarter = q.quarter;
+  const eps = q.eps_basic !== undefined ? q.eps_basic : q.epsBasic;
+  if (year < 2022 || (year === 2022 && quarter === 1)) {
+    return eps / 5;
+  }
+  return eps;
+}
+
+function renderEquityKPIs() {
+  const grid = document.getElementById('equity-kpi-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  const allQ = QUARTERS; // full 44-quarter array
+  const latest = allQ[allQ.length - 1];
+  const prevYearQ = allQ[allQ.length - 5];
+
+  // Card 1: Book Value Per Share (latest quarter)
+  const latestShares = interpolateSharesQuarterly(latest.period) * 1e6; // convert M to units
+  const bvps = latest.stockholdersEquity / latestShares;
+  const prevBVPS = prevYearQ ? (prevYearQ.stockholdersEquity / (interpolateSharesQuarterly(prevYearQ.period) * 1e6)) : null;
+  const bvpsChange = prevBVPS ? ((bvps - prevBVPS) / prevBVPS) * 100 : null;
+
+  // Card 2: Cumulative 10Y Shareholder Returns
+  const totalReturned = CASHFLOW_DATA.reduce((s, d) => s + Math.abs(d.stock_repurchases) + Math.abs(d.dividends_paid), 0);
+  const ttmReturned = CASHFLOW_DATA.slice(-4).reduce((s, d) => s + Math.abs(d.stock_repurchases) + Math.abs(d.dividends_paid), 0);
+  const prevTTMReturned = CASHFLOW_DATA.slice(-8, -4).reduce((s, d) => s + Math.abs(d.stock_repurchases) + Math.abs(d.dividends_paid), 0);
+  const returnedChange = ((ttmReturned - prevTTMReturned) / prevTTMReturned) * 100;
+
+  // Card 3: Float Reduction Since 2015
+  const shares2015 = SHARES_OUTSTANDING_ANNUAL[2015];
+  const sharesLatest = SHARES_OUTSTANDING_ANNUAL[2025];
+  const floatReduction = ((shares2015 - sharesLatest) / shares2015) * 100;
+
+  // Card 4: EPS Accretion Premium (EPS CAGR vs OpNI CAGR)
+  const firstQ = allQ[0];
+  const n = allQ.length / 4; // years
+  const epsFirst = splitAdjustedEPS(firstQ);
+  const epsLatest = splitAdjustedEPS(latest);
+  const epsCagr = (Math.pow(epsLatest / epsFirst, 1/n) - 1) * 100;
+  const niFirst = firstQ.operatingNetIncome;
+  const niLatest = latest.operatingNetIncome;
+  const niCagr = (Math.pow(niLatest / niFirst, 1/n) - 1) * 100;
+  const accrPremium = epsCagr - niCagr;
+
+  const cards = [
+    {
+      label: 'BOOK VALUE / SHARE',
+      value: '$' + bvps.toFixed(2),
+      change: bvpsChange,
+      color: '#C8A050',
+      sublabel: 'latest quarter'
+    },
+    {
+      label: 'RETURNED TO SHAREHOLDERS',
+      value: '$' + (totalReturned / 1e9).toFixed(1) + 'B',
+      change: returnedChange,
+      color: '#2DD4BF',
+      sublabel: '10Y cumulative (buybacks + dividends)'
+    },
+    {
+      label: 'FLOAT REDUCTION SINCE 2015',
+      value: '–' + floatReduction.toFixed(1) + '%',
+      change: null,
+      color: '#818cf8',
+      sublabel: 'split-adjusted shares retired'
+    },
+    {
+      label: 'EPS ACCRETION PREMIUM',
+      value: (accrPremium >= 0 ? '+' : '') + accrPremium.toFixed(1) + ' pp',
+      change: null,
+      color: '#22c55e',
+      sublabel: 'EPS CAGR minus Op. NI CAGR'
+    }
+  ];
+
+  cards.forEach(k => {
+    const card = document.createElement('div');
+    card.className = 'kpi-card';
+    const chVal = k.change != null ? ((k.change >= 0 ? '+' : '') + k.change.toFixed(1) + '% YoY') : '';
+    const chClass = k.change != null ? (k.change >= 0 ? 'up' : 'down') : '';
+    card.innerHTML = `
+      <div class="label">${k.label}</div>
+      <div class="value">${k.value}</div>
+      ${k.change != null ? `<div class="change ${chClass}">${chVal}</div>` : ''}
+      ${k.sublabel ? `<div style="font-size:11px;color:#555;font-style:italic;margin-top:2px">${k.sublabel}</div>` : ''}
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function renderEquityCompoundChart() {
+  const ctx = document.getElementById('chart-equity-compound');
+  if (!ctx) return;
+  if (charts.equityCompound) charts.equityCompound.destroy();
+
+  const data = QUARTERS;
+  const labels = data.map(q => q.period);
+  const equity = data.map(q => q.stockholdersEquity / 1e9);
+  const bvps = data.map(q => q.stockholdersEquity / (interpolateSharesQuarterly(q.period) * 1e6));
+
+  charts.equityCompound = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Stockholders' Equity",
+          data: equity,
+          backgroundColor: 'rgba(200,160,80,.3)',
+          borderColor: '#C8A050',
+          borderWidth: 1,
+          borderRadius: 3,
+          yAxisID: 'y',
+          order: 2,
+          type: 'bar'
+        },
+        {
+          label: 'Book Value / Share',
+          data: bvps,
+          borderColor: '#2DD4BF',
+          backgroundColor: 'rgba(45,212,191,.1)',
+          borderWidth: 2.5,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          fill: true,
+          tension: 0.3,
+          yAxisID: 'y1',
+          order: 1,
+          type: 'line'
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        ...chartDefaults.plugins,
+        tooltip: {
+          ...chartDefaults.plugins.tooltip,
+          callbacks: {
+            label: c => c.dataset.label === 'Book Value / Share'
+              ? `Book Value/Share: $${c.parsed.y.toFixed(2)}`
+              : `Equity: $${c.parsed.y.toFixed(2)}B`
+          }
+        },
+        annotation: {
+          annotations: {
+            splitLine: {
+              type: 'line',
+              xMin: '2022-Q2', xMax: '2022-Q2',
+              borderColor: 'rgba(255,255,255,0.2)',
+              borderWidth: 1.5,
+              borderDash: [4,4],
+              label: { display: true, content: '5-for-1 Split', position: 'start', color: '#a3a3a3', font: { size: 10 }, backgroundColor: 'transparent' }
+            }
+          }
+        }
+      },
+      scales: {
+        x: chartDefaults.scales.x,
+        y: {
+          ...chartDefaults.scales.y, position: 'left',
+          title: { display: true, text: "Equity ($B)", color: '#606080' },
+          ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v.toFixed(0) + 'B' }
+        },
+        y1: {
+          ...chartDefaults.scales.y, position: 'right',
+          title: { display: true, text: 'Book Value / Share ($)', color: '#606080' },
+          ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v.toFixed(2) },
+          grid: { drawOnChartArea: false }
+        }
+      }
+    }
+  });
+}
+
+function renderEquitySharesChart() {
+  const ctx = document.getElementById('chart-equity-shares');
+  if (!ctx) return;
+  if (charts.equityShares) charts.equityShares.destroy();
+
+  // Quarterly buyback spend (bars)
+  const labels = CASHFLOW_DATA.map(d => d.period);
+  const buybackData = CASHFLOW_DATA.map(d => Math.abs(d.stock_repurchases) / 1e9);
+
+  // Interpolate share count onto quarterly scale
+  const sharesQuarterly = labels.map(p => interpolateSharesQuarterly(p));
+
+  charts.equityShares = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Buyback Spend',
+          data: buybackData,
+          backgroundColor: 'rgba(129,140,248,.4)',
+          borderColor: '#818cf8',
+          borderWidth: 1,
+          borderRadius: 3,
+          yAxisID: 'y',
+          order: 2,
+          type: 'bar'
+        },
+        {
+          label: 'Shares Outstanding (Split-Adj.)',
+          data: sharesQuarterly,
+          borderColor: '#C8A050',
+          backgroundColor: 'transparent',
+          borderWidth: 2.5,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          fill: false,
+          tension: 0.2,
+          yAxisID: 'y1',
+          order: 1,
+          type: 'line'
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        ...chartDefaults.plugins,
+        tooltip: {
+          ...chartDefaults.plugins.tooltip,
+          callbacks: {
+            label: c => c.dataset.label === 'Shares Outstanding (Split-Adj.)'
+              ? `Shares: ${c.parsed.y.toFixed(0)}M`
+              : `Buybacks: $${c.parsed.y.toFixed(2)}B`
+          }
+        },
+        annotation: {
+          annotations: {
+            splitLine: {
+              type: 'line', xMin: '2022-Q2', xMax: '2022-Q2',
+              borderColor: 'rgba(255,255,255,0.2)', borderWidth: 1.5, borderDash: [4,4],
+              label: { display: true, content: '5-for-1 Split', position: 'start', color: '#a3a3a3', font: { size: 10 }, backgroundColor: 'transparent' }
+            }
+          }
+        }
+      },
+      scales: {
+        x: chartDefaults.scales.x,
+        y: {
+          ...chartDefaults.scales.y, position: 'left',
+          title: { display: true, text: 'Buyback Spend ($B)', color: '#606080' },
+          ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v.toFixed(1) + 'B' }
+        },
+        y1: {
+          ...chartDefaults.scales.y, position: 'right',
+          title: { display: true, text: 'Shares Outstanding (M)', color: '#606080' },
+          ticks: { ...chartDefaults.scales.y.ticks, callback: v => v.toFixed(0) + 'M' },
+          grid: { drawOnChartArea: false }
+        }
+      }
+    }
+  });
+}
+
+function renderEquityEPSChart() {
+  const ctx = document.getElementById('chart-equity-eps');
+  if (!ctx) return;
+  if (charts.equityEPS) charts.equityEPS.destroy();
+
+  const data = QUARTERS;
+  const labels = data.map(q => q.period);
+
+  // Rebase both to 100 at 2015-Q1
+  const baseNI = data[0].operatingNetIncome;
+  const baseEPS = splitAdjustedEPS(data[0]);
+
+  const niIndexed = data.map(q => (q.operatingNetIncome / baseNI) * 100);
+  const epsIndexed = data.map(q => (splitAdjustedEPS(q) / baseEPS) * 100);
+
+  charts.equityEPS = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Operating NI (Indexed)',
+          data: niIndexed,
+          borderColor: '#C8A050',
+          backgroundColor: 'transparent',
+          borderWidth: 2.5,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          tension: 0.3,
+          fill: false,
+          order: 2
+        },
+        {
+          label: 'EPS Split-Adj. (Indexed)',
+          data: epsIndexed,
+          borderColor: '#2DD4BF',
+          backgroundColor: 'rgba(45,212,191,0.08)',
+          borderWidth: 2.5,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          tension: 0.3,
+          fill: '-1',
+          order: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        ...chartDefaults.plugins,
+        tooltip: {
+          ...chartDefaults.plugins.tooltip,
+          callbacks: {
+            label: c => `${c.dataset.label}: ${c.parsed.y.toFixed(1)} (base 100 = 2015-Q1)`
+          }
+        },
+        annotation: {
+          annotations: {
+            baseLine: {
+              type: 'line', yMin: 100, yMax: 100,
+              borderColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderDash: [4,4],
+              label: { display: true, content: 'Base (2015-Q1)', position: 'start', color: '#555', font: { size: 10 }, backgroundColor: 'transparent' }
+            }
+          }
+        }
+      },
+      scales: {
+        x: chartDefaults.scales.x,
+        y: {
+          ...chartDefaults.scales.y,
+          title: { display: true, text: 'Indexed (2015-Q1 = 100)', color: '#606080' },
+          ticks: { ...chartDefaults.scales.y.ticks, callback: v => v.toFixed(0) }
+        }
+      }
+    }
+  });
+}
+
+let equityReturnsMode = 'annual';
+
+function renderEquityReturnsChart() {
+  const ctx = document.getElementById('chart-equity-returns');
+  if (!ctx) return;
+  if (charts.equityReturns) charts.equityReturns.destroy();
+
+  let labels, divs, buybacks, niData;
+
+  if (equityReturnsMode === 'annual') {
+    const annCF = computeCashflowAnnualTotals(CASHFLOW_DATA);
+    labels = annCF.map(d => String(d.year));
+    divs = annCF.map(d => Math.abs(d.dividends_paid) / 1e9);
+    buybacks = annCF.map(d => Math.abs(d.stock_repurchases) / 1e9);
+    // Annual operating NI
+    const annNI = computeAnnualTotals(QUARTERS);
+    niData = annCF.map(d => {
+      const ni = annNI.find(n => n.year === d.year);
+      return ni ? ni.operatingNetIncome / 1e9 : null;
+    });
+  } else {
+    labels = CASHFLOW_DATA.map(d => d.period);
+    divs = CASHFLOW_DATA.map(d => Math.abs(d.dividends_paid) / 1e9);
+    buybacks = CASHFLOW_DATA.map(d => Math.abs(d.stock_repurchases) / 1e9);
+    niData = CASHFLOW_DATA.map(d => {
+      const q = QUARTERS.find(q => q.period === d.period);
+      return q ? q.operatingNetIncome / 1e9 : null;
+    });
+  }
+
+  const returnRate = labels.map((_, i) => {
+    if (!niData[i] || niData[i] === 0) return null;
+    return ((divs[i] + buybacks[i]) / niData[i]) * 100;
+  });
+
+  charts.equityReturns = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Dividends',
+          data: divs,
+          backgroundColor: 'rgba(45,212,191,.45)',
+          borderColor: '#2DD4BF',
+          borderWidth: 1,
+          borderRadius: 3,
+          stack: 'returns',
+          yAxisID: 'y',
+          order: 2
+        },
+        {
+          label: 'Buybacks',
+          data: buybacks,
+          backgroundColor: 'rgba(129,140,248,.45)',
+          borderColor: '#818cf8',
+          borderWidth: 1,
+          borderRadius: 3,
+          stack: 'returns',
+          yAxisID: 'y',
+          order: 3
+        },
+        {
+          label: 'Capital Return Rate',
+          data: returnRate,
+          type: 'line',
+          borderColor: '#C8A050',
+          backgroundColor: 'transparent',
+          borderWidth: 2.5,
+          pointRadius: equityReturnsMode === 'annual' ? 5 : 2,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#C8A050',
+          tension: 0.3,
+          fill: false,
+          yAxisID: 'y1',
+          order: 1,
+          spanGaps: true
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        ...chartDefaults.plugins,
+        tooltip: {
+          ...chartDefaults.plugins.tooltip,
+          callbacks: {
+            label: c => {
+              if (c.dataset.label === 'Capital Return Rate') return c.parsed.y != null ? `Return Rate: ${c.parsed.y.toFixed(1)}% of Op. NI` : '';
+              return `${c.dataset.label}: $${c.parsed.y.toFixed(2)}B`;
+            },
+            afterBody: items => {
+              const idx = items[0].dataIndex;
+              const total = (divs[idx] || 0) + (buybacks[idx] || 0);
+              return [`Total Returned: $${total.toFixed(2)}B`];
+            }
+          }
+        },
+        annotation: {
+          annotations: {
+            hundredPct: {
+              type: 'line', yScaleID: 'y1', yMin: 100, yMax: 100,
+              borderColor: 'rgba(239,83,80,0.4)', borderWidth: 1.5, borderDash: [5,4],
+              label: { display: true, content: '100% payout', position: 'end', color: '#ef5350', font: { size: 10 }, backgroundColor: 'transparent' }
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ...chartDefaults.scales.x, stacked: true },
+        y: {
+          ...chartDefaults.scales.y, stacked: true, position: 'left',
+          title: { display: true, text: 'Returns ($B)', color: '#606080' },
+          ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v.toFixed(1) + 'B' }
+        },
+        y1: {
+          ...chartDefaults.scales.y, position: 'right',
+          title: { display: true, text: 'Capital Return Rate (%)', color: '#606080' },
+          ticks: { ...chartDefaults.scales.y.ticks, callback: v => v + '%' },
+          grid: { drawOnChartArea: false }
+        }
+      }
+    }
+  });
+}
+
+document.getElementById('equity-returns-toggle').addEventListener('click', e => {
+  const btn = e.target.closest('.toggle-btn');
+  if (!btn) return;
+  equityReturnsMode = btn.dataset.mode;
+  document.querySelectorAll('#equity-returns-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+  renderEquityReturnsChart();
 });
 
 // ──────────────────────────────────────────────────────────────
