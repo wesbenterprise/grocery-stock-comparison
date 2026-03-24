@@ -1174,18 +1174,28 @@ function renderCFAllocChart() {
   const ctx = document.getElementById('chart-cf-alloc');
   if (charts.cfAlloc) charts.cfAlloc.destroy();
 
-  let labels, capex, divs, buybacks;
+  let labels, capex, divs, buybacks, retained;
   if (cfAllocMode === 'quarterly') {
     labels = CASHFLOW_DATA.map(d => d.period);
     capex = CASHFLOW_DATA.map(d => Math.abs(d.capex) / 1e9);
     divs = CASHFLOW_DATA.map(d => Math.abs(d.dividends_paid) / 1e9);
     buybacks = CASHFLOW_DATA.map(d => Math.abs(d.stock_repurchases) / 1e9);
+    // Retained = FCF minus cash returned to shareholders (dividends + buybacks)
+    // Negative retained means shareholder returns exceeded FCF that quarter
+    retained = CASHFLOW_DATA.map(d => {
+      const r = d.free_cash_flow - Math.abs(d.dividends_paid) - Math.abs(d.stock_repurchases);
+      return r / 1e9;
+    });
   } else {
     const ann = computeCashflowAnnualTotals(CASHFLOW_DATA);
     labels = ann.map(d => String(d.year));
     capex = ann.map(d => Math.abs(d.capex) / 1e9);
     divs = ann.map(d => Math.abs(d.dividends_paid) / 1e9);
     buybacks = ann.map(d => Math.abs(d.stock_repurchases) / 1e9);
+    retained = ann.map(d => {
+      const r = d.free_cash_flow - Math.abs(d.dividends_paid) - Math.abs(d.stock_repurchases);
+      return r / 1e9;
+    });
   }
 
   charts.cfAlloc = new Chart(ctx, {
@@ -1195,12 +1205,36 @@ function renderCFAllocChart() {
       datasets: [
         { label: 'Capex', data: capex, backgroundColor: 'rgba(200,160,80,.55)', borderColor: '#C8A050', borderWidth: 1, borderRadius: 3, stack: 'alloc' },
         { label: 'Dividends', data: divs, backgroundColor: 'rgba(45,212,191,.45)', borderColor: '#2DD4BF', borderWidth: 1, borderRadius: 3, stack: 'alloc' },
-        { label: 'Buybacks', data: buybacks, backgroundColor: 'rgba(76,175,80,.45)', borderColor: '#4caf50', borderWidth: 1, borderRadius: 3, stack: 'alloc' }
+        { label: 'Buybacks', data: buybacks, backgroundColor: 'rgba(76,175,80,.45)', borderColor: '#4caf50', borderWidth: 1, borderRadius: 3, stack: 'alloc' },
+        { label: 'Retained / Reinvested', data: retained, backgroundColor: retained.map(v => v >= 0 ? 'rgba(129,140,248,.45)' : 'rgba(239,83,80,.35)'), borderColor: retained.map(v => v >= 0 ? '#818cf8' : '#ef5350'), borderWidth: 1, borderRadius: 3, stack: 'alloc' }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { ...chartDefaults.plugins, tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: ctx => ctx.dataset.label + ': $' + ctx.parsed.y.toFixed(2) + 'B' } } },
+      plugins: {
+        ...chartDefaults.plugins,
+        tooltip: {
+          ...chartDefaults.plugins.tooltip,
+          callbacks: {
+            label: ctx => {
+              const v = ctx.parsed.y;
+              if (ctx.dataset.label === 'Retained / Reinvested') {
+                return v >= 0
+                  ? `Retained / Reinvested: $${v.toFixed(2)}B`
+                  : `Returned > FCF: $${Math.abs(v).toFixed(2)}B excess`;
+              }
+              return ctx.dataset.label + ': $' + v.toFixed(2) + 'B';
+            },
+            afterBody: items => {
+              const idx = items[0].dataIndex;
+              const data = cfAllocMode === 'quarterly' ? CASHFLOW_DATA : computeCashflowAnnualTotals(CASHFLOW_DATA);
+              const d = data[idx];
+              const total = Math.abs(d.capex) + Math.abs(d.dividends_paid) + Math.abs(d.stock_repurchases);
+              return [`Total deployed (ex. retained): $${(total/1e9).toFixed(2)}B`];
+            }
+          }
+        }
+      },
       scales: {
         x: { ...chartDefaults.scales.x, stacked: true },
         y: { ...chartDefaults.scales.y, stacked: true, ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v.toFixed(1) + 'B' }, title: { display: true, text: '($B)', color: '#606080' } }
