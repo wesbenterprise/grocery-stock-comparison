@@ -228,16 +228,6 @@ tr:hover td{background:rgba(76,175,80,.03)}
   <!-- KPI Cards -->
   <div class="kpi-grid" id="kpi-grid"></div>
 
-  <!-- IS Global Period Toggle (affects margins, RPS, balance, stores charts) -->
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
-    <span style="font-family:var(--font-mono);font-size:12px;color:var(--muted);letter-spacing:.04em">VIEW</span>
-    <div class="chart-toggle" id="is-period-toggle">
-      <button class="toggle-btn active" data-period="quarterly">Quarterly</button>
-      <button class="toggle-btn" data-period="annual">Annual</button>
-    </div>
-    <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);opacity:.6">(applies to margins, revenue/store, balance &amp; stores charts)</span>
-  </div>
-
   <!-- Revenue & Operating Net Income -->
   <div class="chart-card">
     <h3>Revenue &amp; Adjusted Net Income</h3>
@@ -264,6 +254,10 @@ tr:hover td{background:rgba(76,175,80,.03)}
     <div class="chart-card">
       <h3>Margin Analysis</h3>
       <div class="chart-subtitle">Gross, operating &amp; net margins with industry reference lines</div>
+      <div class="chart-toggle" id="margins-period-toggle">
+        <button class="toggle-btn active" data-period="quarterly">Quarterly</button>
+        <button class="toggle-btn" data-period="annual">Annual</button>
+      </div>
       <div style="position:relative;height:280px"><canvas id="chart-margins"></canvas></div>
       <div class="narrative-card">
         <div class="narrative-header">&#9670; Anderson's Take</div>
@@ -275,6 +269,10 @@ tr:hover td{background:rgba(76,175,80,.03)}
     <div class="chart-card">
       <h3>Revenue Per Store</h3>
       <div class="chart-subtitle">Quarterly revenue divided by interpolated store count Store count interpolated between annual year-end figures.</div>
+      <div class="chart-toggle" id="rps-period-toggle">
+        <button class="toggle-btn active" data-period="quarterly">Quarterly</button>
+        <button class="toggle-btn" data-period="annual">Annual</button>
+      </div>
       <div style="position:relative;height:280px"><canvas id="chart-rps"></canvas></div>
       <div class="narrative-card">
         <div class="narrative-header">&#9670; Anderson's Take</div>
@@ -295,6 +293,10 @@ tr:hover td{background:rgba(76,175,80,.03)}
     <div class="chart-card">
       <h3>Balance Sheet</h3>
       <div class="chart-subtitle">Total assets, liabilities &amp; stockholders' equity over time</div>
+      <div class="chart-toggle" id="balance-period-toggle">
+        <button class="toggle-btn active" data-period="quarterly">Quarterly</button>
+        <button class="toggle-btn" data-period="annual">Annual</button>
+      </div>
       <div style="position:relative;height:280px"><canvas id="chart-balance"></canvas></div>
       <div class="narrative-card">
         <div class="narrative-header">&#9670; Anderson's Take</div>
@@ -403,19 +405,16 @@ tr:hover td{background:rgba(76,175,80,.03)}
     <!-- Equity KPI Cards -->
     <div class="kpi-grid" id="equity-kpi-grid"></div>
 
-    <!-- Global Period Toggle -->
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
-      <span style="font-family:var(--font-mono);font-size:12px;color:var(--muted);letter-spacing:.04em">VIEW</span>
-      <div class="chart-toggle" id="equity-period-toggle">
-        <button class="toggle-btn" data-period="quarterly">Quarterly</button>
-        <button class="toggle-btn active" data-period="annual">Annual</button>
-      </div>
-    </div>
+
 
     <!-- Chart 1: Equity Compounding -->
     <div class="chart-card">
       <h3>Equity Compounding</h3>
       <div class="chart-subtitle">Total stockholders' equity and book value per share</div>
+      <div class="chart-toggle" id="equity-compound-toggle">
+        <button class="toggle-btn" data-period="quarterly">Quarterly</button>
+        <button class="toggle-btn active" data-period="annual">Annual</button>
+      </div>
       <div style="position:relative;height:340px"><canvas id="chart-equity-compound"></canvas></div>
       <div class="narrative-card">
         <div class="narrative-header">&#9670; Anderson's Take</div>
@@ -427,6 +426,10 @@ tr:hover td{background:rgba(76,175,80,.03)}
     <div class="chart-card">
       <h3>Share Count &amp; Buybacks</h3>
       <div class="chart-subtitle">Split-adjusted shares outstanding and quarterly buyback spend (pre-2022 figures ×5 for split)</div>
+      <div class="chart-toggle" id="equity-shares-toggle">
+        <button class="toggle-btn" data-period="quarterly">Quarterly</button>
+        <button class="toggle-btn active" data-period="annual">Annual</button>
+      </div>
       <div style="position:relative;height:340px"><canvas id="chart-equity-shares"></canvas></div>
       <div class="narrative-card">
         <div class="narrative-header">&#9670; Anderson's Take</div>
@@ -438,6 +441,10 @@ tr:hover td{background:rgba(76,175,80,.03)}
     <div class="chart-card">
       <h3>EPS vs Adj. Net Income — Indexed Growth</h3>
       <div class="chart-subtitle">Both rebased to 100 at 2015-Q1. The gap is the buyback accretion premium.</div>
+      <div class="chart-toggle" id="equity-eps-toggle">
+        <button class="toggle-btn" data-period="quarterly">Quarterly</button>
+        <button class="toggle-btn active" data-period="annual">Annual</button>
+      </div>
       <div style="position:relative;height:320px"><canvas id="chart-equity-eps"></canvas></div>
       <div class="narrative-card">
         <div class="narrative-header">&#9670; Anderson's Take</div>
@@ -460,18 +467,15 @@ tr:hover td{background:rgba(76,175,80,.03)}
   <div id="bs-section" style="display:none">
     <div class="kpi-grid" id="bs-kpi-grid"></div>
 
-    <!-- BS Global Period Toggle -->
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
-      <span style="font-family:var(--font-mono);font-size:12px;color:var(--muted);letter-spacing:.04em">VIEW</span>
-      <div class="chart-toggle" id="bs-period-toggle">
-        <button class="toggle-btn active" data-period="quarterly">Quarterly</button>
-        <button class="toggle-btn" data-period="annual">Annual</button>
-      </div>
-    </div>
+
 
     <div class="chart-card">
       <h3>Asset Composition</h3>
       <div class="chart-subtitle">Operating assets vs. investment portfolio — quarterly FY2015–FY2025</div>
+      <div class="chart-toggle" id="bs-assets-toggle">
+        <button class="toggle-btn active" data-period="quarterly">Quarterly</button>
+        <button class="toggle-btn" data-period="annual">Annual</button>
+      </div>
       <div style="position:relative;height:360px"><canvas id="chart-bs-assets"></canvas></div>
       <div class="narrative-card">
         <div class="narrative-header">&#9670; Anderson's Take</div>
@@ -482,6 +486,10 @@ tr:hover td{background:rgba(76,175,80,.03)}
     <div class="chart-card">
       <h3>Balance Sheet Growth</h3>
       <div class="chart-subtitle">Total assets, equity, and liabilities — quarterly FY2015–FY2025</div>
+      <div class="chart-toggle" id="bs-growth-toggle">
+        <button class="toggle-btn active" data-period="quarterly">Quarterly</button>
+        <button class="toggle-btn" data-period="annual">Annual</button>
+      </div>
       <div style="position:relative;height:340px"><canvas id="chart-bs-growth"></canvas></div>
       <div class="narrative-card">
         <div class="narrative-header">&#9670; Anderson's Take</div>
@@ -492,6 +500,10 @@ tr:hover td{background:rgba(76,175,80,.03)}
     <div class="chart-card">
       <h3>Asset Efficiency &amp; Working Capital</h3>
       <div class="chart-subtitle">Asset turnover (TTM) and current ratio — quarterly FY2015–FY2025</div>
+      <div class="chart-toggle" id="bs-efficiency-toggle">
+        <button class="toggle-btn active" data-period="quarterly">Quarterly</button>
+        <button class="toggle-btn" data-period="annual">Annual</button>
+      </div>
       <div style="position:relative;height:320px"><canvas id="chart-bs-efficiency"></canvas></div>
       <div class="narrative-card">
         <div class="narrative-header">&#9670; Anderson's Take</div>
@@ -809,7 +821,9 @@ let activePreset = 'all';
 let yearStart = 2015, yearEnd = 2025;
 let revPeriod = 'quarterly'; // 'quarterly' | 'annual'
 let revView = 'absolute';   // 'absolute' | 'yoy'
-let isPeriod = 'quarterly'; // global IS tab period (margins, RPS, balance, stores)
+let marginsPeriod = 'quarterly';
+let rpsPeriod = 'quarterly';
+let balancePeriod = 'quarterly';
 let charts = {};
 let tableSortCol = 'period';
 let tableSortAsc = false;
@@ -1191,17 +1205,17 @@ document.getElementById('rev-view-toggle').addEventListener('click', e => {
 function renderMarginsChart() {
   const ctx = document.getElementById('chart-margins');
   if (charts.margins) charts.margins.destroy();
-  const mData = isPeriod === 'annual' ? computeAnnualTotals(filteredData) : filteredData;
-  const mLabels = isPeriod === 'annual' ? mData.map(d => String(d.year)) : mData.map(q => q.period);
-  const getField = (d, qField, aField) => isPeriod === 'annual' ? d[aField] : d[qField];
+  const mData = marginsPeriod === 'annual' ? computeAnnualTotals(filteredData) : filteredData;
+  const mLabels = marginsPeriod === 'annual' ? mData.map(d => String(d.year)) : mData.map(q => q.period);
+  const getField = (d, qField, aField) => marginsPeriod === 'annual' ? d[aField] : d[qField];
   charts.margins = new Chart(ctx, {
     type: 'line',
     data: {
       labels: mLabels,
       datasets: [
-        { label: 'Gross Margin', data: mData.map(d => getField(d, 'grossMarginPct', 'grossMarginPct')), borderColor: '#4caf50', backgroundColor: 'rgba(76,175,80,.08)', borderWidth: 2, pointRadius: isPeriod === 'annual' ? 4 : 1.5, fill: true, tension: 0.3 },
-        { label: 'Operating Margin', data: mData.map(d => getField(d, 'operatingMarginPct', 'operatingMarginPct')), borderColor: '#2DD4BF', borderWidth: 2, pointRadius: isPeriod === 'annual' ? 4 : 1.5, tension: 0.3 },
-        { label: 'Op. Net Margin (ex. G/L)', data: mData.map(d => getField(d, 'operatingNetMarginPct', 'operatingNetMarginPct')), borderColor: '#818cf8', borderWidth: 2, pointRadius: isPeriod === 'annual' ? 4 : 1.5, tension: 0.3 }
+        { label: 'Gross Margin', data: mData.map(d => getField(d, 'grossMarginPct', 'grossMarginPct')), borderColor: '#4caf50', backgroundColor: 'rgba(76,175,80,.08)', borderWidth: 2, pointRadius: marginsPeriod === 'annual' ? 4 : 1.5, fill: true, tension: 0.3 },
+        { label: 'Operating Margin', data: mData.map(d => getField(d, 'operatingMarginPct', 'operatingMarginPct')), borderColor: '#2DD4BF', borderWidth: 2, pointRadius: marginsPeriod === 'annual' ? 4 : 1.5, tension: 0.3 },
+        { label: 'Op. Net Margin (ex. G/L)', data: mData.map(d => getField(d, 'operatingNetMarginPct', 'operatingNetMarginPct')), borderColor: '#818cf8', borderWidth: 2, pointRadius: marginsPeriod === 'annual' ? 4 : 1.5, tension: 0.3 }
       ]
     },
     options: {
@@ -1230,17 +1244,17 @@ function renderMarginsChart() {
 function renderRPSChart() {
   const ctx = document.getElementById('chart-rps');
   if (charts.rps) charts.rps.destroy();
-  const rpsData = isPeriod === 'annual' ? computeAnnualTotals(filteredData) : filteredData;
-  const rpsLabels = isPeriod === 'annual' ? rpsData.map(d => String(d.year)) : rpsData.map(q => q.period);
+  const rpsData = rpsPeriod === 'annual' ? computeAnnualTotals(filteredData) : filteredData;
+  const rpsLabels = rpsPeriod === 'annual' ? rpsData.map(d => String(d.year)) : rpsData.map(q => q.period);
   charts.rps = new Chart(ctx, {
     type: 'line',
     data: {
       labels: rpsLabels,
       datasets: [{
         label: 'Revenue Per Store',
-        data: rpsData.map(d => (isPeriod === 'annual' ? d.revenuePerStore : d.revenuePerStore) / 1e6),
+        data: rpsData.map(d => (rpsPeriod === 'annual' ? d.revenuePerStore : d.revenuePerStore) / 1e6),
         borderColor: '#4caf50', backgroundColor: 'rgba(76,175,80,.1)',
-        borderWidth: 2, pointRadius: isPeriod === 'annual' ? 4 : 2, fill: true, tension: 0.3
+        borderWidth: 2, pointRadius: rpsPeriod === 'annual' ? 4 : 2, fill: true, tension: 0.3
       }]
     },
     options: {
@@ -1301,9 +1315,9 @@ function renderHeatmap() {
 function renderBalanceChart() {
   const ctx = document.getElementById('chart-balance');
   if (charts.balance) charts.balance.destroy();
-  const blData = isPeriod === 'annual' ? filteredData.filter(q => q.quarter === 4) : filteredData;
-  const blLabels = isPeriod === 'annual' ? blData.map(q => String(q.fiscalYear)) : blData.map(q => q.period);
-  const pr = isPeriod === 'annual' ? 5 : 1;
+  const blData = balancePeriod === 'annual' ? filteredData.filter(q => q.quarter === 4) : filteredData;
+  const blLabels = balancePeriod === 'annual' ? blData.map(q => String(q.fiscalYear)) : blData.map(q => q.period);
+  const pr = balancePeriod === 'annual' ? 5 : 1;
   charts.balance = new Chart(ctx, {
     type: 'line',
     data: {
@@ -1421,7 +1435,7 @@ document.getElementById('table-toggle').addEventListener('click', () => {
 let activeTab = 'is';
 let cfOcfPeriod = 'quarterly'; // 'quarterly' | 'annual'
 let cfOcfView = 'absolute';   // 'absolute' | 'yoy'
-let cfConvPeriod = 'quarterly'; // global CF conversion chart period
+let cfConvPeriod = 'quarterly';
 let cfAllocMode = 'quarterly';
 
 function switchTab(tab) {
@@ -1949,8 +1963,8 @@ function renderEquityCompoundChart() {
   if (!ctx) return;
   if (charts.equityCompound) charts.equityCompound.destroy();
 
-  const data = equityPeriod === 'annual' ? QUARTERS.filter(q => q.quarter === 4) : QUARTERS;
-  const labels = equityPeriod === 'annual' ? data.map(q => String(q.fiscalYear)) : data.map(q => q.period);
+  const data = equityCompoundPeriod === 'annual' ? QUARTERS.filter(q => q.quarter === 4) : QUARTERS;
+  const labels = equityCompoundPeriod === 'annual' ? data.map(q => String(q.fiscalYear)) : data.map(q => q.period);
   const equity = data.map(q => q.stockholdersEquity / 1e9);
   const bvps = data.map(q => q.stockholdersEquity / (interpolateSharesQuarterly(q.period) * 1e6));
 
@@ -2036,7 +2050,7 @@ function renderEquitySharesChart() {
 
   // Annual: aggregate buybacks per year, use year-end share count
   let labels, buybackData, sharesQuarterly;
-  if (equityPeriod === 'annual') {
+  if (equitySharesPeriod === 'annual') {
     const annualMap = {};
     CASHFLOW_DATA.forEach(d => {
       if (!annualMap[d.fiscal_year]) annualMap[d.fiscal_year] = 0;
@@ -2128,8 +2142,8 @@ function renderEquityEPSChart() {
   if (!ctx) return;
   if (charts.equityEPS) charts.equityEPS.destroy();
 
-  const data = equityPeriod === 'annual' ? QUARTERS.filter(q => q.quarter === 4) : QUARTERS;
-  const labels = equityPeriod === 'annual' ? data.map(q => String(q.fiscalYear)) : data.map(q => q.period);
+  const data = equityEPSPeriod === 'annual' ? QUARTERS.filter(q => q.quarter === 4) : QUARTERS;
+  const labels = equityEPSPeriod === 'annual' ? data.map(q => String(q.fiscalYear)) : data.map(q => q.period);
 
   // Rebase both to 100 at first data point
   const baseNI = data[0].operatingNetIncome;
@@ -2201,8 +2215,12 @@ function renderEquityEPSChart() {
   });
 }
 
-let equityPeriod = 'annual'; // global equity tab toggle
-let equityReturnsMode = 'annual'; // kept for compat, synced to equityPeriod
+let equityCompoundPeriod = 'annual';
+let equitySharesPeriod = 'annual';
+let equityEPSPeriod = 'annual';
+let equityReturnsPeriod = 'annual';
+let equityPeriod = 'annual'; // kept for compat
+let equityReturnsMode = 'annual'; // kept for compat
 
 function renderEquityReturnsChart() {
   const ctx = document.getElementById('chart-equity-returns');
@@ -2211,7 +2229,7 @@ function renderEquityReturnsChart() {
 
   let labels, divs, buybacks, niData;
 
-  if (equityPeriod === 'annual') {
+  if (equityReturnsPeriod === 'annual') {
     const annCF = computeCashflowAnnualTotals(CASHFLOW_DATA);
     labels = annCF.map(d => String(d.year));
     divs = annCF.map(d => Math.abs(d.dividends_paid) / 1e9);
@@ -2271,7 +2289,7 @@ function renderEquityReturnsChart() {
           borderColor: '#4caf50',
           backgroundColor: 'transparent',
           borderWidth: 2.5,
-          pointRadius: equityPeriod === 'annual' ? 5 : 2,
+          pointRadius: equityReturnsPeriod === 'annual' ? 5 : 2,
           pointHoverRadius: 6,
           pointBackgroundColor: '#4caf50',
           tension: 0.3,
@@ -2328,17 +2346,22 @@ function renderEquityReturnsChart() {
   });
 }
 
-document.getElementById('equity-period-toggle').addEventListener('click', e => {
-  const btn = e.target.closest('.toggle-btn');
-  if (!btn) return;
-  equityPeriod = btn.dataset.period;
-  equityReturnsMode = equityPeriod; // keep in sync
-  document.querySelectorAll('#equity-period-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
-  renderEquityCompoundChart();
-  renderEquitySharesChart();
-  renderEquityEPSChart();
-  renderEquityReturnsChart();
-});
+// Per-chart equity toggles
+function makeToggle(id, varSetter, renderFn) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('click', e => {
+    const btn = e.target.closest('.toggle-btn');
+    if (!btn) return;
+    varSetter(btn.dataset.period || btn.dataset.mode);
+    el.querySelectorAll('.toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+    renderFn();
+  });
+}
+makeToggle('equity-compound-toggle', v => equityCompoundPeriod = v, renderEquityCompoundChart);
+makeToggle('equity-shares-toggle', v => equitySharesPeriod = v, renderEquitySharesChart);
+makeToggle('equity-eps-toggle', v => equityEPSPeriod = v, renderEquityEPSChart);
+makeToggle('equity-returns-toggle', v => { equityReturnsPeriod = v; equityReturnsMode = v; }, renderEquityReturnsChart);
 
 // ──────────────────────────────────────────────────────────────
 // Balance Sheet Tab — Render Functions
@@ -2404,8 +2427,8 @@ function renderBSAssetsChart() {
   if (!ctx) return;
   if (charts.bsAssets) charts.bsAssets.destroy();
 
-  const bsSrc = bsPeriod === 'annual' ? BS_DATA.filter(d => d.period.endsWith('Q4')) : BS_DATA;
-  const labels = bsPeriod === 'annual' ? bsSrc.map(d => d.period.split('-')[0]) : bsSrc.map(d => d.period);
+  const bsSrc = bsAssetsPeriod === 'annual' ? BS_DATA.filter(d => d.period.endsWith('Q4')) : BS_DATA;
+  const labels = bsAssetsPeriod === 'annual' ? bsSrc.map(d => d.period.split('-')[0]) : bsSrc.map(d => d.period);
 
   const ppe = bsSrc.map(d => (d.ppe_net || 0) / 1e9);
   const rou = bsSrc.map(d => (d.rou_asset || 0) / 1e9);
@@ -2448,9 +2471,9 @@ function renderBSAssetsChart() {
         tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: c => `${c.dataset.label}: $${c.parsed.y.toFixed(2)}B` } },
         annotation: {
           annotations: {
-            asc321: { type: 'line', xMin: bsPeriod === 'annual' ? '2018' : '2018-Q1', xMax: bsPeriod === 'annual' ? '2018' : '2018-Q1', borderColor: 'rgba(255,255,255,0.2)', borderWidth: 1, borderDash: [3,3],
+            asc321: { type: 'line', xMin: bsAssetsPeriod === 'annual' ? '2018' : '2018-Q1', xMax: bsAssetsPeriod === 'annual' ? '2018' : '2018-Q1', borderColor: 'rgba(255,255,255,0.2)', borderWidth: 1, borderDash: [3,3],
               label: { display: true, content: 'ASC 321', position: 'start', color: '#a3a3a3', font: { size: 9 }, backgroundColor: 'transparent' } },
-            asc842: { type: 'line', xMin: bsPeriod === 'annual' ? '2019' : '2019-Q1', xMax: bsPeriod === 'annual' ? '2019' : '2019-Q1', borderColor: 'rgba(255,255,255,0.2)', borderWidth: 1, borderDash: [3,3],
+            asc842: { type: 'line', xMin: bsAssetsPeriod === 'annual' ? '2019' : '2019-Q1', xMax: bsAssetsPeriod === 'annual' ? '2019' : '2019-Q1', borderColor: 'rgba(255,255,255,0.2)', borderWidth: 1, borderDash: [3,3],
               label: { display: true, content: 'ASC 842', position: 'start', color: '#a3a3a3', font: { size: 9 }, backgroundColor: 'transparent' } }
           }
         }
@@ -2468,8 +2491,8 @@ function renderBSGrowthChart() {
   if (!ctx) return;
   if (charts.bsGrowth) charts.bsGrowth.destroy();
 
-  const bsGSrc = bsPeriod === 'annual' ? BS_DATA.filter(d => d.period.endsWith('Q4')) : BS_DATA;
-  const labels = bsPeriod === 'annual' ? bsGSrc.map(d => d.period.split('-')[0]) : bsGSrc.map(d => d.period);
+  const bsGSrc = bsGrowthPeriod === 'annual' ? BS_DATA.filter(d => d.period.endsWith('Q4')) : BS_DATA;
+  const labels = bsGrowthPeriod === 'annual' ? bsGSrc.map(d => d.period.split('-')[0]) : bsGSrc.map(d => d.period);
   const assets = bsGSrc.map(d => d.total_assets / 1e9);
   const equity = bsGSrc.map(d => d.stockholders_equity / 1e9);
   const liabilities = bsGSrc.map(d => d.total_liabilities / 1e9);
@@ -2493,9 +2516,9 @@ function renderBSGrowthChart() {
         tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: c => c.dataset.label === 'Equity/Assets %' ? `Equity/Assets: ${c.parsed.y.toFixed(1)}%` : `${c.dataset.label}: $${c.parsed.y.toFixed(2)}B` } },
         annotation: {
           annotations: {
-            asc842: { type: 'line', xMin: bsPeriod === 'annual' ? '2019' : '2019-Q1', xMax: bsPeriod === 'annual' ? '2019' : '2019-Q1', borderColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderDash: [3,3],
+            asc842: { type: 'line', xMin: bsGrowthPeriod === 'annual' ? '2019' : '2019-Q1', xMax: bsGrowthPeriod === 'annual' ? '2019' : '2019-Q1', borderColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderDash: [3,3],
               label: { display: true, content: 'ASC 842', position: 'end', color: '#a3a3a3', font: { size: 9 }, backgroundColor: 'transparent' } },
-            covid: { type: 'line', xMin: bsPeriod === 'annual' ? '2020' : '2020-Q1', xMax: bsPeriod === 'annual' ? '2020' : '2020-Q1', borderColor: 'rgba(255,255,255,0.12)', borderWidth: 1, borderDash: [3,3],
+            covid: { type: 'line', xMin: bsGrowthPeriod === 'annual' ? '2020' : '2020-Q1', xMax: bsGrowthPeriod === 'annual' ? '2020' : '2020-Q1', borderColor: 'rgba(255,255,255,0.12)', borderWidth: 1, borderDash: [3,3],
               label: { display: true, content: 'COVID-19', position: 'end', color: '#a3a3a3', font: { size: 9 }, backgroundColor: 'transparent' } }
           }
         }
@@ -2514,8 +2537,8 @@ function renderBSEfficiencyChart() {
   if (!ctx) return;
   if (charts.bsEfficiency) charts.bsEfficiency.destroy();
 
-  const bsESrc = bsPeriod === 'annual' ? BS_DATA.filter(d => d.period.endsWith('Q4')) : BS_DATA;
-  const labels = bsPeriod === 'annual' ? bsESrc.map(d => d.period.split('-')[0]) : bsESrc.map(d => d.period);
+  const bsESrc = bsEfficiencyPeriod === 'annual' ? BS_DATA.filter(d => d.period.endsWith('Q4')) : BS_DATA;
+  const labels = bsEfficiencyPeriod === 'annual' ? bsESrc.map(d => d.period.split('-')[0]) : bsESrc.map(d => d.period);
   const assetTurnover = bsESrc.map((d, i) => {
     if (i < 3) return null;
     const qIdx = QUARTERS.findIndex(q => q.period === d.period);
@@ -2557,7 +2580,10 @@ function renderBSEfficiencyChart() {
 }
 
 let bsLiabMode = 'quarterly';
-let bsPeriod = 'quarterly'; // global BS tab period (assets, growth, efficiency)
+let bsAssetsPeriod = 'quarterly';
+let bsGrowthPeriod = 'quarterly';
+let bsEfficiencyPeriod = 'quarterly';
+let bsPeriod = 'quarterly'; // kept for compat
 
 function renderBSLiabChart() {
   const ctx = document.getElementById('chart-bs-liab');
@@ -2605,7 +2631,7 @@ function renderBSLiabChart() {
         tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: c => `${c.dataset.label}: $${c.parsed.y.toFixed(2)}B` } },
         annotation: {
           annotations: {
-            asc842: { type: 'line', xMin: bsPeriod === 'annual' ? '2019' : '2019-Q1', xMax: bsPeriod === 'annual' ? '2019' : '2019-Q1', borderColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderDash: [3,3],
+            asc842: { type: 'line', xMin: bsEfficiencyPeriod === 'annual' ? '2019' : '2019-Q1', xMax: bsEfficiencyPeriod === 'annual' ? '2019' : '2019-Q1', borderColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderDash: [3,3],
               label: { display: true, content: 'ASC 842', position: 'start', color: '#a3a3a3', font: { size: 9 }, backgroundColor: 'transparent' } }
           }
         }
@@ -2626,40 +2652,17 @@ document.getElementById('bs-liab-toggle').addEventListener('click', e => {
   renderBSLiabChart();
 });
 
-// IS global period toggle
-document.getElementById('is-period-toggle').addEventListener('click', e => {
-  const btn = e.target.closest('.toggle-btn');
-  if (!btn) return;
-  isPeriod = btn.dataset.period;
-  document.querySelectorAll('#is-period-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
-  renderMarginsChart();
-  renderRPSChart();
-  renderBalanceChart();
-  renderStoresChart();
-});
-
+// IS per-chart toggles
+makeToggle('margins-period-toggle', v => marginsPeriod = v, renderMarginsChart);
+makeToggle('rps-period-toggle', v => rpsPeriod = v, renderRPSChart);
+makeToggle('balance-period-toggle', v => balancePeriod = v, renderBalanceChart);
 // CF conversion toggle
-document.getElementById('cf-conv-toggle').addEventListener('click', e => {
-  const btn = e.target.closest('.toggle-btn');
-  if (!btn) return;
-  cfConvPeriod = btn.dataset.period;
-  document.querySelectorAll('#cf-conv-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
-  renderCFConversionChart();
-});
-
-// BS global period toggle
-document.getElementById('bs-period-toggle').addEventListener('click', e => {
-  const btn = e.target.closest('.toggle-btn');
-  if (!btn) return;
-  bsPeriod = btn.dataset.period;
-  bsLiabMode = btn.dataset.period; // sync liability chart too
-  document.querySelectorAll('#bs-period-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
-  document.querySelectorAll('#bs-liab-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === bsPeriod));
-  renderBSAssetsChart();
-  renderBSGrowthChart();
-  renderBSEfficiencyChart();
-  renderBSLiabChart();
-});
+makeToggle('cf-conv-toggle', v => cfConvPeriod = v, renderCFConversionChart);
+// BS per-chart toggles
+makeToggle('bs-assets-toggle', v => bsAssetsPeriod = v, renderBSAssetsChart);
+makeToggle('bs-growth-toggle', v => bsGrowthPeriod = v, renderBSGrowthChart);
+makeToggle('bs-efficiency-toggle', v => bsEfficiencyPeriod = v, renderBSEfficiencyChart);
+makeToggle('bs-liab-toggle', v => { bsLiabMode = v; bsPeriod = v; }, renderBSLiabChart);
 
 // ──────────────────────────────────────────────────────────────
 // Boot
