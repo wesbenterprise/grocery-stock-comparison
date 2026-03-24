@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Publix Super Markets — Financial History</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0/dist/chartjs-plugin-annotation.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0a;--card:#1a1a1a;--border:#2a2a2a;--amber:#C8A050;--teal:#2DD4BF;--text:#e5e5e5;--muted:#a3a3a3;--red:#ef4444;--green:#22c55e}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;min-height:100vh}
+a{color:var(--amber)}
+
+/* Password Gate */
+#gate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:24px}
+#gate .lock{font-size:64px;opacity:.8}
+#gate .gate-box{display:flex;gap:8px}
+#gate input{background:#111;border:1px solid var(--border);color:var(--text);padding:10px 16px;border-radius:8px;font-size:16px;width:220px;outline:none}
+#gate input:focus{border-color:var(--amber)}
+#gate button{background:var(--amber);color:#000;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;font-size:15px}
+#gate button:hover{opacity:.9}
+#gate .error{color:var(--red);font-size:14px;height:20px}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.shake{animation:shake .4s ease-in-out}
+
+/* Dashboard */
+#dashboard{display:none;max-width:1400px;margin:0 auto;padding:24px 20px 60px}
+header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:28px}
+header h1{color:var(--amber);font-size:28px;font-weight:700;letter-spacing:-.5px}
+header .subtitle{color:var(--muted);font-size:14px;margin-top:2px}
+.badge{display:inline-block;background:rgba(200,160,80,.12);color:var(--amber);border:1px solid rgba(200,160,80,.25);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;margin-top:6px}
+.logout-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s}
+.logout-btn:hover{border-color:var(--red);color:var(--red)}
+
+/* Year Selector */
+.year-selector{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:24px}
+.year-btn{background:var(--card);border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px;transition:all .15s}
+.year-btn:hover{border-color:var(--amber);color:var(--text)}
+.year-btn.active{background:rgba(200,160,80,.15);border-color:var(--amber);color:var(--amber);font-weight:600}
+.year-btn.preset{font-weight:500}
+
+/* KPI Cards */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 20px;position:relative;overflow:hidden}
+.kpi-card .label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.kpi-card .value{font-size:26px;font-weight:700;color:var(--text)}
+.kpi-card .change{font-size:12px;margin-top:2px}
+.kpi-card .change.up{color:var(--green)}
+.kpi-card .change.down{color:var(--red)}
+.kpi-card canvas{position:absolute;bottom:0;right:0;width:100px;height:40px;opacity:.5}
+
+/* Chart Cards */
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px}
+.chart-card h3{color:var(--text);font-size:16px;font-weight:600;margin-bottom:4px}
+.chart-card .chart-subtitle{color:var(--muted);font-size:12px;margin-bottom:16px}
+.chart-toggle{display:flex;gap:4px;margin-bottom:12px}
+.toggle-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 12px;border-radius:5px;cursor:pointer;font-size:12px;transition:all .15s}
+.toggle-btn.active{background:rgba(200,160,80,.15);border-color:var(--amber);color:var(--amber)}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+
+/* Heatmap */
+.heatmap{overflow-x:auto}
+.heatmap-grid{display:grid;gap:3px;min-width:600px}
+.hm-cell{padding:8px 6px;text-align:center;font-size:11px;font-weight:500;border-radius:4px;color:var(--text);transition:transform .15s}
+.hm-cell:hover{transform:scale(1.08);z-index:1}
+.hm-header{background:transparent;color:var(--muted);font-weight:600;font-size:11px}
+.hm-year{background:transparent;color:var(--muted);font-weight:600;text-align:right;padding-right:10px}
+
+/* Data Table */
+.table-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--amber);font-size:14px;font-weight:500;margin-bottom:12px;user-select:none}
+.table-toggle .arrow{transition:transform .2s;display:inline-block}
+.table-toggle .arrow.open{transform:rotate(90deg)}
+.data-table-wrap{overflow-x:auto;display:none}
+.data-table-wrap.open{display:block}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;white-space:nowrap;font-size:11px}
+th:first-child{text-align:left}
+th:hover{color:var(--amber)}
+th .sort-arrow{margin-left:3px;opacity:.4}
+th.sorted .sort-arrow{opacity:1;color:var(--amber)}
+td{padding:7px 10px;text-align:right;border-bottom:1px solid rgba(42,42,42,.5);white-space:nowrap}
+td:first-child{text-align:left;color:var(--amber);font-weight:500}
+tr:hover td{background:rgba(200,160,80,.04)}
+
+/* Responsive */
+@media(max-width:900px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .chart-grid{grid-template-columns:1fr}
+  header h1{font-size:22px}
+}
+@media(max-width:600px){
+  .kpi-grid{grid-template-columns:1fr}
+  #dashboard{padding:16px 12px 40px}
+}
+</style>
+</head>
+<body>
+
+<!-- Password Gate -->
+<div id="gate">
+  <div class="lock">&#128274;</div>
+  <div class="gate-box">
+    <input type="password" id="pw-input" placeholder="Enter password" autocomplete="off">
+    <button id="pw-btn">Unlock</button>
+  </div>
+  <div class="error" id="pw-error"></div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard">
+  <header>
+    <div>
+      <h1>Publix Super Markets</h1>
+      <div class="subtitle">Quarterly Financial Performance Dashboard</div>
+      <div class="badge">44 Quarters &middot; SEC EDGAR Data</div>
+    </div>
+    <button class="logout-btn" id="logout-btn">Logout</button>
+  </header>
+
+  <!-- Year Selector -->
+  <div class="year-selector" id="year-selector"></div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid" id="kpi-grid"></div>
+
+  <!-- Revenue & Net Income -->
+  <div class="chart-card">
+    <h3>Revenue &amp; Net Income</h3>
+    <div class="chart-subtitle">Quarterly revenue (bars) and net income (line) with key event annotations</div>
+    <div class="chart-toggle" id="rev-toggle">
+      <button class="toggle-btn active" data-mode="absolute">Absolute</button>
+      <button class="toggle-btn" data-mode="yoy">YoY %</button>
+    </div>
+    <canvas id="chart-revenue" height="320"></canvas>
+  </div>
+
+  <div class="chart-grid">
+    <!-- Margin Analysis -->
+    <div class="chart-card">
+      <h3>Margin Analysis</h3>
+      <div class="chart-subtitle">Gross, operating &amp; net margins with industry reference lines</div>
+      <canvas id="chart-margins" height="280"></canvas>
+    </div>
+
+    <!-- Revenue Per Store -->
+    <div class="chart-card">
+      <h3>Revenue Per Store</h3>
+      <div class="chart-subtitle">Quarterly revenue divided by interpolated store count</div>
+      <canvas id="chart-rps" height="280"></canvas>
+    </div>
+  </div>
+
+  <!-- Seasonal Heatmap -->
+  <div class="chart-card">
+    <h3>Seasonal Revenue Heatmap</h3>
+    <div class="chart-subtitle">Net margin % by quarter — amber intensity reflects revenue magnitude</div>
+    <div class="heatmap" id="heatmap"></div>
+  </div>
+
+  <div class="chart-grid">
+    <!-- Balance Sheet -->
+    <div class="chart-card">
+      <h3>Balance Sheet</h3>
+      <div class="chart-subtitle">Total assets, liabilities &amp; stockholders' equity over time</div>
+      <canvas id="chart-balance" height="280"></canvas>
+    </div>
+
+    <!-- Store Expansion -->
+    <div class="chart-card">
+      <h3>Store Expansion</h3>
+      <div class="chart-subtitle">Store count growth with net new stores per year</div>
+      <canvas id="chart-stores" height="280"></canvas>
+    </div>
+  </div>
+
+  <!-- Data Table -->
+  <div class="chart-card">
+    <div class="table-toggle" id="table-toggle">
+      <span class="arrow" id="table-arrow">&#9654;</span> Full Quarterly Data (44 Quarters)
+    </div>
+    <div class="data-table-wrap" id="table-wrap">
+      <table>
+        <thead id="table-head"></thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+// ──────────────────────────────────────────────────────────────
+// RAW DATA (44 quarters from SEC EDGAR)
+// ──────────────────────────────────────────────────────────────
+const RAW_QUARTERS = [
+  { period:"2015-Q1", fiscal_year:2015, quarter:1, period_end:"2015-03-28", revenue:8412745000, gross_profit:2411514000, gross_margin_pct:28.67, operating_income:773794000, operating_margin_pct:9.2, net_income:548918000, net_margin_pct:6.52, eps_basic:0.71, total_assets:15905937000, total_liabilities:4176984000, stockholders_equity:8591535000 },
+  { period:"2015-Q2", fiscal_year:2015, quarter:2, period_end:"2015-06-27", revenue:8018031000, gross_profit:2295692000, gross_margin_pct:28.63, operating_income:668440000, operating_margin_pct:8.34, net_income:482741000, net_margin_pct:6.02, eps_basic:0.62, total_assets:15714319000, total_liabilities:3662174000, stockholders_equity:8984622000 },
+  { period:"2015-Q3", fiscal_year:2015, quarter:3, period_end:"2015-09-26", revenue:7902144000, gross_profit:2163921000, gross_margin_pct:27.38, operating_income:558126000, operating_margin_pct:7.06, net_income:412314000, net_margin_pct:5.22, eps_basic:0.53, total_assets:15946059000, total_liabilities:3796287000, stockholders_equity:9123906000 },
+  { period:"2015-Q4", fiscal_year:2015, quarter:4, period_end:"2015-12-26", revenue:8285839000, gross_profit:2288022000, gross_margin_pct:27.61, operating_income:677881000, operating_margin_pct:8.18, net_income:521075000, net_margin_pct:6.29, eps_basic:0.68, total_assets:16359278000, total_liabilities:3928016000, stockholders_equity:9440453000 },
+  { period:"2016-Q1", fiscal_year:2016, quarter:1, period_end:"2016-03-26", revenue:8790561000, gross_profit:2519437000, gross_margin_pct:28.66, operating_income:826787000, operating_margin_pct:9.41, net_income:581889000, net_margin_pct:6.62, eps_basic:0.75, total_assets:17004056000, total_liabilities:3950696000, stockholders_equity:9591132000 },
+  { period:"2016-Q2", fiscal_year:2016, quarter:2, period_end:"2016-06-25", revenue:8190537000, gross_profit:2309064000, gross_margin_pct:28.19, operating_income:659351000, operating_margin_pct:8.05, net_income:478187000, net_margin_pct:5.84, eps_basic:0.62, total_assets:16940312000, total_liabilities:3743459000, stockholders_equity:9942670000 },
+  { period:"2016-Q3", fiscal_year:2016, quarter:3, period_end:"2016-09-24", revenue:8090649000, gross_profit:2188570000, gross_margin_pct:27.05, operating_income:535637000, operating_margin_pct:6.62, net_income:421135000, net_margin_pct:5.21, eps_basic:0.55, total_assets:17332819000, total_liabilities:4000632000, stockholders_equity:10159188000 },
+  { period:"2016-Q4", fiscal_year:2016, quarter:4, period_end:"2016-12-31", revenue:9202362000, gross_profit:2522733000, gross_margin_pct:27.41, operating_income:729876000, operating_margin_pct:7.93, net_income:544477000, net_margin_pct:5.92, eps_basic:0.71, total_assets:17386458000, total_liabilities:3889021000, stockholders_equity:10405171000 },
+  { period:"2017-Q1", fiscal_year:2017, quarter:1, period_end:"2017-04-01", revenue:8752946000, gross_profit:2496042000, gross_margin_pct:28.52, operating_income:740012000, operating_margin_pct:8.45, net_income:555271000, net_margin_pct:6.34, eps_basic:0.73, total_assets:18026221000, total_liabilities:3939172000, stockholders_equity:10575902000 },
+  { period:"2017-Q2", fiscal_year:2017, quarter:2, period_end:"2017-07-01", revenue:8482827000, gross_profit:2366475000, gross_margin_pct:27.9, operating_income:613303000, operating_margin_pct:7.23, net_income:495072000, net_margin_pct:5.84, eps_basic:0.65, total_assets:17941315000, total_liabilities:3804244000, stockholders_equity:10836496000 },
+  { period:"2017-Q3", fiscal_year:2017, quarter:3, period_end:"2017-09-30", revenue:8586080000, gross_profit:2366345000, gross_margin_pct:27.56, operating_income:634794000, operating_margin_pct:7.39, net_income:474927000, net_margin_pct:5.53, eps_basic:0.63, total_assets:17969044000, total_liabilities:4266509000, stockholders_equity:10541896000 },
+  { period:"2017-Q4", fiscal_year:2017, quarter:4, period_end:"2017-12-30", revenue:9014985000, gross_profit:2478259000, gross_margin_pct:27.49, operating_income:744715000, operating_margin_pct:8.26, net_income:766624000, net_margin_pct:8.5, eps_basic:1.04, total_assets:18183506000, total_liabilities:4074887000, stockholders_equity:11017149000 },
+  { period:"2018-Q1", fiscal_year:2018, quarter:1, period_end:"2018-03-31", revenue:9345807000, gross_profit:2664350000, gross_margin_pct:28.51, operating_income:833957000, operating_margin_pct:8.92, net_income:680271000, net_margin_pct:7.28, eps_basic:0.93, total_assets:18546137000, total_liabilities:3928369000, stockholders_equity:11126566000 },
+  { period:"2018-Q2", fiscal_year:2018, quarter:2, period_end:"2018-06-30", revenue:8826003000, gross_profit:2459957000, gross_margin_pct:27.87, operating_income:642792000, operating_margin_pct:7.28, net_income:616172000, net_margin_pct:6.98, eps_basic:0.84, total_assets:18576862000, total_liabilities:3805429000, stockholders_equity:11485083000 },
+  { period:"2018-Q3", fiscal_year:2018, quarter:3, period_end:"2018-09-29", revenue:8858101000, gross_profit:2422060000, gross_margin_pct:27.34, operating_income:583152000, operating_margin_pct:6.58, net_income:677744000, net_margin_pct:7.65, eps_basic:0.94, total_assets:18998748000, total_liabilities:4106856000, stockholders_equity:11666996000 },
+  { period:"2018-Q4", fiscal_year:2018, quarter:4, period_end:"2018-12-29", revenue:9365807000, gross_profit:2537960000, gross_margin_pct:27.1, operating_income:684502000, operating_margin_pct:7.31, net_income:406980000, net_margin_pct:4.35, eps_basic:0.57, total_assets:18982516000, total_liabilities:3987852000, stockholders_equity:11823342000 },
+  { period:"2019-Q1", fiscal_year:2019, quarter:1, period_end:"2019-03-30", revenue:9760110000, gross_profit:2793718000, gross_margin_pct:28.62, operating_income:856575000, operating_margin_pct:8.78, net_income:980971000, net_margin_pct:10.05, eps_basic:1.37, total_assets:22970300000, total_liabilities:6973560000, stockholders_equity:12450398000 },
+  { period:"2019-Q2", fiscal_year:2019, quarter:2, period_end:"2019-06-29", revenue:9446916000, gross_profit:2634326000, gross_margin_pct:27.89, operating_income:679438000, operating_margin_pct:7.19, net_income:661057000, net_margin_pct:7.0, eps_basic:0.92, total_assets:23383629000, total_liabilities:7097775000, stockholders_equity:12897061000 },
+  { period:"2019-Q3", fiscal_year:2019, quarter:3, period_end:"2019-09-28", revenue:9417933000, gross_profit:2577858000, gross_margin_pct:27.37, operating_income:612030000, operating_margin_pct:6.5, net_income:574026000, net_margin_pct:6.1, eps_basic:0.81, total_assets:23929393000, total_liabilities:7405844000, stockholders_equity:13200858000 },
+  { period:"2019-Q4", fiscal_year:2019, quarter:4, period_end:"2019-12-28", revenue:9837794000, gross_profit:2716382000, gross_margin_pct:27.61, operating_income:741206000, operating_margin_pct:7.53, net_income:789341000, net_margin_pct:8.02, eps_basic:1.11, total_assets:24507120000, total_liabilities:7605776000, stockholders_equity:13604000000 },
+  { period:"2020-Q1", fiscal_year:2020, quarter:1, period_end:"2020-03-28", revenue:11306951000, gross_profit:3269383000, gross_margin_pct:28.91, operating_income:1151611000, operating_margin_pct:10.18, net_income:667335000, net_margin_pct:5.9, eps_basic:0.94, total_assets:25202317000, total_liabilities:7955599000, stockholders_equity:13505729000 },
+  { period:"2020-Q2", fiscal_year:2020, quarter:2, period_end:"2020-06-27", revenue:11468563000, gross_profit:3312889000, gross_margin_pct:28.89, operating_income:1077045000, operating_margin_pct:9.39, net_income:1367055000, net_margin_pct:11.92, eps_basic:1.94, total_assets:26845843000, total_liabilities:8506838000, stockholders_equity:14734397000 },
+  { period:"2020-Q3", fiscal_year:2020, quarter:3, period_end:"2020-09-26", revenue:11136409000, gross_profit:3133393000, gross_margin_pct:28.14, operating_income:876323000, operating_margin_pct:7.87, net_income:917584000, net_margin_pct:8.24, eps_basic:1.31, total_assets:27194202000, total_liabilities:8407773000, stockholders_equity:15227652000 },
+  { period:"2020-Q4", fiscal_year:2020, quarter:4, period_end:"2020-12-26", revenue:11292036000, gross_profit:3133294000, gross_margin_pct:27.75, operating_income:907021000, operating_margin_pct:8.03, net_income:1019864000, net_margin_pct:9.03, eps_basic:1.47, total_assets:28094077000, total_liabilities:8808213000, stockholders_equity:15757000000 },
+  { period:"2021-Q1", fiscal_year:2021, quarter:1, period_end:"2021-03-27", revenue:11760235000, gross_profit:3377013000, gross_margin_pct:28.72, operating_income:1051604000, operating_margin_pct:8.94, net_income:1495093000, net_margin_pct:12.71, eps_basic:2.16, total_assets:29446420000, total_liabilities:8836700000, stockholders_equity:16522259000 },
+  { period:"2021-Q2", fiscal_year:2021, quarter:2, period_end:"2021-06-26", revenue:11927061000, gross_profit:3410983000, gross_margin_pct:28.6, operating_income:1109358000, operating_margin_pct:9.3, net_income:1009404000, net_margin_pct:8.46, eps_basic:0.29, total_assets:29983121000, total_liabilities:8813288000, stockholders_equity:17266580000 },
+  { period:"2021-Q3", fiscal_year:2021, quarter:3, period_end:"2021-09-25", revenue:12007162000, gross_profit:3295526000, gross_margin_pct:27.45, operating_income:909520000, operating_margin_pct:7.57, net_income:856906000, net_margin_pct:7.14, eps_basic:0.25, total_assets:30874323000, total_liabilities:9301760000, stockholders_equity:17706884000 },
+  { period:"2021-Q4", fiscal_year:2021, quarter:4, period_end:"2021-12-25", revenue:12699542000, gross_profit:3482478000, gross_margin_pct:27.42, operating_income:1082518000, operating_margin_pct:8.52, net_income:1050597000, net_margin_pct:8.27, eps_basic:3.7, total_assets:31524000000, total_liabilities:9486000000, stockholders_equity:18170000000 },
+  { period:"2022-Q1", fiscal_year:2022, quarter:1, period_end:"2022-03-26", revenue:13336000000, gross_profit:3769000000, gross_margin_pct:28.26, operating_income:1282000000, operating_margin_pct:9.61, net_income:618000000, net_margin_pct:4.63, eps_basic:0.18, total_assets:30911368000, total_liabilities:8894041000, stockholders_equity:17549000000 },
+  { period:"2022-Q2", fiscal_year:2022, quarter:2, period_end:"2022-06-25", revenue:13035000000, gross_profit:3558000000, gross_margin_pct:27.3, operating_income:1073000000, operating_margin_pct:8.23, net_income:628000000, net_margin_pct:4.82, eps_basic:0.18, total_assets:30374604000, total_liabilities:8837791000, stockholders_equity:17243000000 },
+  { period:"2022-Q3", fiscal_year:2022, quarter:3, period_end:"2022-09-24", revenue:13107000000, gross_profit:3470000000, gross_margin_pct:26.47, operating_income:935000000, operating_margin_pct:7.13, net_income:394000000, net_margin_pct:3.01, eps_basic:0.12, total_assets:30347557000, total_liabilities:9105228000, stockholders_equity:17065000000 },
+  { period:"2022-Q4", fiscal_year:2022, quarter:4, period_end:"2022-12-31", revenue:15464000000, gross_profit:4207000000, gross_margin_pct:27.21, operating_income:1469000000, operating_margin_pct:9.5, net_income:1278000000, net_margin_pct:8.26, eps_basic:0.38, total_assets:31047000000, total_liabilities:9195000000, stockholders_equity:17786000000 },
+  { period:"2023-Q1", fiscal_year:2023, quarter:1, period_end:"2023-04-01", revenue:14438000000, gross_profit:3910000000, gross_margin_pct:27.08, operating_income:1215000000, operating_margin_pct:8.42, net_income:1241000000, net_margin_pct:8.6, eps_basic:0.37, total_assets:32241000000, total_liabilities:9109000000, stockholders_equity:18432000000 },
+  { period:"2023-Q2", fiscal_year:2023, quarter:2, period_end:"2023-07-01", revenue:14189000000, gross_profit:3809000000, gross_margin_pct:26.84, operating_income:1070000000, operating_margin_pct:7.54, net_income:1097000000, net_margin_pct:7.73, eps_basic:0.33, total_assets:32776000000, total_liabilities:9165000000, stockholders_equity:19183000000 },
+  { period:"2023-Q3", fiscal_year:2023, quarter:3, period_end:"2023-09-30", revenue:14062000000, gross_profit:3780000000, gross_margin_pct:26.88, operating_income:1056000000, operating_margin_pct:7.51, net_income:833000000, net_margin_pct:5.92, eps_basic:0.25, total_assets:33354000000, total_liabilities:9533000000, stockholders_equity:19496000000 },
+  { period:"2023-Q4", fiscal_year:2023, quarter:4, period_end:"2023-12-30", revenue:14845000000, gross_profit:3946000000, gross_margin_pct:26.58, operating_income:1132000000, operating_margin_pct:7.63, net_income:1178000000, net_margin_pct:7.94, eps_basic:0.36, total_assets:34384000000, total_liabilities:9713000000, stockholders_equity:20416000000 },
+  { period:"2024-Q1", fiscal_year:2024, quarter:1, period_end:"2024-03-30", revenue:15162000000, gross_profit:4003000000, gross_margin_pct:26.4, operating_income:1195000000, operating_margin_pct:7.88, net_income:1366000000, net_margin_pct:9.01, eps_basic:0.41, total_assets:35764000000, total_liabilities:9864000000, stockholders_equity:21030000000 },
+  { period:"2024-Q2", fiscal_year:2024, quarter:2, period_end:"2024-06-29", revenue:14636000000, gross_profit:3831000000, gross_margin_pct:26.18, operating_income:1052000000, operating_margin_pct:7.19, net_income:972000000, net_margin_pct:6.64, eps_basic:0.29, total_assets:35752000000, total_liabilities:9609000000, stockholders_equity:21493000000 },
+  { period:"2024-Q3", fiscal_year:2024, quarter:3, period_end:"2024-09-28", revenue:14733000000, gross_profit:3818000000, gross_margin_pct:25.91, operating_income:1020000000, operating_margin_pct:6.92, net_income:1097000000, net_margin_pct:7.45, eps_basic:0.33, total_assets:36851000000, total_liabilities:9984000000, stockholders_equity:22284000000 },
+  { period:"2024-Q4", fiscal_year:2024, quarter:4, period_end:"2024-12-28", revenue:15646000000, gross_profit:4097000000, gross_margin_pct:26.19, operating_income:1201000000, operating_margin_pct:7.68, net_income:1200000000, net_margin_pct:7.67, eps_basic:0.38, total_assets:37601000000, total_liabilities:10173000000, stockholders_equity:22863000000 },
+  { period:"2025-Q1", fiscal_year:2025, quarter:1, period_end:"2025-03-29", revenue:15934000000, gross_profit:4240000000, gross_margin_pct:26.61, operating_income:1344000000, operating_margin_pct:8.43, net_income:1011000000, net_margin_pct:6.34, eps_basic:0.31, total_assets:38398000000, total_liabilities:10051000000, stockholders_equity:23002000000 },
+  { period:"2025-Q2", fiscal_year:2025, quarter:2, period_end:"2025-06-28", revenue:15690000000, gross_profit:4084000000, gross_margin_pct:26.03, operating_income:1152000000, operating_margin_pct:7.34, net_income:1375000000, net_margin_pct:8.76, eps_basic:0.42, total_assets:39370000000, total_liabilities:10323000000, stockholders_equity:23956000000 },
+  { period:"2025-Q3", fiscal_year:2025, quarter:3, period_end:"2025-09-27", revenue:15499000000, gross_profit:4003000000, gross_margin_pct:25.83, operating_income:1062000000, operating_margin_pct:6.85, net_income:1183000000, net_margin_pct:7.63, eps_basic:0.37, total_assets:40363000000, total_liabilities:10840000000, stockholders_equity:24471000000 },
+  { period:"2025-Q4", fiscal_year:2025, quarter:4, period_end:"2025-12-27", revenue:16086000000, gross_profit:4062000000, gross_margin_pct:25.25, operating_income:1066000000, operating_margin_pct:6.63, net_income:1165000000, net_margin_pct:7.24, eps_basic:0.36, total_assets:40989000000, total_liabilities:10887000000, stockholders_equity:25141000000 }
+];
+
+const YEAR_END_STORE_COUNTS = {
+  2014:1100, 2015:1114, 2016:1136, 2017:1167, 2018:1211, 2019:1239,
+  2020:1264, 2021:1293, 2022:1322, 2023:1360, 2024:1390, 2025:1432
+};
+
+const ANNOTATIONS = [
+  { id:'covid_surge', quarter:'2020-Q1', label:'COVID Surge', color:'#ef4444' },
+  { id:'portfolio_peak', quarter:'2021-Q1', label:'Portfolio Peak', color:'#2DD4BF' },
+  { id:'inflation_surge', quarter:'2022-Q1', label:'Inflation Pass-Through', color:'#C8A050' },
+  { id:'margin_trough', quarter:'2022-Q3', label:'Margin Trough', color:'#ef4444' },
+  { id:'normalization', quarter:'2024-Q1', label:'Organic Growth', color:'#C8A050' },
+];
+
+// ──────────────────────────────────────────────────────────────
+// Initialize quarters with derived fields
+// ──────────────────────────────────────────────────────────────
+function initializeQuarters(raw) {
+  const withStores = raw.map(r => {
+    const fy = r.fiscal_year, q = r.quarter;
+    const prevEnd = YEAR_END_STORE_COUNTS[fy - 1];
+    const thisEnd = YEAR_END_STORE_COUNTS[fy];
+    const storeCount = q === 4 ? thisEnd : Math.round(prevEnd + (thisEnd - prevEnd) * (q / 4));
+    return {
+      period: r.period, fiscalYear: r.fiscal_year, quarter: r.quarter, periodEnd: r.period_end,
+      revenue: r.revenue, grossProfit: r.gross_profit, grossMarginPct: r.gross_margin_pct,
+      operatingIncome: r.operating_income, operatingMarginPct: r.operating_margin_pct,
+      netIncome: r.net_income, netMarginPct: r.net_margin_pct, epsBasic: r.eps_basic,
+      totalAssets: r.total_assets, totalLiabilities: r.total_liabilities,
+      stockholdersEquity: r.stockholders_equity, storeCount,
+      revenuePerStore: r.revenue / storeCount,
+    };
+  });
+  const yoyRev = withStores.map((q,i) => i < 4 ? null : ((q.revenue - withStores[i-4].revenue) / Math.abs(withStores[i-4].revenue)) * 100);
+  const yoyNI = withStores.map((q,i) => i < 4 ? null : ((q.netIncome - withStores[i-4].netIncome) / Math.abs(withStores[i-4].netIncome)) * 100);
+  return withStores.map((q,i) => ({ ...q, yoyRevenueGrowth: yoyRev[i], yoyNetIncomeGrowth: yoyNI[i] }));
+}
+
+const QUARTERS = initializeQuarters(RAW_QUARTERS);
+
+// ──────────────────────────────────────────────────────────────
+// Helpers
+// ──────────────────────────────────────────────────────────────
+function fmtB(v) { return '$' + (v/1e9).toFixed(1) + 'B'; }
+function fmtM(v) { return '$' + (v/1e6).toFixed(0) + 'M'; }
+function fmtPct(v,d) { return v.toFixed(d||2) + '%'; }
+function fmtNum(v) { return v.toLocaleString('en-US'); }
+
+// ──────────────────────────────────────────────────────────────
+// State
+// ──────────────────────────────────────────────────────────────
+let filteredData = [...QUARTERS];
+let activePreset = 'all';
+let yearStart = 2015, yearEnd = 2025;
+let revMode = 'absolute';
+let charts = {};
+let tableSortCol = 'period';
+let tableSortAsc = false;
+
+// ──────────────────────────────────────────────────────────────
+// Auth
+// ──────────────────────────────────────────────────────────────
+function checkAuth() {
+  if (localStorage.getItem('publix-auth') === 'authenticated') {
+    showDashboard();
+  }
+}
+
+function tryLogin() {
+  const pw = document.getElementById('pw-input').value;
+  if (pw === 'bfp2026') {
+    localStorage.setItem('publix-auth', 'authenticated');
+    showDashboard();
+  } else {
+    const box = document.querySelector('.gate-box');
+    const err = document.getElementById('pw-error');
+    err.textContent = 'Wrong password';
+    box.classList.add('shake');
+    setTimeout(() => { box.classList.remove('shake'); err.textContent = ''; }, 1500);
+    document.getElementById('pw-input').value = '';
+  }
+}
+
+document.getElementById('pw-btn').addEventListener('click', tryLogin);
+document.getElementById('pw-input').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
+document.getElementById('logout-btn').addEventListener('click', () => {
+  localStorage.removeItem('publix-auth');
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('gate').style.display = 'flex';
+  document.getElementById('pw-input').value = '';
+});
+
+function showDashboard() {
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  buildYearSelector();
+  updateAll();
+}
+
+// ──────────────────────────────────────────────────────────────
+// Year Selector
+// ──────────────────────────────────────────────────────────────
+function buildYearSelector() {
+  const el = document.getElementById('year-selector');
+  const presets = [
+    { label: 'All', key: 'all', s: 2015, e: 2025 },
+    { label: 'Last 5yr', key: '5yr', s: 2021, e: 2025 },
+    { label: 'Last 3yr', key: '3yr', s: 2023, e: 2025 },
+  ];
+  el.innerHTML = '';
+  presets.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'year-btn preset' + (activePreset === p.key ? ' active' : '');
+    btn.textContent = p.label;
+    btn.onclick = () => { activePreset = p.key; yearStart = p.s; yearEnd = p.e; buildYearSelector(); applyFilter(); };
+    el.appendChild(btn);
+  });
+  for (let y = 2015; y <= 2025; y++) {
+    const btn = document.createElement('button');
+    btn.className = 'year-btn' + (activePreset === String(y) ? ' active' : '');
+    btn.textContent = y;
+    btn.onclick = () => { activePreset = String(y); yearStart = y; yearEnd = y; buildYearSelector(); applyFilter(); };
+    el.appendChild(btn);
+  }
+}
+
+function applyFilter() {
+  filteredData = QUARTERS.filter(q => q.fiscalYear >= yearStart && q.fiscalYear <= yearEnd);
+  updateAll();
+}
+
+// ──────────────────────────────────────────────────────────────
+// Update Everything
+// ──────────────────────────────────────────────────────────────
+function updateAll() {
+  renderKPIs();
+  renderRevenueChart();
+  renderMarginsChart();
+  renderRPSChart();
+  renderHeatmap();
+  renderBalanceChart();
+  renderStoresChart();
+  renderTable();
+}
+
+// ──────────────────────────────────────────────────────────────
+// KPI Cards
+// ──────────────────────────────────────────────────────────────
+function renderKPIs() {
+  const latest = filteredData[filteredData.length - 1];
+  const prev = filteredData.length > 1 ? filteredData[filteredData.length - 2] : null;
+  const last8 = filteredData.slice(-8);
+
+  function changePct(cur, old) {
+    if (!old || old === 0) return null;
+    return ((cur - old) / Math.abs(old)) * 100;
+  }
+
+  const kpis = [
+    { label: 'Total Revenue', value: fmtB(latest.revenue), change: changePct(latest.revenue, prev?.revenue), spark: last8.map(q => q.revenue) },
+    { label: 'Net Income', value: fmtM(latest.netIncome), change: changePct(latest.netIncome, prev?.netIncome), spark: last8.map(q => q.netIncome) },
+    { label: 'Net Margin %', value: fmtPct(latest.netMarginPct, 2), change: prev ? latest.netMarginPct - prev.netMarginPct : null, spark: last8.map(q => q.netMarginPct), isDelta: true },
+    { label: 'Store Count', value: fmtNum(latest.storeCount), change: changePct(latest.storeCount, prev?.storeCount), spark: last8.map(q => q.storeCount) },
+  ];
+
+  const grid = document.getElementById('kpi-grid');
+  grid.innerHTML = '';
+  kpis.forEach((k, idx) => {
+    const card = document.createElement('div');
+    card.className = 'kpi-card';
+    const chVal = k.change != null ? (k.isDelta ? (k.change >= 0 ? '+' : '') + k.change.toFixed(2) + 'pp' : (k.change >= 0 ? '+' : '') + k.change.toFixed(1) + '%') : '';
+    const chClass = k.change != null ? (k.change >= 0 ? 'up' : 'down') : '';
+    card.innerHTML = `<div class="label">${k.label}</div><div class="value">${k.value}</div><div class="change ${chClass}">${chVal} QoQ</div><canvas id="spark-${idx}" width="100" height="40"></canvas>`;
+    grid.appendChild(card);
+  });
+
+  // Draw sparklines
+  kpis.forEach((k, idx) => {
+    const canvas = document.getElementById('spark-' + idx);
+    if (!canvas || k.spark.length < 2) return;
+    const ctx = canvas.getContext('2d');
+    const w = 100, h = 40;
+    canvas.width = w * 2; canvas.height = h * 2;
+    ctx.scale(2, 2);
+    const min = Math.min(...k.spark), max = Math.max(...k.spark);
+    const range = max - min || 1;
+    ctx.beginPath();
+    ctx.strokeStyle = '#C8A050';
+    ctx.lineWidth = 1.5;
+    k.spark.forEach((v, i) => {
+      const x = (i / (k.spark.length - 1)) * w;
+      const y = h - ((v - min) / range) * (h - 4) - 2;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  });
+}
+
+// ──────────────────────────────────────────────────────────────
+// Chart defaults
+// ──────────────────────────────────────────────────────────────
+const chartDefaults = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { labels: { color: '#a3a3a3', font: { size: 11 }, boxWidth: 12, padding: 16 } },
+    tooltip: { backgroundColor: '#1a1a1a', borderColor: '#2a2a2a', borderWidth: 1, titleColor: '#e5e5e5', bodyColor: '#a3a3a3', padding: 10, cornerRadius: 8 }
+  },
+  scales: {
+    x: { ticks: { color: '#a3a3a3', font: { size: 10 }, maxRotation: 45 }, grid: { color: 'rgba(42,42,42,.5)' } },
+    y: { ticks: { color: '#a3a3a3', font: { size: 10 } }, grid: { color: 'rgba(42,42,42,.5)' } }
+  }
+};
+
+function mergeDefaults(overrides) {
+  return JSON.parse(JSON.stringify({ ...chartDefaults, ...overrides,
+    plugins: { ...chartDefaults.plugins, ...(overrides.plugins || {}) },
+    scales: { ...chartDefaults.scales, ...(overrides.scales || {}) }
+  }));
+}
+
+// ──────────────────────────────────────────────────────────────
+// Revenue & Net Income Chart
+// ──────────────────────────────────────────────────────────────
+function buildAnnotations(data) {
+  const result = {};
+  ANNOTATIONS.forEach(a => {
+    const idx = data.findIndex(q => q.period === a.quarter);
+    if (idx < 0) return;
+    result[a.id] = {
+      type: 'line', xMin: idx, xMax: idx,
+      borderColor: a.color + '60', borderWidth: 1.5, borderDash: [6, 3],
+      label: {
+        display: true, content: a.label, position: 'start',
+        color: a.color, font: { size: 10, weight: '500' },
+        backgroundColor: '#0a0a0aCC', padding: { top: 2, bottom: 2, left: 6, right: 6 }, borderRadius: 4
+      }
+    };
+  });
+  return result;
+}
+
+function renderRevenueChart() {
+  const ctx = document.getElementById('chart-revenue');
+  if (charts.revenue) charts.revenue.destroy();
+
+  const labels = filteredData.map(q => q.period);
+
+  if (revMode === 'absolute') {
+    charts.revenue = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Revenue', data: filteredData.map(q => q.revenue / 1e9), backgroundColor: 'rgba(200,160,80,.35)', borderColor: '#C8A050', borderWidth: 1, borderRadius: 3, yAxisID: 'y', order: 2 },
+          { label: 'Net Income', data: filteredData.map(q => q.netIncome / 1e9), type: 'line', borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.1)', borderWidth: 2, pointRadius: 2, pointHoverRadius: 5, fill: true, tension: 0.3, yAxisID: 'y1', order: 1 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          ...chartDefaults.plugins,
+          annotation: { annotations: buildAnnotations(filteredData) },
+          tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: ctx => ctx.dataset.label + ': $' + ctx.parsed.y.toFixed(1) + 'B' } }
+        },
+        scales: {
+          x: chartDefaults.scales.x,
+          y: { ...chartDefaults.scales.y, position: 'left', title: { display: true, text: 'Revenue ($B)', color: '#a3a3a3' }, ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v + 'B' } },
+          y1: { ...chartDefaults.scales.y, position: 'right', title: { display: true, text: 'Net Income ($B)', color: '#a3a3a3' }, ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v.toFixed(1) + 'B' }, grid: { drawOnChartArea: false } }
+        }
+      }
+    });
+  } else {
+    const yoyRev = filteredData.map(q => q.yoyRevenueGrowth);
+    const yoyNI = filteredData.map(q => q.yoyNetIncomeGrowth);
+    charts.revenue = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Revenue YoY %', data: yoyRev, backgroundColor: yoyRev.map(v => v != null && v >= 0 ? 'rgba(200,160,80,.5)' : 'rgba(239,68,68,.4)'), borderColor: yoyRev.map(v => v != null && v >= 0 ? '#C8A050' : '#ef4444'), borderWidth: 1, borderRadius: 3, order: 2 },
+          { label: 'Net Income YoY %', data: yoyNI, type: 'line', borderColor: '#2DD4BF', borderWidth: 2, pointRadius: 2, tension: 0.3, order: 1 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { ...chartDefaults.plugins, annotation: { annotations: buildAnnotations(filteredData) }, tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: ctx => ctx.parsed.y != null ? ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1) + '%' : '' } } },
+        scales: {
+          x: chartDefaults.scales.x,
+          y: { ...chartDefaults.scales.y, title: { display: true, text: 'YoY Growth %', color: '#a3a3a3' }, ticks: { ...chartDefaults.scales.y.ticks, callback: v => v + '%' } }
+        }
+      }
+    });
+  }
+}
+
+// Revenue toggle
+document.getElementById('rev-toggle').addEventListener('click', e => {
+  const btn = e.target.closest('.toggle-btn');
+  if (!btn) return;
+  revMode = btn.dataset.mode;
+  document.querySelectorAll('#rev-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+  renderRevenueChart();
+});
+
+// ──────────────────────────────────────────────────────────────
+// Margin Analysis
+// ──────────────────────────────────────────────────────────────
+function renderMarginsChart() {
+  const ctx = document.getElementById('chart-margins');
+  if (charts.margins) charts.margins.destroy();
+  charts.margins = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: filteredData.map(q => q.period),
+      datasets: [
+        { label: 'Gross Margin', data: filteredData.map(q => q.grossMarginPct), borderColor: '#C8A050', backgroundColor: 'rgba(200,160,80,.08)', borderWidth: 2, pointRadius: 1.5, fill: true, tension: 0.3 },
+        { label: 'Operating Margin', data: filteredData.map(q => q.operatingMarginPct), borderColor: '#2DD4BF', borderWidth: 2, pointRadius: 1.5, tension: 0.3 },
+        { label: 'Net Margin', data: filteredData.map(q => q.netMarginPct), borderColor: '#818cf8', borderWidth: 2, pointRadius: 1.5, tension: 0.3 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        ...chartDefaults.plugins,
+        annotation: {
+          annotations: {
+            grossRef: { type: 'line', yMin: 27.5, yMax: 27.5, borderColor: 'rgba(200,160,80,.3)', borderWidth: 1, borderDash: [4,4], label: { display: true, content: 'Grocery Avg Gross ~27.5%', position: 'start', color: '#a3a3a3', font: { size: 9 }, backgroundColor: '#0a0a0aCC', padding: 3 } },
+            netRef: { type: 'line', yMin: 2.5, yMax: 2.5, borderColor: 'rgba(239,68,68,.3)', borderWidth: 1, borderDash: [4,4], label: { display: true, content: 'Grocery Avg Net ~2.5%', position: 'end', color: '#a3a3a3', font: { size: 9 }, backgroundColor: '#0a0a0aCC', padding: 3 } }
+          }
+        },
+        tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(2) + '%' } }
+      },
+      scales: {
+        x: chartDefaults.scales.x,
+        y: { ...chartDefaults.scales.y, ticks: { ...chartDefaults.scales.y.ticks, callback: v => v + '%' } }
+      }
+    }
+  });
+}
+
+// ──────────────────────────────────────────────────────────────
+// Revenue Per Store
+// ──────────────────────────────────────────────────────────────
+function renderRPSChart() {
+  const ctx = document.getElementById('chart-rps');
+  if (charts.rps) charts.rps.destroy();
+  charts.rps = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: filteredData.map(q => q.period),
+      datasets: [{
+        label: 'Revenue Per Store',
+        data: filteredData.map(q => q.revenuePerStore / 1e6),
+        borderColor: '#C8A050', backgroundColor: 'rgba(200,160,80,.1)',
+        borderWidth: 2, pointRadius: 2, fill: true, tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { ...chartDefaults.plugins, tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: ctx => '$' + ctx.parsed.y.toFixed(1) + 'M per store' } } },
+      scales: {
+        x: chartDefaults.scales.x,
+        y: { ...chartDefaults.scales.y, ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v + 'M' } }
+      }
+    }
+  });
+}
+
+// ──────────────────────────────────────────────────────────────
+// Seasonal Heatmap (pure CSS)
+// ──────────────────────────────────────────────────────────────
+function renderHeatmap() {
+  const el = document.getElementById('heatmap');
+  const years = [];
+  for (let y = yearStart; y <= yearEnd; y++) years.push(y);
+
+  // Get revenue + margin data for visible years
+  const cells = [];
+  let allRevs = [];
+  years.forEach(y => {
+    for (let q = 1; q <= 4; q++) {
+      const d = QUARTERS.find(x => x.fiscalYear === y && x.quarter === q);
+      if (d) { cells.push(d); allRevs.push(d.revenue); }
+    }
+  });
+
+  const minR = Math.min(...allRevs), maxR = Math.max(...allRevs), rangeR = maxR - minR || 1;
+
+  let html = `<div class="heatmap-grid" style="grid-template-columns:80px repeat(4,1fr)">`;
+  html += `<div class="hm-cell hm-header"></div><div class="hm-cell hm-header">Q1</div><div class="hm-cell hm-header">Q2</div><div class="hm-cell hm-header">Q3</div><div class="hm-cell hm-header">Q4</div>`;
+
+  years.forEach(y => {
+    html += `<div class="hm-cell hm-year">${y}</div>`;
+    for (let q = 1; q <= 4; q++) {
+      const d = QUARTERS.find(x => x.fiscalYear === y && x.quarter === q);
+      if (d) {
+        const intensity = (d.revenue - minR) / rangeR;
+        const alpha = (0.15 + intensity * 0.65).toFixed(3);
+        const title = `${d.period}: Revenue ${fmtB(d.revenue)} | Net Margin ${d.netMarginPct.toFixed(2)}%`;
+        html += `<div class="hm-cell" style="background:rgba(200,160,80,${alpha})" title="${title}">${d.netMarginPct.toFixed(1)}%</div>`;
+      } else {
+        html += `<div class="hm-cell" style="background:var(--card)">-</div>`;
+      }
+    }
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+// ──────────────────────────────────────────────────────────────
+// Balance Sheet
+// ──────────────────────────────────────────────────────────────
+function renderBalanceChart() {
+  const ctx = document.getElementById('chart-balance');
+  if (charts.balance) charts.balance.destroy();
+  charts.balance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: filteredData.map(q => q.period),
+      datasets: [
+        { label: 'Total Assets', data: filteredData.map(q => q.totalAssets / 1e9), borderColor: '#C8A050', backgroundColor: 'rgba(200,160,80,.1)', borderWidth: 2, fill: true, pointRadius: 1, tension: 0.3 },
+        { label: 'Stockholders\' Equity', data: filteredData.map(q => q.stockholdersEquity / 1e9), borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.08)', borderWidth: 2, fill: true, pointRadius: 1, tension: 0.3 },
+        { label: 'Total Liabilities', data: filteredData.map(q => q.totalLiabilities / 1e9), borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,.06)', borderWidth: 2, fill: true, pointRadius: 1, tension: 0.3 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { ...chartDefaults.plugins, tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: ctx => ctx.dataset.label + ': $' + ctx.parsed.y.toFixed(1) + 'B' } } },
+      scales: {
+        x: chartDefaults.scales.x,
+        y: { ...chartDefaults.scales.y, ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v + 'B' } }
+      }
+    }
+  });
+}
+
+// ──────────────────────────────────────────────────────────────
+// Store Expansion
+// ──────────────────────────────────────────────────────────────
+function renderStoresChart() {
+  const ctx = document.getElementById('chart-stores');
+  if (charts.stores) charts.stores.destroy();
+
+  // Annual store data
+  const years = [...new Set(filteredData.map(q => q.fiscalYear))].sort();
+  const storesByYear = years.map(y => {
+    const qs = filteredData.filter(q => q.fiscalYear === y);
+    const q4 = qs.find(q => q.quarter === 4) || qs[qs.length - 1];
+    return q4.storeCount;
+  });
+  const netNew = storesByYear.map((s, i) => i === 0 ? (YEAR_END_STORE_COUNTS[years[i] - 1] ? s - YEAR_END_STORE_COUNTS[years[i] - 1] : 0) : s - storesByYear[i - 1]);
+
+  charts.stores = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: years.map(String),
+      datasets: [
+        { label: 'Net New Stores', data: netNew, backgroundColor: 'rgba(45,212,191,.4)', borderColor: '#2DD4BF', borderWidth: 1, borderRadius: 3, yAxisID: 'y', order: 2 },
+        { label: 'Total Stores', data: storesByYear, type: 'line', borderColor: '#C8A050', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#C8A050', yAxisID: 'y1', order: 1, tension: 0.3 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { ...chartDefaults.plugins },
+      scales: {
+        x: chartDefaults.scales.x,
+        y: { ...chartDefaults.scales.y, position: 'left', title: { display: true, text: 'Net New', color: '#a3a3a3' } },
+        y1: { ...chartDefaults.scales.y, position: 'right', title: { display: true, text: 'Total', color: '#a3a3a3' }, grid: { drawOnChartArea: false } }
+      }
+    }
+  });
+}
+
+// ──────────────────────────────────────────────────────────────
+// Data Table
+// ──────────────────────────────────────────────────────────────
+const TABLE_COLS = [
+  { key: 'period', label: 'Period', fmt: v => v, align: 'left' },
+  { key: 'revenue', label: 'Revenue', fmt: fmtB },
+  { key: 'grossMarginPct', label: 'Gross %', fmt: v => fmtPct(v, 2) },
+  { key: 'operatingIncome', label: 'Op. Income', fmt: fmtM },
+  { key: 'operatingMarginPct', label: 'Op. %', fmt: v => fmtPct(v, 2) },
+  { key: 'netIncome', label: 'Net Income', fmt: fmtM },
+  { key: 'netMarginPct', label: 'Net %', fmt: v => fmtPct(v, 2) },
+  { key: 'storeCount', label: 'Stores', fmt: fmtNum },
+  { key: 'totalAssets', label: 'Assets', fmt: fmtB },
+  { key: 'stockholdersEquity', label: 'Equity', fmt: fmtB },
+];
+
+function renderTable() {
+  const thead = document.getElementById('table-head');
+  const tbody = document.getElementById('table-body');
+
+  thead.innerHTML = '<tr>' + TABLE_COLS.map(c => {
+    const sorted = tableSortCol === c.key;
+    const arrow = sorted ? (tableSortAsc ? '\u25B2' : '\u25BC') : '\u25B4';
+    return `<th class="${sorted ? 'sorted' : ''}" data-col="${c.key}">${c.label} <span class="sort-arrow">${arrow}</span></th>`;
+  }).join('') + '</tr>';
+
+  const sorted = [...filteredData].sort((a, b) => {
+    const av = a[tableSortCol], bv = b[tableSortCol];
+    if (typeof av === 'string') return tableSortAsc ? av.localeCompare(bv) : bv.localeCompare(av);
+    return tableSortAsc ? av - bv : bv - av;
+  });
+
+  tbody.innerHTML = sorted.map(q => '<tr>' + TABLE_COLS.map(c => `<td>${c.fmt(q[c.key])}</td>`).join('') + '</tr>').join('');
+}
+
+document.getElementById('table-head').addEventListener('click', e => {
+  const th = e.target.closest('th');
+  if (!th) return;
+  const col = th.dataset.col;
+  if (tableSortCol === col) { tableSortAsc = !tableSortAsc; }
+  else { tableSortCol = col; tableSortAsc = col === 'period'; }
+  renderTable();
+});
+
+document.getElementById('table-toggle').addEventListener('click', () => {
+  const wrap = document.getElementById('table-wrap');
+  const arrow = document.getElementById('table-arrow');
+  const isOpen = wrap.classList.toggle('open');
+  arrow.classList.toggle('open', isOpen);
+});
+
+// ──────────────────────────────────────────────────────────────
+// Boot
+// ──────────────────────────────────────────────────────────────
+checkAuth();
+</script>
+</body>
+</html>
