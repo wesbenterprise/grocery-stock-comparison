@@ -179,10 +179,15 @@ tr:hover td{background:rgba(200,160,80,.03)}
   <div class="chart-card">
     <h3>Revenue &amp; Operating Net Income</h3>
     <div class="chart-subtitle">Quarterly revenue (bars) and operating net income ex. securities G/L (line) with key event annotations</div>
-    <div class="chart-toggle" id="rev-toggle">
-      <button class="toggle-btn active" data-mode="quarterly">Quarterly</button>
-      <button class="toggle-btn" data-mode="annual">Annual</button>
-      <button class="toggle-btn" data-mode="yoy">YoY %</button>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+      <div class="chart-toggle" id="rev-period-toggle">
+        <button class="toggle-btn active" data-period="quarterly">Quarterly</button>
+        <button class="toggle-btn" data-period="annual">Annual</button>
+      </div>
+      <div class="chart-toggle" id="rev-view-toggle">
+        <button class="toggle-btn active" data-view="absolute">Absolute</button>
+        <button class="toggle-btn" data-view="yoy">YoY %</button>
+      </div>
     </div>
     <div style="position:relative;height:320px"><canvas id="chart-revenue"></canvas></div>
     <div class="narrative-card">
@@ -543,7 +548,8 @@ function fmtNum(v) { return v.toLocaleString('en-US'); }
 let filteredData = [...QUARTERS];
 let activePreset = 'all';
 let yearStart = 2015, yearEnd = 2025;
-let revMode = 'quarterly';
+let revPeriod = 'quarterly'; // 'quarterly' | 'annual'
+let revView = 'absolute';   // 'absolute' | 'yoy'
 let charts = {};
 let tableSortCol = 'period';
 let tableSortAsc = false;
@@ -757,89 +763,131 @@ function renderRevenueChart() {
   const ctx = document.getElementById('chart-revenue');
   if (charts.revenue) charts.revenue.destroy();
 
-  if (revMode === 'quarterly') {
-    const labels = filteredData.map(q => q.period);
-    charts.revenue = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [
-          { label: 'Revenue', data: filteredData.map(q => q.revenue / 1e9), backgroundColor: 'rgba(200,160,80,.35)', borderColor: '#C8A050', borderWidth: 1, borderRadius: 3, yAxisID: 'y', order: 2 },
-          { label: 'Operating Net Income', data: filteredData.map(q => q.operatingNetIncome / 1e9), type: 'line', borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.1)', borderWidth: 2, pointRadius: 2, pointHoverRadius: 5, fill: true, tension: 0.3, yAxisID: 'y1', order: 1 }
-        ]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: {
-          ...chartDefaults.plugins,
-          annotation: { annotations: buildAnnotations(filteredData) },
-          tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: ctx => ctx.dataset.label + ': $' + ctx.parsed.y.toFixed(1) + 'B' } }
-        },
-        scales: {
-          x: chartDefaults.scales.x,
-          y: { ...chartDefaults.scales.y, position: 'left', title: { display: true, text: 'Revenue ($B)', color: '#606080' }, ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v + 'B' } },
-          y1: { ...chartDefaults.scales.y, position: 'right', title: { display: true, text: 'Net Income ($B)', color: '#606080' }, ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v.toFixed(1) + 'B' }, grid: { drawOnChartArea: false } }
-        }
-      }
-    });
-  } else if (revMode === 'annual') {
+  const isAnnual = revPeriod === 'annual';
+  const isYoY = revView === 'yoy';
+
+  if (isAnnual) {
     const annualData = computeAnnualTotals(filteredData);
     const labels = annualData.map(d => String(d.year));
-    charts.revenue = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [
-          { label: 'Revenue', data: annualData.map(d => d.revenue / 1e9), backgroundColor: 'rgba(200,160,80,.35)', borderColor: '#C8A050', borderWidth: 1, borderRadius: 4, yAxisID: 'y', order: 2 },
-          { label: 'Operating Net Income', data: annualData.map(d => d.operatingNetIncome / 1e9), type: 'line', borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.1)', borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 7, pointBackgroundColor: '#2DD4BF', fill: true, tension: 0.3, yAxisID: 'y1', order: 1 }
-        ]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: {
-          ...chartDefaults.plugins,
-          annotation: { annotations: buildAnnualAnnotations(annualData) },
-          tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: ctx => ctx.dataset.label + ': $' + ctx.parsed.y.toFixed(1) + 'B' } }
+
+    if (!isYoY) {
+      // Annual Absolute
+      charts.revenue = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Revenue', data: annualData.map(d => d.revenue / 1e9), backgroundColor: 'rgba(200,160,80,.35)', borderColor: '#C8A050', borderWidth: 1, borderRadius: 4, yAxisID: 'y', order: 2 },
+            { label: 'Operating Net Income', data: annualData.map(d => d.operatingNetIncome / 1e9), type: 'line', borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.1)', borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 7, pointBackgroundColor: '#2DD4BF', fill: true, tension: 0.3, yAxisID: 'y1', order: 1 }
+          ]
         },
-        scales: {
-          x: chartDefaults.scales.x,
-          y: { ...chartDefaults.scales.y, position: 'left', title: { display: true, text: 'Revenue ($B)', color: '#606080' }, ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v + 'B' } },
-          y1: { ...chartDefaults.scales.y, position: 'right', title: { display: true, text: 'Net Income ($B)', color: '#606080' }, ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v.toFixed(1) + 'B' }, grid: { drawOnChartArea: false } }
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            ...chartDefaults.plugins,
+            annotation: { annotations: buildAnnualAnnotations(annualData) },
+            tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: c => c.dataset.label + ': $' + c.parsed.y.toFixed(1) + 'B' } }
+          },
+          scales: {
+            x: chartDefaults.scales.x,
+            y: { ...chartDefaults.scales.y, position: 'left', title: { display: true, text: 'Revenue ($B)', color: '#606080' }, ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v + 'B' } },
+            y1: { ...chartDefaults.scales.y, position: 'right', title: { display: true, text: 'Op. Net Income ($B)', color: '#606080' }, ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v.toFixed(1) + 'B' }, grid: { drawOnChartArea: false } }
+          }
         }
-      }
-    });
+      });
+    } else {
+      // Annual YoY %
+      const yoyRev = annualData.map((d, i) => i === 0 ? null : ((d.revenue - annualData[i-1].revenue) / Math.abs(annualData[i-1].revenue)) * 100);
+      const yoyNI = annualData.map((d, i) => i === 0 ? null : ((d.operatingNetIncome - annualData[i-1].operatingNetIncome) / Math.abs(annualData[i-1].operatingNetIncome)) * 100);
+      charts.revenue = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Revenue YoY %', data: yoyRev, backgroundColor: yoyRev.map(v => v != null && v >= 0 ? 'rgba(200,160,80,.5)' : 'rgba(239,83,80,.4)'), borderColor: yoyRev.map(v => v != null && v >= 0 ? '#C8A050' : '#ef5350'), borderWidth: 1, borderRadius: 4, order: 2 },
+            { label: 'Op. Net Income YoY %', data: yoyNI, type: 'line', borderColor: '#2DD4BF', borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 6, pointBackgroundColor: '#2DD4BF', tension: 0.3, order: 1 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { ...chartDefaults.plugins, annotation: { annotations: buildAnnualAnnotations(annualData) }, tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: c => c.parsed.y != null ? c.dataset.label + ': ' + (c.parsed.y >= 0 ? '+' : '') + c.parsed.y.toFixed(1) + '%' : '' } } },
+          scales: {
+            x: chartDefaults.scales.x,
+            y: { ...chartDefaults.scales.y, title: { display: true, text: 'YoY Growth %', color: '#606080' }, ticks: { ...chartDefaults.scales.y.ticks, callback: v => v + '%' } }
+          }
+        }
+      });
+    }
   } else {
-    // YoY mode
+    // Quarterly
     const labels = filteredData.map(q => q.period);
-    const yoyRev = filteredData.map(q => q.yoyRevenueGrowth);
-    const yoyNI = filteredData.map(q => q.yoyNetIncomeGrowth);
-    charts.revenue = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [
-          { label: 'Revenue YoY %', data: yoyRev, backgroundColor: yoyRev.map(v => v != null && v >= 0 ? 'rgba(200,160,80,.5)' : 'rgba(239,83,80,.4)'), borderColor: yoyRev.map(v => v != null && v >= 0 ? '#C8A050' : '#ef5350'), borderWidth: 1, borderRadius: 3, order: 2 },
-          { label: 'Op. Net Income YoY %', data: yoyNI, type: 'line', borderColor: '#2DD4BF', borderWidth: 2, pointRadius: 2, tension: 0.3, order: 1 }
-        ]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { ...chartDefaults.plugins, annotation: { annotations: buildAnnotations(filteredData) }, tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: ctx => ctx.parsed.y != null ? ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1) + '%' : '' } } },
-        scales: {
-          x: chartDefaults.scales.x,
-          y: { ...chartDefaults.scales.y, title: { display: true, text: 'YoY Growth %', color: '#606080' }, ticks: { ...chartDefaults.scales.y.ticks, callback: v => v + '%' } }
+
+    if (!isYoY) {
+      // Quarterly Absolute
+      charts.revenue = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Revenue', data: filteredData.map(q => q.revenue / 1e9), backgroundColor: 'rgba(200,160,80,.35)', borderColor: '#C8A050', borderWidth: 1, borderRadius: 3, yAxisID: 'y', order: 2 },
+            { label: 'Operating Net Income', data: filteredData.map(q => q.operatingNetIncome / 1e9), type: 'line', borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.1)', borderWidth: 2, pointRadius: 2, pointHoverRadius: 5, fill: true, tension: 0.3, yAxisID: 'y1', order: 1 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            ...chartDefaults.plugins,
+            annotation: { annotations: buildAnnotations(filteredData) },
+            tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: c => c.dataset.label + ': $' + c.parsed.y.toFixed(1) + 'B' } }
+          },
+          scales: {
+            x: chartDefaults.scales.x,
+            y: { ...chartDefaults.scales.y, position: 'left', title: { display: true, text: 'Revenue ($B)', color: '#606080' }, ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v + 'B' } },
+            y1: { ...chartDefaults.scales.y, position: 'right', title: { display: true, text: 'Op. Net Income ($B)', color: '#606080' }, ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v.toFixed(1) + 'B' }, grid: { drawOnChartArea: false } }
+          }
         }
-      }
-    });
+      });
+    } else {
+      // Quarterly YoY %
+      const yoyRev = filteredData.map(q => q.yoyRevenueGrowth);
+      const yoyNI = filteredData.map(q => q.yoyNetIncomeGrowth);
+      charts.revenue = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Revenue YoY %', data: yoyRev, backgroundColor: yoyRev.map(v => v != null && v >= 0 ? 'rgba(200,160,80,.5)' : 'rgba(239,83,80,.4)'), borderColor: yoyRev.map(v => v != null && v >= 0 ? '#C8A050' : '#ef5350'), borderWidth: 1, borderRadius: 3, order: 2 },
+            { label: 'Op. Net Income YoY %', data: yoyNI, type: 'line', borderColor: '#2DD4BF', borderWidth: 2, pointRadius: 2, tension: 0.3, order: 1 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { ...chartDefaults.plugins, annotation: { annotations: buildAnnotations(filteredData) }, tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: c => c.parsed.y != null ? c.dataset.label + ': ' + (c.parsed.y >= 0 ? '+' : '') + c.parsed.y.toFixed(1) + '%' : '' } } },
+          scales: {
+            x: chartDefaults.scales.x,
+            y: { ...chartDefaults.scales.y, title: { display: true, text: 'YoY Growth %', color: '#606080' }, ticks: { ...chartDefaults.scales.y.ticks, callback: v => v + '%' } }
+          }
+        }
+      });
+    }
   }
 }
 
-// Revenue toggle
-document.getElementById('rev-toggle').addEventListener('click', e => {
+// Revenue period toggle (Quarterly / Annual)
+document.getElementById('rev-period-toggle').addEventListener('click', e => {
   const btn = e.target.closest('.toggle-btn');
   if (!btn) return;
-  revMode = btn.dataset.mode;
-  document.querySelectorAll('#rev-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+  revPeriod = btn.dataset.period;
+  document.querySelectorAll('#rev-period-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+  renderRevenueChart();
+});
+
+// Revenue view toggle (Absolute / YoY %)
+document.getElementById('rev-view-toggle').addEventListener('click', e => {
+  const btn = e.target.closest('.toggle-btn');
+  if (!btn) return;
+  revView = btn.dataset.view;
+  document.querySelectorAll('#rev-view-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
   renderRevenueChart();
 });
 
