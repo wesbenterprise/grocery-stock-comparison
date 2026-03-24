@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import KPICard from './components/KPICard';
 import YearRangeSelector from './components/YearRangeSelector';
 import RevenueIncomeChart from './components/RevenueIncomeChart';
@@ -7,9 +8,9 @@ import MarginChart from './components/MarginChart';
 import RevenuePerStoreChart from './components/RevenuePerStoreChart';
 import SeasonalHeatmap from './components/SeasonalHeatmap';
 import BalanceSheetChart from './components/BalanceSheetChart';
-import CashFlowChart from './components/CashFlowChart';
 import StoreExpansionChart from './components/StoreExpansionChart';
 import DataTable from './components/DataTable';
+import CashFlowDashboard from './components/CashFlowDashboard';
 import {
   formatBillions, formatPercent, formatNumber, getMarginColor,
 } from '../../lib/publix-financials';
@@ -18,6 +19,8 @@ export default function DashboardContent({
   filteredData, yearRange, setYearRange, activePreset, setActivePreset,
   latestQ, prevQ, kpiSparklineData, handleLogout,
 }) {
+  const [activeTab, setActiveTab] = useState('income');
+
   const qoqRevGrowth = latestQ.qoqRevenueGrowth ?? 0;
   const qoqNIGrowth = latestQ.qoqNetIncomeGrowth ?? 0;
   const storeChange = latestQ.storeCount - prevQ.storeCount;
@@ -26,6 +29,25 @@ export default function DashboardContent({
   const getRevDir = (v) => v > 1.0 ? 'up' : v < -1.0 ? 'down' : 'neutral';
   const getNIDir = (v) => v > 5.0 ? 'up' : v < -5.0 ? 'down' : 'neutral';
   const netMarginColor = getMarginColor(latestQ.operatingNetMarginPct, 'net');
+
+  const tabBase = {
+    padding: '10px 28px',
+    fontSize: '1rem',
+    fontWeight: 600,
+    background: 'transparent',
+    border: 'none',
+    borderBottom: '2px solid transparent',
+    cursor: 'pointer',
+    transition: 'all 150ms ease',
+    color: '#a3a3a3',
+    letterSpacing: '0.02em',
+  };
+
+  const tabActive = {
+    ...tabBase,
+    color: '#C8A050',
+    borderBottom: '2px solid #C8A050',
+  };
 
   return (
     <main style={{ background: '#0a0a0a', minHeight: '100vh', color: '#e5e5e5',
@@ -61,66 +83,94 @@ export default function DashboardContent({
           </button>
         </header>
 
+        {/* TAB SWITCHER */}
+        <div style={{
+          display: 'flex',
+          gap: 0,
+          borderBottom: '1px solid #2a2a2a',
+          marginBottom: 32,
+        }}>
+          <button
+            onClick={() => setActiveTab('income')}
+            style={activeTab === 'income' ? tabActive : tabBase}
+          >
+            Income Statement
+          </button>
+          <button
+            onClick={() => setActiveTab('cashflow')}
+            style={activeTab === 'cashflow' ? tabActive : tabBase}
+          >
+            Cash Flow
+          </button>
+        </div>
+
         {/* YEAR RANGE SELECTOR */}
         <YearRangeSelector yearRange={yearRange} setYearRange={setYearRange}
           activePreset={activePreset} setActivePreset={setActivePreset} />
 
-        {/* KPI ROW */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 32 }}
-          className="kpi-grid">
-          <KPICard label="TOTAL REVENUE" value={formatBillions(latestQ.revenue)}
-            trendValue={qoqRevGrowth} trendDirection={getRevDir(qoqRevGrowth)}
-            sparklineData={kpiSparklineData.revenue} sparklineColor="#C8A050" />
-          <KPICard label="OPERATING NET INCOME" value={formatBillions(latestQ.operatingNetIncome, 2)}
-            trendValue={qoqNIGrowth} trendDirection={getNIDir(qoqNIGrowth)}
-            sparklineData={kpiSparklineData.operatingNetIncome} sparklineColor="#2DD4BF"
-            sublabel="ex. securities G/L" />
-          <KPICard label="OPERATING NET MARGIN" value={formatPercent(latestQ.operatingNetMarginPct)}
-            trendValue={netMarginChange} trendDirection={netMarginChange >= 0 ? 'up' : 'down'}
-            sparklineData={kpiSparklineData.operatingNetMarginPct} sparklineColor={netMarginColor}
-            valueColor={netMarginColor} sublabel="ex. securities G/L" />
-          <KPICard label="STORE COUNT" value={formatNumber(latestQ.storeCount)}
-            trendValue={`+${storeChange}`}
-            trendDirection={storeChange > 0 ? 'up' : 'neutral'}
-            sparklineData={kpiSparklineData.storeCount} sparklineColor="#C8A050" />
-        </div>
+        {/* ── INCOME STATEMENT TAB ── */}
+        {activeTab === 'income' && (
+          <>
+            {/* KPI ROW */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 32 }}
+              className="kpi-grid">
+              <KPICard label="TOTAL REVENUE" value={formatBillions(latestQ.revenue)}
+                trendValue={qoqRevGrowth} trendDirection={getRevDir(qoqRevGrowth)}
+                sparklineData={kpiSparklineData.revenue} sparklineColor="#C8A050" />
+              <KPICard label="OPERATING NET INCOME" value={formatBillions(latestQ.operatingNetIncome, 2)}
+                trendValue={qoqNIGrowth} trendDirection={getNIDir(qoqNIGrowth)}
+                sparklineData={kpiSparklineData.operatingNetIncome} sparklineColor="#2DD4BF"
+                sublabel="ex. securities G/L" />
+              <KPICard label="OPERATING NET MARGIN" value={formatPercent(latestQ.operatingNetMarginPct)}
+                trendValue={netMarginChange} trendDirection={netMarginChange >= 0 ? 'up' : 'down'}
+                sparklineData={kpiSparklineData.operatingNetMarginPct} sparklineColor={netMarginColor}
+                valueColor={netMarginColor} sublabel="ex. securities G/L" />
+              <KPICard label="STORE COUNT" value={formatNumber(latestQ.storeCount)}
+                trendValue={`+${storeChange}`}
+                trendDirection={storeChange > 0 ? 'up' : 'neutral'}
+                sparklineData={kpiSparklineData.storeCount} sparklineColor="#C8A050" />
+            </div>
 
-        {/* REVENUE & NET INCOME */}
-        <div style={{ marginBottom: 32 }}>
-          <RevenueIncomeChart data={filteredData} />
-        </div>
+            {/* REVENUE & NET INCOME */}
+            <div style={{ marginBottom: 32 }}>
+              <RevenueIncomeChart data={filteredData} />
+            </div>
 
-        {/* MARGIN ANALYSIS */}
-        <div style={{ marginBottom: 32 }}>
-          <MarginChart data={filteredData} />
-        </div>
+            {/* MARGIN ANALYSIS */}
+            <div style={{ marginBottom: 32 }}>
+              <MarginChart data={filteredData} />
+            </div>
 
-        {/* TWO COLUMN: Rev/Store + Heatmap */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 32 }}
-          className="two-column">
-          <RevenuePerStoreChart data={filteredData} />
-          <SeasonalHeatmap yearRange={yearRange} />
-        </div>
+            {/* TWO COLUMN: Rev/Store + Heatmap */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 32 }}
+              className="two-column">
+              <RevenuePerStoreChart data={filteredData} />
+              <SeasonalHeatmap yearRange={yearRange} />
+            </div>
 
-        {/* BALANCE SHEET */}
-        <div style={{ marginBottom: 32 }}>
-          <BalanceSheetChart data={filteredData} />
-        </div>
+            {/* BALANCE SHEET */}
+            <div style={{ marginBottom: 32 }}>
+              <BalanceSheetChart data={filteredData} />
+            </div>
 
-        {/* CASH FLOW */}
-        <div style={{ marginBottom: 32 }}>
-          <CashFlowChart data={filteredData} />
-        </div>
+            {/* STORE EXPANSION */}
+            <div style={{ marginBottom: 32 }}>
+              <StoreExpansionChart />
+            </div>
 
-        {/* STORE EXPANSION */}
-        <div style={{ marginBottom: 32 }}>
-          <StoreExpansionChart />
-        </div>
+            {/* DATA TABLE */}
+            <div style={{ marginBottom: 48 }}>
+              <DataTable />
+            </div>
+          </>
+        )}
 
-        {/* DATA TABLE */}
-        <div style={{ marginBottom: 48 }}>
-          <DataTable />
-        </div>
+        {/* ── CASH FLOW TAB ── */}
+        {activeTab === 'cashflow' && (
+          <div style={{ marginBottom: 48 }}>
+            <CashFlowDashboard filteredData={filteredData} yearRange={yearRange} />
+          </div>
+        )}
 
         {/* FOOTER */}
         <footer style={{ textAlign: 'center', padding: '48px 0 32px', borderTop: '1px solid #2a2a2a', marginTop: 48 }}>
