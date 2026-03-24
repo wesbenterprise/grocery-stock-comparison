@@ -17,8 +17,8 @@
   --card-hover:#1c1c28;
   --border:rgba(255,255,255,0.08);
   --border-hover:rgba(255,255,255,0.16);
-  --amber:#C8A050;
-  --amber-glow:rgba(200,160,80,0.15);
+  --amber:#4caf50;
+  --amber-glow:rgba(76,175,80,0.15);
   --teal:#2DD4BF;
   --text:#f0f0f5;
   --text-secondary:#a0a0b8;
@@ -26,6 +26,8 @@
   --red:#ef5350;
   --green:#4caf50;
   --accent:#7c6fff;
+  --publix:#4caf50;
+  --publix-glow:rgba(76,175,80,0.15);
   --font-display:"Nunito", system-ui, sans-serif;
   --font-body:"DM Sans", system-ui, sans-serif;
   --font-mono:"Space Grotesk", monospace;
@@ -47,12 +49,15 @@ h1,h2,h3,h4,h5,h6{font-family:var(--font-display);font-weight:800;line-height:1.
 .shake{animation:shake .4s ease-in-out}
 
 /* Dashboard */
-#dashboard{display:none;max-width:1400px;margin:0 auto;padding:32px 24px 72px}
-header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:32px}
-header h1{color:var(--amber);font-size:30px;font-weight:900;letter-spacing:-.5px}
-header .subtitle{color:var(--text-secondary);font-family:var(--font-body);font-size:14px;margin-top:4px;font-weight:400}
-.badge{display:inline-block;background:var(--amber-glow);color:var(--amber);border:1px solid rgba(200,160,80,.25);padding:4px 14px;border-radius:20px;font-family:var(--font-mono);font-size:12px;font-weight:600;margin-top:8px;letter-spacing:.02em}
-.logout-btn{background:transparent;border:1px solid var(--border);color:var(--text-secondary);padding:8px 18px;border-radius:10px;cursor:pointer;font-family:var(--font-mono);font-size:13px;font-weight:600;transition:all .2s}
+#dashboard{display:none;max-width:1400px;margin:0 auto;padding:80px 24px 72px}
+.app-header{position:fixed;top:0;left:0;right:0;z-index:100;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:rgba(10,10,15,.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+.header-brand{display:flex;align-items:center;gap:12px}
+.header-brand h1{color:var(--text);font-size:16px;font-weight:800;letter-spacing:-.3px}
+.header-badge{font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--muted);background:#1e1e2a;border:1px solid var(--border);padding:2px 10px;border-radius:6px;letter-spacing:.04em;text-transform:uppercase}
+.header-right{display:flex;align-items:center;gap:12px}
+.header-nav-link{font-family:var(--font-mono);font-size:12px;color:var(--muted);text-decoration:none;opacity:.7;transition:opacity .2s}
+.header-nav-link:hover{opacity:1;color:var(--text)}
+.logout-btn{background:transparent;border:1px solid var(--border);color:var(--text-secondary);padding:6px 14px;border-radius:8px;cursor:pointer;font-family:var(--font-mono);font-size:12px;font-weight:600;transition:all .2s}
 .logout-btn:hover{border-color:var(--red);color:var(--red)}
 
 /* Year Selector */
@@ -75,7 +80,7 @@ header .subtitle{color:var(--text-secondary);font-family:var(--font-body);font-s
 
 /* Chart Cards */
 .chart-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.05);position:relative;overflow:hidden}
-.chart-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(124,111,255,0.02) 0%,transparent 50%);pointer-events:none}
+.chart-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(76,175,80,0.025) 0%,transparent 50%);pointer-events:none}
 .chart-card h3{font-family:var(--font-display);color:var(--text);font-size:17px;font-weight:800;margin-bottom:4px;letter-spacing:-0.01em}
 .chart-card .chart-subtitle{color:var(--muted);font-family:var(--font-body);font-size:12px;margin-bottom:16px;font-weight:400}
 .chart-toggle{display:flex;gap:4px;margin-bottom:14px;background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:3px;width:fit-content}
@@ -106,7 +111,7 @@ th .sort-arrow{margin-left:3px;opacity:.4}
 th.sorted .sort-arrow{opacity:1;color:var(--amber)}
 td{font-family:var(--font-mono);padding:8px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.04);white-space:nowrap;font-weight:500;color:var(--text-secondary)}
 td:first-child{text-align:left;color:var(--amber);font-weight:600}
-tr:hover td{background:rgba(200,160,80,.03)}
+tr:hover td{background:rgba(76,175,80,.03)}
 
 /* Anderson Narrative Cards */
 .narrative-card{background:#0d0d14;border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:16px 20px;margin-top:16px;margin-bottom:8px}
@@ -151,13 +156,15 @@ tr:hover td{background:rgba(200,160,80,.03)}
 
 <!-- Dashboard -->
 <div id="dashboard">
-  <header>
-    <div>
-      <h1>Publix Super Markets</h1>
-      <div class="subtitle">Quarterly Financial Performance Dashboard</div>
-      <div class="badge">44 Quarters &middot; SEC EDGAR Data</div>
+  <header class="app-header">
+    <div class="header-brand">
+      <h1>Publix Financial History</h1>
+      <span class="header-badge">SEC EDGAR · 44 Quarters</span>
     </div>
-    <button class="logout-btn" id="logout-btn">Logout</button>
+    <div class="header-right">
+      <a class="header-nav-link" href="/">← Grocery Compare</a>
+      <button class="logout-btn" id="logout-btn">Logout</button>
+    </div>
   </header>
 
   <!-- Tab Switcher -->
@@ -496,9 +503,9 @@ const YEAR_END_STORE_COUNTS = {
 const ANNOTATIONS = [
   { id:'covid_surge', quarter:'2020-Q1', label:'COVID Surge', color:'#ef5350' },
   { id:'portfolio_peak', quarter:'2021-Q1', label:'Portfolio Peak', color:'#2DD4BF' },
-  { id:'inflation_surge', quarter:'2022-Q1', label:'Inflation Pass-Through', color:'#C8A050' },
+  { id:'inflation_surge', quarter:'2022-Q1', label:'Inflation Pass-Through', color:'#4caf50' },
   { id:'margin_trough', quarter:'2022-Q3', label:'Margin Trough', color:'#ef5350' },
-  { id:'normalization', quarter:'2024-Q1', label:'Organic Growth', color:'#C8A050' },
+  { id:'normalization', quarter:'2024-Q1', label:'Organic Growth', color:'#4caf50' },
 ];
 
 // ──────────────────────────────────────────────────────────────
@@ -981,7 +988,7 @@ function renderRevenueChart() {
         data: {
           labels,
           datasets: [
-            { label: 'Revenue', data: annualData.map(d => d.revenue / 1e9), backgroundColor: 'rgba(200,160,80,.35)', borderColor: '#C8A050', borderWidth: 1, borderRadius: 4, yAxisID: 'y', order: 2 },
+            { label: 'Revenue', data: annualData.map(d => d.revenue / 1e9), backgroundColor: 'rgba(76,175,80,.35)', borderColor: '#4caf50', borderWidth: 1, borderRadius: 4, yAxisID: 'y', order: 2 },
             { label: 'Adj. Net Income (ex. Securities G/L)', data: annualData.map(d => d.operatingNetIncome / 1e9), type: 'line', borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.1)', borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 7, pointBackgroundColor: '#2DD4BF', fill: true, tension: 0.3, yAxisID: 'y1', order: 1 }
           ]
         },
@@ -1008,7 +1015,7 @@ function renderRevenueChart() {
         data: {
           labels,
           datasets: [
-            { label: 'Revenue YoY %', data: yoyRev, backgroundColor: yoyRev.map(v => v != null && v >= 0 ? 'rgba(200,160,80,.5)' : 'rgba(239,83,80,.4)'), borderColor: yoyRev.map(v => v != null && v >= 0 ? '#C8A050' : '#ef5350'), borderWidth: 1, borderRadius: 4, order: 2 },
+            { label: 'Revenue YoY %', data: yoyRev, backgroundColor: yoyRev.map(v => v != null && v >= 0 ? 'rgba(76,175,80,.5)' : 'rgba(239,83,80,.4)'), borderColor: yoyRev.map(v => v != null && v >= 0 ? '#4caf50' : '#ef5350'), borderWidth: 1, borderRadius: 4, order: 2 },
             { label: 'Op. Net Income YoY %', data: yoyNI, type: 'line', borderColor: '#2DD4BF', borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 6, pointBackgroundColor: '#2DD4BF', tension: 0.3, order: 1 }
           ]
         },
@@ -1033,7 +1040,7 @@ function renderRevenueChart() {
         data: {
           labels,
           datasets: [
-            { label: 'Revenue', data: filteredData.map(q => q.revenue / 1e9), backgroundColor: 'rgba(200,160,80,.35)', borderColor: '#C8A050', borderWidth: 1, borderRadius: 3, yAxisID: 'y', order: 2 },
+            { label: 'Revenue', data: filteredData.map(q => q.revenue / 1e9), backgroundColor: 'rgba(76,175,80,.35)', borderColor: '#4caf50', borderWidth: 1, borderRadius: 3, yAxisID: 'y', order: 2 },
             { label: 'Adj. Net Income (ex. Securities G/L)', data: filteredData.map(q => q.operatingNetIncome / 1e9), type: 'line', borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.1)', borderWidth: 2, pointRadius: 2, pointHoverRadius: 5, fill: true, tension: 0.3, yAxisID: 'y1', order: 1 }
           ]
         },
@@ -1060,7 +1067,7 @@ function renderRevenueChart() {
         data: {
           labels,
           datasets: [
-            { label: 'Revenue YoY %', data: yoyRev, backgroundColor: yoyRev.map(v => v != null && v >= 0 ? 'rgba(200,160,80,.5)' : 'rgba(239,83,80,.4)'), borderColor: yoyRev.map(v => v != null && v >= 0 ? '#C8A050' : '#ef5350'), borderWidth: 1, borderRadius: 3, order: 2 },
+            { label: 'Revenue YoY %', data: yoyRev, backgroundColor: yoyRev.map(v => v != null && v >= 0 ? 'rgba(76,175,80,.5)' : 'rgba(239,83,80,.4)'), borderColor: yoyRev.map(v => v != null && v >= 0 ? '#4caf50' : '#ef5350'), borderWidth: 1, borderRadius: 3, order: 2 },
             { label: 'Op. Net Income YoY %', data: yoyNI, type: 'line', borderColor: '#2DD4BF', borderWidth: 2, pointRadius: 2, tension: 0.3, order: 1 }
           ]
         },
@@ -1106,7 +1113,7 @@ function renderMarginsChart() {
     data: {
       labels: filteredData.map(q => q.period),
       datasets: [
-        { label: 'Gross Margin', data: filteredData.map(q => q.grossMarginPct), borderColor: '#C8A050', backgroundColor: 'rgba(200,160,80,.08)', borderWidth: 2, pointRadius: 1.5, fill: true, tension: 0.3 },
+        { label: 'Gross Margin', data: filteredData.map(q => q.grossMarginPct), borderColor: '#4caf50', backgroundColor: 'rgba(76,175,80,.08)', borderWidth: 2, pointRadius: 1.5, fill: true, tension: 0.3 },
         { label: 'Operating Margin', data: filteredData.map(q => q.operatingMarginPct), borderColor: '#2DD4BF', borderWidth: 2, pointRadius: 1.5, tension: 0.3 },
         { label: 'Op. Net Margin (ex. G/L)', data: filteredData.map(q => q.operatingNetMarginPct), borderColor: '#818cf8', borderWidth: 2, pointRadius: 1.5, tension: 0.3 }
       ]
@@ -1117,7 +1124,7 @@ function renderMarginsChart() {
         ...chartDefaults.plugins,
         annotation: {
           annotations: {
-            grossRef: { type: 'line', yMin: 27.5, yMax: 27.5, borderColor: 'rgba(200,160,80,.3)', borderWidth: 1, borderDash: [4,4], label: { display: true, content: 'Grocery Avg Gross ~27.5%', position: 'start', color: '#606080', font: { size: 9 }, backgroundColor: '#0a0a0fCC', padding: 3 } },
+            grossRef: { type: 'line', yMin: 27.5, yMax: 27.5, borderColor: 'rgba(76,175,80,.3)', borderWidth: 1, borderDash: [4,4], label: { display: true, content: 'Grocery Avg Gross ~27.5%', position: 'start', color: '#606080', font: { size: 9 }, backgroundColor: '#0a0a0fCC', padding: 3 } },
             netRef: { type: 'line', yMin: 2.5, yMax: 2.5, borderColor: 'rgba(239,83,80,.3)', borderWidth: 1, borderDash: [4,4], label: { display: true, content: 'Grocery Avg Net ~2.5%', position: 'end', color: '#606080', font: { size: 9 }, backgroundColor: '#0a0a0fCC', padding: 3 } }
           }
         },
@@ -1144,7 +1151,7 @@ function renderRPSChart() {
       datasets: [{
         label: 'Revenue Per Store',
         data: filteredData.map(q => q.revenuePerStore / 1e6),
-        borderColor: '#C8A050', backgroundColor: 'rgba(200,160,80,.1)',
+        borderColor: '#4caf50', backgroundColor: 'rgba(76,175,80,.1)',
         borderWidth: 2, pointRadius: 2, fill: true, tension: 0.3
       }]
     },
@@ -1190,7 +1197,7 @@ function renderHeatmap() {
         const intensity = (d.revenue - minR) / rangeR;
         const alpha = (0.15 + intensity * 0.65).toFixed(3);
         const title = `${d.period}: Revenue ${fmtB(d.revenue)} | Net Margin ${d.netMarginPct.toFixed(2)}%`;
-        html += `<div class="hm-cell" style="background:rgba(200,160,80,${alpha})" title="${title}">${d.netMarginPct.toFixed(1)}%</div>`;
+        html += `<div class="hm-cell" style="background:rgba(76,175,80,${alpha})" title="${title}">${d.netMarginPct.toFixed(1)}%</div>`;
       } else {
         html += `<div class="hm-cell" style="background:var(--card)">-</div>`;
       }
@@ -1211,7 +1218,7 @@ function renderBalanceChart() {
     data: {
       labels: filteredData.map(q => q.period),
       datasets: [
-        { label: 'Total Assets', data: filteredData.map(q => q.totalAssets / 1e9), borderColor: '#C8A050', backgroundColor: 'rgba(200,160,80,.1)', borderWidth: 2, fill: true, pointRadius: 1, tension: 0.3 },
+        { label: 'Total Assets', data: filteredData.map(q => q.totalAssets / 1e9), borderColor: '#4caf50', backgroundColor: 'rgba(76,175,80,.1)', borderWidth: 2, fill: true, pointRadius: 1, tension: 0.3 },
         { label: 'Stockholders\' Equity', data: filteredData.map(q => q.stockholdersEquity / 1e9), borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.08)', borderWidth: 2, fill: true, pointRadius: 1, tension: 0.3 },
         { label: 'Total Liabilities', data: filteredData.map(q => q.totalLiabilities / 1e9), borderColor: '#ef5350', backgroundColor: 'rgba(239,83,80,.06)', borderWidth: 2, fill: true, pointRadius: 1, tension: 0.3 }
       ]
@@ -1249,7 +1256,7 @@ function renderStoresChart() {
       labels: years.map(String),
       datasets: [
         { label: 'Net New Stores', data: netNew, backgroundColor: 'rgba(45,212,191,.4)', borderColor: '#2DD4BF', borderWidth: 1, borderRadius: 3, yAxisID: 'y', order: 2 },
-        { label: 'Total Stores', data: storesByYear, type: 'line', borderColor: '#C8A050', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#C8A050', yAxisID: 'y1', order: 1, tension: 0.3 }
+        { label: 'Total Stores', data: storesByYear, type: 'line', borderColor: '#4caf50', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#4caf50', yAxisID: 'y1', order: 1, tension: 0.3 }
       ]
     },
     options: {
@@ -1452,7 +1459,7 @@ function renderCFOcfChart() {
       data: {
         labels,
         datasets: [
-          { label: 'Operating CF', data: ocf, backgroundColor: 'rgba(200,160,80,.45)', borderColor: '#C8A050', borderWidth: 1, borderRadius: 3, yAxisID: 'y', order: 2 },
+          { label: 'Operating CF', data: ocf, backgroundColor: 'rgba(76,175,80,.45)', borderColor: '#4caf50', borderWidth: 1, borderRadius: 3, yAxisID: 'y', order: 2 },
           { label: 'Capex', data: capex, backgroundColor: 'rgba(239,83,80,.4)', borderColor: '#ef5350', borderWidth: 1, borderRadius: 3, yAxisID: 'y', order: 3 },
           { label: 'Free Cash Flow', data: fcf, type: 'line', borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.1)', borderWidth: 2, pointRadius: isAnnual ? 4 : 2, pointHoverRadius: 5, fill: false, tension: 0.3, yAxisID: 'y', order: 1 },
           { label: 'FCF Trend', data: trendData, type: 'line', borderColor: 'rgba(45,212,191,.45)', backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [6, 4], pointRadius: 0, pointHoverRadius: 0, fill: false, tension: 0, yAxisID: 'y', order: 4 }
@@ -1480,7 +1487,7 @@ function renderCFOcfChart() {
       data: {
         labels,
         datasets: [
-          { label: 'Operating CF YoY %', data: yoyOCF, borderColor: '#C8A050', backgroundColor: 'transparent', borderWidth: 2, pointRadius: isAnnual ? 4 : 2, pointHoverRadius: 5, tension: 0.3, spanGaps: true },
+          { label: 'Operating CF YoY %', data: yoyOCF, borderColor: '#4caf50', backgroundColor: 'transparent', borderWidth: 2, pointRadius: isAnnual ? 4 : 2, pointHoverRadius: 5, tension: 0.3, spanGaps: true },
           {
             label: 'FCF YoY %', data: yoyFCF, borderColor: '#2DD4BF', borderWidth: 2,
             pointRadius: isAnnual ? 4 : 2, pointHoverRadius: 5, tension: 0.3, spanGaps: true,
@@ -1560,7 +1567,7 @@ function renderCFAllocChart() {
     data: {
       labels,
       datasets: [
-        { label: 'Capex', data: capex, backgroundColor: 'rgba(200,160,80,.55)', borderColor: '#C8A050', borderWidth: 1, borderRadius: 3, stack: 'alloc' },
+        { label: 'Capex', data: capex, backgroundColor: 'rgba(76,175,80,.55)', borderColor: '#4caf50', borderWidth: 1, borderRadius: 3, stack: 'alloc' },
         { label: 'Dividends', data: divs, backgroundColor: 'rgba(45,212,191,.45)', borderColor: '#2DD4BF', borderWidth: 1, borderRadius: 3, stack: 'alloc' },
         { label: 'Buybacks', data: buybacks, backgroundColor: 'rgba(76,175,80,.45)', borderColor: '#4caf50', borderWidth: 1, borderRadius: 3, stack: 'alloc' },
         { label: 'Retained / Reinvested', data: retained, backgroundColor: retained.map(v => v >= 0 ? 'rgba(129,140,248,.45)' : 'rgba(239,83,80,.35)'), borderColor: retained.map(v => v >= 0 ? '#818cf8' : '#ef5350'), borderWidth: 1, borderRadius: 3, stack: 'alloc' }
@@ -1619,7 +1626,7 @@ function renderCFConversionChart() {
     data: {
       labels,
       datasets: [
-        { label: 'OCF % of Revenue', data: ocfPct, borderColor: '#C8A050', backgroundColor: 'rgba(200,160,80,.1)', borderWidth: 2, pointRadius: 2, fill: true, tension: 0.3 },
+        { label: 'OCF % of Revenue', data: ocfPct, borderColor: '#4caf50', backgroundColor: 'rgba(76,175,80,.1)', borderWidth: 2, pointRadius: 2, fill: true, tension: 0.3 },
         { label: 'FCF % of Revenue', data: fcfPct, borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.08)', borderWidth: 2, pointRadius: 2, fill: true, tension: 0.3 }
       ]
     },
@@ -1787,7 +1794,7 @@ function renderEquityKPIs() {
       label: 'BOOK VALUE / SHARE',
       value: '$' + bvps.toFixed(2),
       change: bvpsChange,
-      color: '#C8A050',
+      color: '#4caf50',
       sublabel: 'latest quarter'
     },
     {
@@ -1846,8 +1853,8 @@ function renderEquityCompoundChart() {
         {
           label: "Stockholders' Equity",
           data: equity,
-          backgroundColor: 'rgba(200,160,80,.3)',
-          borderColor: '#C8A050',
+          backgroundColor: 'rgba(76,175,80,.3)',
+          borderColor: '#4caf50',
           borderWidth: 1,
           borderRadius: 3,
           yAxisID: 'y',
@@ -1944,7 +1951,7 @@ function renderEquitySharesChart() {
         {
           label: 'Shares Outstanding (Split-Adj.)',
           data: sharesQuarterly,
-          borderColor: '#C8A050',
+          borderColor: '#4caf50',
           backgroundColor: 'transparent',
           borderWidth: 2.5,
           pointRadius: 0,
@@ -2020,7 +2027,7 @@ function renderEquityEPSChart() {
         {
           label: 'Adj. Net Income (Indexed)',
           data: niIndexed,
-          borderColor: '#C8A050',
+          borderColor: '#4caf50',
           backgroundColor: 'transparent',
           borderWidth: 2.5,
           pointRadius: 0,
@@ -2141,12 +2148,12 @@ function renderEquityReturnsChart() {
           label: 'Capital Return Rate',
           data: returnRate,
           type: 'line',
-          borderColor: '#C8A050',
+          borderColor: '#4caf50',
           backgroundColor: 'transparent',
           borderWidth: 2.5,
           pointRadius: equityReturnsMode === 'annual' ? 5 : 2,
           pointHoverRadius: 6,
-          pointBackgroundColor: '#C8A050',
+          pointBackgroundColor: '#4caf50',
           tension: 0.3,
           fill: false,
           yAxisID: 'y1',
@@ -2299,8 +2306,8 @@ function renderBSAssetsChart() {
     data: {
       labels,
       datasets: [
-        { label: 'PP&E', data: ppe, backgroundColor: 'rgba(200,160,80,0.7)', borderWidth: 0, stack: 'assets' },
-        { label: 'Operating Lease ROU', data: rou, backgroundColor: 'rgba(200,160,80,0.35)', borderWidth: 0, stack: 'assets' },
+        { label: 'PP&E', data: ppe, backgroundColor: 'rgba(76,175,80,0.7)', borderWidth: 0, stack: 'assets' },
+        { label: 'Operating Lease ROU', data: rou, backgroundColor: 'rgba(76,175,80,0.35)', borderWidth: 0, stack: 'assets' },
         { label: 'Long-Term Investments', data: ltInv, backgroundColor: 'rgba(45,212,191,0.65)', borderWidth: 0, stack: 'assets' },
         { label: 'Equity Securities (FV)', data: eqSec, backgroundColor: 'rgba(45,212,191,0.35)', borderWidth: 0, stack: 'assets' },
         { label: 'Short-Term Investments / Cash', data: stLiquid, backgroundColor: 'rgba(129,140,248,0.6)', borderWidth: 0, stack: 'assets' },
@@ -2347,7 +2354,7 @@ function renderBSGrowthChart() {
     data: {
       labels,
       datasets: [
-        { label: 'Total Assets', data: assets, borderColor: '#C8A050', backgroundColor: 'rgba(200,160,80,0.08)', borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5, tension: 0.3, fill: false, yAxisID: 'y', order: 1 },
+        { label: 'Total Assets', data: assets, borderColor: '#4caf50', backgroundColor: 'rgba(76,175,80,0.08)', borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5, tension: 0.3, fill: false, yAxisID: 'y', order: 1 },
         { label: "Stockholders' Equity", data: equity, borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,0.08)', borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5, tension: 0.3, fill: false, yAxisID: 'y', order: 2 },
         { label: 'Total Liabilities', data: liabilities, borderColor: '#ef5350', backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [4,3], pointRadius: 0, pointHoverRadius: 4, tension: 0.3, fill: false, yAxisID: 'y', order: 3 },
         { label: 'Equity/Assets %', data: etaRatio, borderColor: '#818cf8', backgroundColor: 'rgba(129,140,248,0.06)', borderWidth: 1.5, pointRadius: 0, pointHoverRadius: 4, tension: 0.3, fill: true, yAxisID: 'y1', order: 4 }
@@ -2397,7 +2404,7 @@ function renderBSEfficiencyChart() {
     data: {
       labels,
       datasets: [
-        { label: 'Asset Turnover (TTM)', data: assetTurnover, borderColor: '#C8A050', backgroundColor: 'transparent', borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5, tension: 0.3, yAxisID: 'y', spanGaps: true },
+        { label: 'Asset Turnover (TTM)', data: assetTurnover, borderColor: '#4caf50', backgroundColor: 'transparent', borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5, tension: 0.3, yAxisID: 'y', spanGaps: true },
         { label: 'Current Ratio', data: currentRatio, borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,0.06)', borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5, tension: 0.3, yAxisID: 'y1', fill: false }
       ]
     },
@@ -2408,7 +2415,7 @@ function renderBSEfficiencyChart() {
         tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: c => c.dataset.label === 'Current Ratio' ? `Current Ratio: ${c.parsed.y.toFixed(2)}x` : `Asset Turnover: ${c.parsed.y.toFixed(2)}x` } },
         annotation: {
           annotations: {
-            onePctAsset: { type: 'line', yScaleID: 'y', yMin: 1, yMax: 1, borderColor: 'rgba(200,160,80,0.2)', borderWidth: 1, borderDash: [4,3] },
+            onePctAsset: { type: 'line', yScaleID: 'y', yMin: 1, yMax: 1, borderColor: 'rgba(76,175,80,0.2)', borderWidth: 1, borderDash: [4,3] },
             onePctCurrent: { type: 'line', yScaleID: 'y1', yMin: 1, yMax: 1, borderColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderDash: [4,3],
               label: { display: true, content: '1.0x', position: 'end', color: '#606080', font: { size: 9 }, backgroundColor: 'transparent' } }
           }
@@ -2455,7 +2462,7 @@ function renderBSLiabChart() {
     data: {
       labels,
       datasets: [
-        { label: 'Accounts Payable', data: ap, backgroundColor: 'rgba(200,160,80,0.65)', borderWidth: 0, stack: 'liab' },
+        { label: 'Accounts Payable', data: ap, backgroundColor: 'rgba(76,175,80,0.65)', borderWidth: 0, stack: 'liab' },
         { label: 'Lease — Current', data: leaseCur, backgroundColor: 'rgba(45,212,191,0.5)', borderWidth: 0, stack: 'liab' },
         { label: 'Lease — Noncurrent', data: leaseNon, backgroundColor: 'rgba(45,212,191,0.3)', borderWidth: 0, stack: 'liab' },
         { label: 'Deferred Income Tax', data: defTax, backgroundColor: 'rgba(129,140,248,0.5)', borderWidth: 0, stack: 'liab' },
