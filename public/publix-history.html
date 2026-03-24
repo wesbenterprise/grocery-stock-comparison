@@ -367,6 +367,15 @@ tr:hover td{background:rgba(76,175,80,.03)}
     <!-- Equity KPI Cards -->
     <div class="kpi-grid" id="equity-kpi-grid"></div>
 
+    <!-- Global Period Toggle -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <span style="font-family:var(--font-mono);font-size:12px;color:var(--muted);letter-spacing:.04em">VIEW</span>
+      <div class="chart-toggle" id="equity-period-toggle">
+        <button class="toggle-btn" data-period="quarterly">Quarterly</button>
+        <button class="toggle-btn active" data-period="annual">Annual</button>
+      </div>
+    </div>
+
     <!-- Chart 1: Equity Compounding -->
     <div class="chart-card">
       <h3>Equity Compounding</h3>
@@ -404,10 +413,6 @@ tr:hover td{background:rgba(76,175,80,.03)}
     <div class="chart-card">
       <h3>Shareholder Returns Composition</h3>
       <div class="chart-subtitle">Dividends and buybacks vs operating net income — Capital Return Rate</div>
-      <div class="chart-toggle" id="equity-returns-toggle">
-        <button class="toggle-btn active" data-mode="quarterly">Quarterly</button>
-        <button class="toggle-btn" data-mode="annual">Annual</button>
-      </div>
       <div style="position:relative;height:320px"><canvas id="chart-equity-returns"></canvas></div>
       <div class="narrative-card">
         <div class="narrative-header">&#9670; Anderson's Take</div>
@@ -1862,8 +1867,8 @@ function renderEquityCompoundChart() {
   if (!ctx) return;
   if (charts.equityCompound) charts.equityCompound.destroy();
 
-  const data = QUARTERS;
-  const labels = data.map(q => q.period);
+  const data = equityPeriod === 'annual' ? QUARTERS.filter(q => q.quarter === 4) : QUARTERS;
+  const labels = equityPeriod === 'annual' ? data.map(q => String(q.fiscalYear)) : data.map(q => q.period);
   const equity = data.map(q => q.stockholdersEquity / 1e9);
   const bvps = data.map(q => q.stockholdersEquity / (interpolateSharesQuarterly(q.period) * 1e6));
 
@@ -1947,12 +1952,22 @@ function renderEquitySharesChart() {
   if (!ctx) return;
   if (charts.equityShares) charts.equityShares.destroy();
 
-  // Quarterly buyback spend (bars)
-  const labels = CASHFLOW_DATA.map(d => d.period);
-  const buybackData = CASHFLOW_DATA.map(d => Math.abs(d.stock_repurchases) / 1e9);
-
-  // Interpolate share count onto quarterly scale
-  const sharesQuarterly = labels.map(p => interpolateSharesQuarterly(p));
+  // Annual: aggregate buybacks per year, use year-end share count
+  let labels, buybackData, sharesQuarterly;
+  if (equityPeriod === 'annual') {
+    const annualMap = {};
+    CASHFLOW_DATA.forEach(d => {
+      if (!annualMap[d.fiscal_year]) annualMap[d.fiscal_year] = 0;
+      annualMap[d.fiscal_year] += Math.abs(d.stock_repurchases);
+    });
+    labels = Object.keys(annualMap).sort();
+    buybackData = labels.map(y => annualMap[y] / 1e9);
+    sharesQuarterly = labels.map(y => interpolateSharesQuarterly(y + '-Q4'));
+  } else {
+    labels = CASHFLOW_DATA.map(d => d.period);
+    buybackData = CASHFLOW_DATA.map(d => Math.abs(d.stock_repurchases) / 1e9);
+    sharesQuarterly = labels.map(p => interpolateSharesQuarterly(p));
+  }
 
   charts.equityShares = new Chart(ctx, {
     type: 'bar',
@@ -2031,10 +2046,10 @@ function renderEquityEPSChart() {
   if (!ctx) return;
   if (charts.equityEPS) charts.equityEPS.destroy();
 
-  const data = QUARTERS;
-  const labels = data.map(q => q.period);
+  const data = equityPeriod === 'annual' ? QUARTERS.filter(q => q.quarter === 4) : QUARTERS;
+  const labels = equityPeriod === 'annual' ? data.map(q => String(q.fiscalYear)) : data.map(q => q.period);
 
-  // Rebase both to 100 at 2015-Q1
+  // Rebase both to 100 at first data point
   const baseNI = data[0].operatingNetIncome;
   const baseEPS = splitAdjustedEPS(data[0]);
 
@@ -2104,7 +2119,8 @@ function renderEquityEPSChart() {
   });
 }
 
-let equityReturnsMode = 'annual';
+let equityPeriod = 'annual'; // global equity tab toggle
+let equityReturnsMode = 'annual'; // kept for compat, synced to equityPeriod
 
 function renderEquityReturnsChart() {
   const ctx = document.getElementById('chart-equity-returns');
@@ -2113,7 +2129,7 @@ function renderEquityReturnsChart() {
 
   let labels, divs, buybacks, niData;
 
-  if (equityReturnsMode === 'annual') {
+  if (equityPeriod === 'annual') {
     const annCF = computeCashflowAnnualTotals(CASHFLOW_DATA);
     labels = annCF.map(d => String(d.year));
     divs = annCF.map(d => Math.abs(d.dividends_paid) / 1e9);
@@ -2173,7 +2189,7 @@ function renderEquityReturnsChart() {
           borderColor: '#4caf50',
           backgroundColor: 'transparent',
           borderWidth: 2.5,
-          pointRadius: equityReturnsMode === 'annual' ? 5 : 2,
+          pointRadius: equityPeriod === 'annual' ? 5 : 2,
           pointHoverRadius: 6,
           pointBackgroundColor: '#4caf50',
           tension: 0.3,
@@ -2230,11 +2246,15 @@ function renderEquityReturnsChart() {
   });
 }
 
-document.getElementById('equity-returns-toggle').addEventListener('click', e => {
+document.getElementById('equity-period-toggle').addEventListener('click', e => {
   const btn = e.target.closest('.toggle-btn');
   if (!btn) return;
-  equityReturnsMode = btn.dataset.mode;
-  document.querySelectorAll('#equity-returns-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+  equityPeriod = btn.dataset.period;
+  equityReturnsMode = equityPeriod; // keep in sync
+  document.querySelectorAll('#equity-period-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+  renderEquityCompoundChart();
+  renderEquitySharesChart();
+  renderEquityEPSChart();
   renderEquityReturnsChart();
 });
 
