@@ -9,11 +9,12 @@ setupCharts();
 const LINE_CONFIG = [
   { key: 'gross', label: 'Gross Margin %', field: 'grossMarginPct', color: '#C8A050' },
   { key: 'operating', label: 'Operating Margin %', field: 'operatingMarginPct', color: '#2DD4BF' },
-  { key: 'net', label: 'Net Margin %', field: 'netMarginPct', color: '#22c55e' },
+  { key: 'operatingNet', label: 'Operating Net Margin %', field: 'operatingNetMarginPct', color: '#22c55e' },
+  { key: 'net', label: 'Reported Net Margin %', field: 'netMarginPct', color: '#22c55e40', dashed: true },
 ];
 
 export default function MarginChart({ data }) {
-  const [visible, setVisible] = useState({ gross: true, operating: true, net: true });
+  const [visible, setVisible] = useState({ gross: true, operating: true, operatingNet: true, net: false });
 
   const toggle = (key) => {
     const activeCount = Object.values(visible).filter(Boolean).length;
@@ -26,8 +27,11 @@ export default function MarginChart({ data }) {
     .map(l => ({
       label: l.label,
       data: data.map(q => q[l.field]),
-      borderColor: l.color, backgroundColor: l.color + '10',
-      borderWidth: 2, pointRadius: 0, pointHoverRadius: 4,
+      borderColor: l.color,
+      backgroundColor: l.dashed ? 'transparent' : l.color + '10',
+      borderWidth: l.dashed ? 1.5 : 2,
+      borderDash: l.dashed ? [4, 3] : undefined,
+      pointRadius: 0, pointHoverRadius: 4,
       pointHoverBackgroundColor: l.color, tension: 0.3, fill: false,
     }));
 
@@ -95,19 +99,18 @@ export default function MarginChart({ data }) {
         </h2>
         <div style={{ display: 'flex', gap: 20 }}>
           {LINE_CONFIG.map(l => (
-            <label key={l.key} style={{
+            <label key={l.key} onClick={() => toggle(l.key)} style={{
               display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
-              fontSize: '0.75rem', color: '#a3a3a3',
+              fontSize: '0.75rem', color: visible[l.key] ? '#e5e5e5' : '#555',
+              transition: 'color 150ms',
             }}>
-              <span
-                onClick={() => toggle(l.key)}
-                style={{
-                  width: 14, height: 14, borderRadius: 3,
-                  border: `2px solid ${l.color}`,
-                  background: visible[l.key] ? l.color : 'transparent',
-                  display: 'inline-block', cursor: 'pointer', transition: 'background 150ms',
-                }}
-              />
+              <span style={{
+                width: 14, height: 14, borderRadius: 3,
+                border: `2px solid ${l.dashed ? '#22c55e' : l.color}`,
+                background: visible[l.key] ? (l.dashed ? '#22c55e' : l.color) : 'transparent',
+                display: 'inline-block', transition: 'background 150ms',
+                opacity: l.dashed ? 0.35 : 1,
+              }} />
               {l.label.replace(' %', '')}
             </label>
           ))}

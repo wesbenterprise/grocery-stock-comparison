@@ -20,11 +20,11 @@ export default function DashboardContent({
   const qoqRevGrowth = latestQ.qoqRevenueGrowth ?? 0;
   const qoqNIGrowth = latestQ.qoqNetIncomeGrowth ?? 0;
   const storeChange = latestQ.storeCount - prevQ.storeCount;
-  const netMarginChange = latestQ.netMarginPct - prevQ.netMarginPct;
+  const netMarginChange = latestQ.operatingNetMarginPct - prevQ.operatingNetMarginPct;
 
   const getRevDir = (v) => v > 1.0 ? 'up' : v < -1.0 ? 'down' : 'neutral';
   const getNIDir = (v) => v > 5.0 ? 'up' : v < -5.0 ? 'down' : 'neutral';
-  const netMarginColor = getMarginColor(latestQ.netMarginPct, 'net');
+  const netMarginColor = getMarginColor(latestQ.operatingNetMarginPct, 'net');
 
   return (
     <main style={{ background: '#0a0a0a', minHeight: '100vh', color: '#e5e5e5',
@@ -70,13 +70,14 @@ export default function DashboardContent({
           <KPICard label="TOTAL REVENUE" value={formatBillions(latestQ.revenue)}
             trendValue={qoqRevGrowth} trendDirection={getRevDir(qoqRevGrowth)}
             sparklineData={kpiSparklineData.revenue} sparklineColor="#C8A050" />
-          <KPICard label="NET INCOME" value={formatBillions(latestQ.netIncome, 2)}
+          <KPICard label="OPERATING NET INCOME" value={formatBillions(latestQ.operatingNetIncome, 2)}
             trendValue={qoqNIGrowth} trendDirection={getNIDir(qoqNIGrowth)}
-            sparklineData={kpiSparklineData.netIncome} sparklineColor="#2DD4BF" />
-          <KPICard label="NET MARGIN" value={formatPercent(latestQ.netMarginPct)}
+            sparklineData={kpiSparklineData.operatingNetIncome} sparklineColor="#2DD4BF"
+            sublabel="ex. securities G/L" />
+          <KPICard label="OPERATING NET MARGIN" value={formatPercent(latestQ.operatingNetMarginPct)}
             trendValue={netMarginChange} trendDirection={netMarginChange >= 0 ? 'up' : 'down'}
-            sparklineData={kpiSparklineData.netMarginPct} sparklineColor={netMarginColor}
-            valueColor={netMarginColor} />
+            sparklineData={kpiSparklineData.operatingNetMarginPct} sparklineColor={netMarginColor}
+            valueColor={netMarginColor} sublabel="ex. securities G/L" />
           <KPICard label="STORE COUNT" value={formatNumber(latestQ.storeCount)}
             trendValue={`+${storeChange}`}
             trendDirection={storeChange > 0 ? 'up' : 'neutral'}

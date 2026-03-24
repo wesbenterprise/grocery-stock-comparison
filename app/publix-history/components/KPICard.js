@@ -5,7 +5,7 @@ import { setupCharts } from '../ChartSetup';
 
 setupCharts();
 
-export default function KPICard({ label, value, trendValue, trendDirection, sparklineData, sparklineColor, valueColor }) {
+export default function KPICard({ label, value, trendValue, trendDirection, sparklineData, sparklineColor, valueColor, sublabel }) {
   const trendColors = {
     up: { bg: '#22c55e26', color: '#22c55e', arrow: '▲' },
     down: { bg: '#ef444426', color: '#ef4444', arrow: '▼' },
@@ -58,6 +58,11 @@ export default function KPICard({ label, value, trendValue, trendDirection, spar
       }}>
         {value}
       </div>
+      {sublabel && (
+        <div style={{ fontSize: '0.6875rem', color: '#555', marginTop: 2, fontStyle: 'italic' }}>
+          {sublabel}
+        </div>
+      )}
       <div style={{ height: 40, marginTop: 12 }}>
         <Line data={chartData} options={chartOptions} />
       </div>

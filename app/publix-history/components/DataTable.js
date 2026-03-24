@@ -6,8 +6,9 @@ import { QUARTERS, getMarginColor } from '../../../lib/publix-financials';
 const COLUMNS = [
   { key: 'period', label: 'Quarter', align: 'left', format: (q) => q.period },
   { key: 'revenue', label: 'Revenue', align: 'right', format: (q) => `$${Math.round(q.revenue / 1e6).toLocaleString()}M` },
-  { key: 'netIncome', label: 'Net Income', align: 'right', format: (q) => `$${Math.round(q.netIncome / 1e6).toLocaleString()}M` },
-  { key: 'netMarginPct', label: 'Net Margin %', align: 'right', format: (q) => `${q.netMarginPct.toFixed(2)}%`, color: (q) => getMarginColor(q.netMarginPct, 'net') },
+  { key: 'operatingNetIncome', label: 'Op. Net Income', align: 'right', format: (q) => `$${Math.round(q.operatingNetIncome / 1e6).toLocaleString()}M` },
+  { key: 'operatingNetMarginPct', label: 'Op. Net Margin', align: 'right', format: (q) => `${q.operatingNetMarginPct.toFixed(2)}%`, color: (q) => getMarginColor(q.operatingNetMarginPct, 'net') },
+  { key: 'netIncome', label: 'Reported NI', align: 'right', format: (q) => `$${Math.round(q.netIncome / 1e6).toLocaleString()}M` },
   { key: 'grossMarginPct', label: 'Gross Margin %', align: 'right', format: (q) => `${q.grossMarginPct.toFixed(2)}%` },
   { key: 'epsBasic', label: 'EPS', align: 'right', format: (q) => `$${q.epsBasic.toFixed(2)}` },
   { key: 'storeCount', label: 'Stores', align: 'right', format: (q) => q.storeCount.toLocaleString() },

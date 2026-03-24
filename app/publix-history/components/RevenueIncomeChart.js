@@ -45,8 +45,18 @@ export default function RevenueIncomeChart({ data }) {
         yAxisID: 'y', order: 2,
       },
       {
-        label: 'Net Income', type: 'line',
+        label: 'Net Income (Reported)', type: 'line',
         data: data.map(q => q.netIncome / 1e9),
+        borderColor: '#2DD4BF40', backgroundColor: 'transparent',
+        borderWidth: 1.5, borderDash: [4, 3],
+        pointRadius: 0, pointHoverRadius: 4,
+        pointHoverBackgroundColor: '#2DD4BF', pointHoverBorderColor: '#0a0a0a',
+        pointHoverBorderWidth: 2, tension: 0.2, fill: false,
+        yAxisID: 'y1', order: 2,
+      },
+      {
+        label: 'Net Income (Operations)', type: 'line',
+        data: data.map(q => q.operatingNetIncome / 1e9),
         borderColor: '#2DD4BF', backgroundColor: '#2DD4BF1A',
         borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5,
         pointHoverBackgroundColor: '#2DD4BF', pointHoverBorderColor: '#0a0a0a',
@@ -66,10 +76,16 @@ export default function RevenueIncomeChart({ data }) {
         pointHoverRadius: 4, tension: 0.2, spanGaps: true,
       },
       {
-        label: 'Net Income YoY Growth %',
-        data: data.map(q => q.yoyNetIncomeGrowth),
+        label: 'Operating Net Income YoY Growth %',
+        data: data.map(q => q.yoyOperatingNetIncomeGrowth),
         borderColor: '#2DD4BF', borderWidth: 2, pointRadius: 0,
         pointHoverRadius: 4, tension: 0.2, spanGaps: true,
+      },
+      {
+        label: 'Reported Net Income YoY Growth %',
+        data: data.map(q => q.yoyNetIncomeGrowth),
+        borderColor: '#2DD4BF40', borderWidth: 1.5, borderDash: [4, 3],
+        pointRadius: 0, pointHoverRadius: 4, tension: 0.2, spanGaps: true,
       },
     ],
   };
@@ -102,15 +118,22 @@ export default function RevenueIncomeChart({ data }) {
           title: (items) => items[0].label,
           label: (item) => {
             if (item.datasetIndex === 0) return `Revenue: $${item.raw.toFixed(1)}B`;
-            return `Net Income: $${item.raw.toFixed(2)}B`;
+            if (item.dataset.label === 'Net Income (Operations)') return `Operating Net Income: $${item.raw.toFixed(2)}B`;
+            return `Reported Net Income: $${item.raw.toFixed(2)}B`;
           },
           afterBody: (items) => {
             const idx = items[0].dataIndex;
             const quarter = data[idx];
+            const lines = [];
             if (quarter.yoyRevenueGrowth != null) {
-              return `YoY Revenue: ${quarter.yoyRevenueGrowth > 0 ? '+' : ''}${quarter.yoyRevenueGrowth.toFixed(1)}%`;
+              lines.push(`YoY Revenue: ${quarter.yoyRevenueGrowth > 0 ? '+' : ''}${quarter.yoyRevenueGrowth.toFixed(1)}%`);
             }
-            return '';
+            const gl = quarter.unrealizedSecuritiesGL;
+            if (gl !== 0) {
+              const sign = gl >= 0 ? '+' : '';
+              lines.push(`Securities G/L: ${sign}$${(gl / 1e6).toFixed(0)}M (excl. from operations)`);
+            }
+            return lines;
           },
         },
       },
