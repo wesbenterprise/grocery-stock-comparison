@@ -179,7 +179,7 @@ tr:hover td{background:rgba(200,160,80,.03)}
 
   <!-- Revenue & Operating Net Income -->
   <div class="chart-card">
-    <h3>Revenue &amp; Operating Net Income</h3>
+    <h3>Revenue &amp; Adjusted Net Income</h3>
     <div class="chart-subtitle">Quarterly revenue (bars) and operating net income ex. securities G/L (line) with key event annotations</div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
       <div class="chart-toggle" id="rev-period-toggle">
@@ -213,7 +213,7 @@ tr:hover td{background:rgba(200,160,80,.03)}
     <!-- Revenue Per Store -->
     <div class="chart-card">
       <h3>Revenue Per Store</h3>
-      <div class="chart-subtitle">Quarterly revenue divided by interpolated store count</div>
+      <div class="chart-subtitle">Quarterly revenue divided by interpolated store count Store count interpolated between annual year-end figures.</div>
       <div style="position:relative;height:280px"><canvas id="chart-rps"></canvas></div>
       <div class="narrative-card">
         <div class="narrative-header">&#9670; Anderson's Take</div>
@@ -224,8 +224,8 @@ tr:hover td{background:rgba(200,160,80,.03)}
 
   <!-- Seasonal Heatmap -->
   <div class="chart-card">
-    <h3>Seasonal Revenue Heatmap</h3>
-    <div class="chart-subtitle">Net margin % by quarter — amber intensity reflects revenue magnitude</div>
+    <h3>Seasonal Margin Heatmap</h3>
+    <div class="chart-subtitle">Cell value = net margin %; cell intensity = revenue magnitude</div>
     <div class="heatmap" id="heatmap"></div>
   </div>
 
@@ -362,7 +362,7 @@ tr:hover td{background:rgba(200,160,80,.03)}
 
     <!-- Chart 3: EPS vs NI Indexed -->
     <div class="chart-card">
-      <h3>EPS vs Operating NI — Indexed Growth</h3>
+      <h3>EPS vs Adj. Net Income — Indexed Growth</h3>
       <div class="chart-subtitle">Both rebased to 100 at 2015-Q1. The gap is the buyback accretion premium.</div>
       <div style="position:relative;height:320px"><canvas id="chart-equity-eps"></canvas></div>
       <div class="narrative-card">
@@ -814,53 +814,93 @@ function updateAll() {
 // KPI Cards
 // ──────────────────────────────────────────────────────────────
 function renderKPIs() {
-  const latest = filteredData[filteredData.length - 1];
-  const prev = filteredData.length > 1 ? filteredData[filteredData.length - 2] : null;
-  const last8 = filteredData.slice(-8);
+  const grid = document.getElementById('kpi-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  const allQ = QUARTERS;
+  const latest = allQ[allQ.length - 1];
+  const prev = allQ[allQ.length - 5]; // same quarter prior year
+  const last8 = allQ.slice(-8);
+
+  // TTM helpers
+  const ttm = allQ.slice(-4);
+  const prevTTM = allQ.slice(-8, -4);
+  const ttmRev = ttm.reduce((s, q) => s + q.revenue, 0);
+  const prevTTMRev = prevTTM.reduce((s, q) => s + q.revenue, 0);
+  const ttmRevChange = ((ttmRev - prevTTMRev) / prevTTMRev) * 100;
 
   function changePct(cur, old) {
     if (!old || old === 0) return null;
     return ((cur - old) / Math.abs(old)) * 100;
   }
 
-  const kpis = [
-    { label: 'Total Revenue', value: fmtB(latest.revenue), change: changePct(latest.revenue, prev?.revenue), spark: last8.map(q => q.revenue) },
-    { label: 'Operating Net Income', value: fmtM(latest.operatingNetIncome), change: changePct(latest.operatingNetIncome, prev?.operatingNetIncome), spark: last8.map(q => q.operatingNetIncome) },
-    { label: 'OPERATING NET MARGIN', subtitle: '(ex. securities G/L)', value: fmtPct(latest.operatingNetMarginPct, 2), change: prev ? latest.operatingNetMarginPct - prev.operatingNetMarginPct : null, spark: last8.map(q => q.operatingNetMarginPct), isDelta: true },
-    { label: 'Store Count', value: fmtNum(latest.storeCount), change: changePct(latest.storeCount, prev?.storeCount), spark: last8.map(q => q.storeCount) },
+  // Row 1: existing metrics
+  const gmChange = prev ? (latest.gross_margin_pct - prev.gross_margin_pct) : null;
+  const niChange = prev ? changePct(latest.operatingNetIncome, prev.operatingNetIncome) : null;
+  const scChange = prev ? changePct(latest.storeCount, prev.storeCount) : null;
+
+  // Row 2: operational metrics
+  // 5. Revenue Per Store TTM
+  const ttmRevPerStore = ttmRev / latest.storeCount;
+  const prevTTMRevPerStore = prevTTMRev / (prev ? prev.storeCount : latest.storeCount);
+  const rpsChange = ((ttmRevPerStore - prevTTMRevPerStore) / prevTTMRevPerStore) * 100;
+
+  // 6. Net New Stores (latest full year)
+  const latestYear = latest.fiscal_year;
+  const q4Latest = allQ.filter(q => q.fiscal_year === latestYear && q.quarter === 4)[0];
+  const q4PriorYear = allQ.filter(q => q.fiscal_year === latestYear - 1 && q.quarter === 4)[0];
+  const netNewStores = q4Latest && q4PriorYear ? q4Latest.storeCount - q4PriorYear.storeCount : null;
+
+  // 7. Implied Same-Store Growth (TTM rev YoY% minus store count YoY%)
+  const storeCountYoY = prev ? ((latest.storeCount - prev.storeCount) / prev.storeCount) * 100 : 0;
+  const impliedSSS = ttmRevChange - storeCountYoY;
+  // Prior year implied SSS for badge
+  const ttmMinus1Rev = allQ.slice(-8, -4).reduce((s, q) => s + q.revenue, 0);
+  const ttmMinus2Rev = allQ.slice(-12, -8).reduce((s, q) => s + q.revenue, 0);
+  const prevTTMRevChange = allQ.length >= 12 ? ((ttmMinus1Rev - ttmMinus2Rev) / ttmMinus2Rev) * 100 : ttmRevChange;
+  const prevStoreCountYoY = allQ.length >= 9 ? ((allQ[allQ.length-5].storeCount - allQ[allQ.length-9].storeCount) / allQ[allQ.length-9].storeCount) * 100 : storeCountYoY;
+  const prevImpliedSSS = prevTTMRevChange - prevStoreCountYoY;
+  const sssChange = impliedSSS - prevImpliedSSS;
+
+  // 8. Capex Per New Store (latest full year)
+  // Sum capex for latest full year from CASHFLOW_DATA
+  const cfLatestYear = CASHFLOW_DATA.filter(d => {
+    const yr = parseInt(d.period.split('-')[0]);
+    return yr === latestYear;
+  });
+  const annualCapex = cfLatestYear.reduce((s, d) => s + Math.abs(d.capex || 0), 0);
+  const capexPerNewStore = netNewStores && netNewStores > 0 ? annualCapex / netNewStores : null;
+  // Prior year
+  const cfPriorYear = CASHFLOW_DATA.filter(d => parseInt(d.period.split('-')[0]) === latestYear - 1);
+  const priorCapex = cfPriorYear.reduce((s, d) => s + Math.abs(d.capex || 0), 0);
+  const priorNetNew = q4PriorYear && allQ.filter(q => q.fiscal_year === latestYear - 2 && q.quarter === 4)[0]
+    ? q4PriorYear.storeCount - allQ.filter(q => q.fiscal_year === latestYear - 2 && q.quarter === 4)[0].storeCount
+    : null;
+  const priorCapexPerStore = priorNetNew && priorNetNew > 0 ? priorCapex / priorNetNew : null;
+  const cpnsChange = capexPerNewStore && priorCapexPerStore ? ((capexPerNewStore - priorCapexPerStore) / priorCapexPerStore) * 100 : null;
+
+  const cards = [
+    // Row 1
+    { label: 'TTM REVENUE', value: fmtB(ttmRev), change: ttmRevChange, isDelta: false, spark: last8.map(q => q.revenue) },
+    { label: 'GROSS MARGIN', value: latest.gross_margin_pct.toFixed(1) + '%', change: gmChange, isDelta: true, spark: last8.map(q => q.gross_margin_pct) },
+    { label: 'ADJ. NET INCOME', value: fmtM(latest.operatingNetIncome), change: niChange, isDelta: false, spark: last8.map(q => q.operatingNetIncome) },
+    { label: 'STORE COUNT', value: fmtNum(latest.storeCount), change: scChange, isDelta: false, spark: last8.map(q => q.storeCount) },
+    // Row 2
+    { label: 'REVENUE / STORE (TTM)', value: '$' + (ttmRevPerStore / 1e6).toFixed(1) + 'M', change: rpsChange, isDelta: false, spark: allQ.slice(-8).map(q => q.revenuePerStore / 1e6) },
+    { label: 'NET NEW STORES (' + latestYear + ')', value: netNewStores != null ? (netNewStores >= 0 ? '+' : '') + netNewStores : 'N/A', change: null, isDelta: false, spark: null },
+    { label: 'IMPLIED SAME-STORE GROWTH', value: (impliedSSS >= 0 ? '+' : '') + impliedSSS.toFixed(1) + '%', change: sssChange, isDelta: true, spark: null },
+    { label: 'CAPEX / NEW STORE', value: capexPerNewStore ? '$' + (capexPerNewStore / 1e6).toFixed(1) + 'M' : 'N/A', change: cpnsChange, isDelta: false, spark: null },
   ];
 
-  const grid = document.getElementById('kpi-grid');
-  grid.innerHTML = '';
-  kpis.forEach((k, idx) => {
+  cards.forEach(k => {
     const card = document.createElement('div');
     card.className = 'kpi-card';
-    const chVal = k.change != null ? (k.isDelta ? (k.change >= 0 ? '+' : '') + k.change.toFixed(2) + 'pp' : (k.change >= 0 ? '+' : '') + k.change.toFixed(1) + '%') : '';
-    const chClass = k.change != null ? (k.change >= 0 ? 'up' : 'down') : '';
-    const subtitleHtml = k.subtitle ? `<div style="color:var(--muted);font-size:10px;font-family:var(--font-body);margin-top:-4px;margin-bottom:4px">${k.subtitle}</div>` : '';
-    card.innerHTML = `<div class="label">${k.label}</div>${subtitleHtml}<div class="value">${k.value}</div><div class="change ${chClass}">${chVal} QoQ</div><canvas id="spark-${idx}" width="100" height="40"></canvas>`;
+    const rawChg = k.change != null ? (k.invertChange ? -k.change : k.change) : null;
+    const chVal = rawChg != null ? (k.isDelta ? (rawChg >= 0 ? '+' : '') + rawChg.toFixed(2) + 'pp' : (rawChg >= 0 ? '+' : '') + rawChg.toFixed(1) + '%') : '';
+    const chClass = rawChg != null ? (rawChg >= 0 ? 'up' : 'down') : '';
+    card.innerHTML = `<div class="label">${k.label}</div><div class="value">${k.value}</div><div class="change ${chClass}">${chVal}${rawChg != null ? ' YoY' : ''}</div>`;
     grid.appendChild(card);
-  });
-
-  // Draw sparklines
-  kpis.forEach((k, idx) => {
-    const canvas = document.getElementById('spark-' + idx);
-    if (!canvas || k.spark.length < 2) return;
-    const ctx = canvas.getContext('2d');
-    const w = 100, h = 40;
-    canvas.width = w * 2; canvas.height = h * 2;
-    ctx.scale(2, 2);
-    const min = Math.min(...k.spark), max = Math.max(...k.spark);
-    const range = max - min || 1;
-    ctx.beginPath();
-    ctx.strokeStyle = '#C8A050';
-    ctx.lineWidth = 1.5;
-    k.spark.forEach((v, i) => {
-      const x = (i / (k.spark.length - 1)) * w;
-      const y = h - ((v - min) / range) * (h - 4) - 2;
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    });
-    ctx.stroke();
   });
 }
 
@@ -948,7 +988,7 @@ function renderRevenueChart() {
           labels,
           datasets: [
             { label: 'Revenue', data: annualData.map(d => d.revenue / 1e9), backgroundColor: 'rgba(200,160,80,.35)', borderColor: '#C8A050', borderWidth: 1, borderRadius: 4, yAxisID: 'y', order: 2 },
-            { label: 'Operating Net Income', data: annualData.map(d => d.operatingNetIncome / 1e9), type: 'line', borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.1)', borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 7, pointBackgroundColor: '#2DD4BF', fill: true, tension: 0.3, yAxisID: 'y1', order: 1 }
+            { label: 'Adj. Net Income (ex. Securities G/L)', data: annualData.map(d => d.operatingNetIncome / 1e9), type: 'line', borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.1)', borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 7, pointBackgroundColor: '#2DD4BF', fill: true, tension: 0.3, yAxisID: 'y1', order: 1 }
           ]
         },
         options: {
@@ -1000,7 +1040,7 @@ function renderRevenueChart() {
           labels,
           datasets: [
             { label: 'Revenue', data: filteredData.map(q => q.revenue / 1e9), backgroundColor: 'rgba(200,160,80,.35)', borderColor: '#C8A050', borderWidth: 1, borderRadius: 3, yAxisID: 'y', order: 2 },
-            { label: 'Operating Net Income', data: filteredData.map(q => q.operatingNetIncome / 1e9), type: 'line', borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.1)', borderWidth: 2, pointRadius: 2, pointHoverRadius: 5, fill: true, tension: 0.3, yAxisID: 'y1', order: 1 }
+            { label: 'Adj. Net Income (ex. Securities G/L)', data: filteredData.map(q => q.operatingNetIncome / 1e9), type: 'line', borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.1)', borderWidth: 2, pointRadius: 2, pointHoverRadius: 5, fill: true, tension: 0.3, yAxisID: 'y1', order: 1 }
           ]
         },
         options: {
@@ -1239,7 +1279,7 @@ const TABLE_COLS = [
   { key: 'grossMarginPct', label: 'Gross %', fmt: v => fmtPct(v, 2) },
   { key: 'operatingIncome', label: 'Op. Income', fmt: fmtM },
   { key: 'operatingMarginPct', label: 'Op. %', fmt: v => fmtPct(v, 2) },
-  { key: 'operatingNetIncome', label: 'Operating NI', fmt: fmtM },
+  { key: 'operatingNetIncome', label: 'Adj. Net Income', fmt: fmtM },
   { key: 'operatingNetMarginPct', label: 'Op. NI %', fmt: v => fmtPct(v, 2) },
   { key: 'netIncome', label: 'Reported NI', fmt: fmtM },
   { key: 'netMarginPct', label: 'Reported NI %', fmt: v => fmtPct(v, 2) },
@@ -1348,11 +1388,17 @@ function renderCFKPIs() {
 
   function chg(cur, prev) { return prev ? ((cur - prev) / Math.abs(prev)) * 100 : null; }
 
+  const latestStoreCount = QUARTERS[QUARTERS.length - 1].storeCount;
+  const fcfPerStore = ttmFCF / latestStoreCount;
+  const prevFCFPerStore = prevFCF / (QUARTERS[QUARTERS.length - 5] ? QUARTERS[QUARTERS.length - 5].storeCount : latestStoreCount);
+  const fcfPerStoreChange = ((fcfPerStore - prevFCFPerStore) / Math.abs(prevFCFPerStore)) * 100;
+
   const kpis = [
-    { label: 'TTM OPERATING CF', value: fmtB(ttmOCF), change: chg(ttmOCF, prevOCF) },
-    { label: 'TTM FREE CASH FLOW', value: fmtB(ttmFCF), change: chg(ttmFCF, prevFCF) },
-    { label: 'TTM CAPEX', value: fmtB(Math.abs(ttmCapex)), change: chg(Math.abs(ttmCapex), Math.abs(prevCapex)), invertChange: true },
-    { label: 'TTM FCF MARGIN', value: fmtPct(fcfMargin, 1), change: fcfMargin - prevFcfMargin, isDelta: true },
+    { label: 'TTM OPERATING CF (FY2025)', value: fmtB(ttmOCF), change: chg(ttmOCF, prevOCF) },
+    { label: 'TTM FREE CASH FLOW (FY2025)', value: fmtB(ttmFCF), change: chg(ttmFCF, prevFCF) },
+    { label: 'TTM CAPEX (FY2025)', value: fmtB(Math.abs(ttmCapex)), change: chg(Math.abs(ttmCapex), Math.abs(prevCapex)), invertChange: true },
+    { label: 'TTM FCF MARGIN (FY2025)', value: fmtPct(fcfMargin, 1), change: fcfMargin - prevFcfMargin, isDelta: true },
+    { label: 'FCF / STORE (TTM)', value: '$' + (fcfPerStore / 1e6).toFixed(1) + 'M', change: fcfPerStoreChange },
   ];
 
   const grid = document.getElementById('cf-kpi-grid');
@@ -1978,7 +2024,7 @@ function renderEquityEPSChart() {
       labels,
       datasets: [
         {
-          label: 'Operating NI (Indexed)',
+          label: 'Adj. Net Income (Indexed)',
           data: niIndexed,
           borderColor: '#C8A050',
           backgroundColor: 'transparent',
