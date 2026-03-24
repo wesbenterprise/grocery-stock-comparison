@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 
@@ -56,7 +56,26 @@ function ChangeTag({ pct, isGain }) {
 }
 
 export default function Page() {
+  const [authed, setAuthed] = useState(null); // null = checking, true = in, false = gate
+  const [pwValue, setPwValue] = useState('');
+  const [pwError, setPwError] = useState('');
+  const [shaking, setShaking] = useState(false);
   const [liveStocks, setLiveStocks] = useState({ KR: null, WMT: null, ADRNY: null, ACI: null, WMK: null });
+
+  useEffect(() => {
+    setAuthed(localStorage.getItem('bfp-auth') === 'authenticated');
+  }, []);
+
+  const tryLogin = () => {
+    if (pwValue === 'bfp2026') {
+      localStorage.setItem('bfp-auth', 'authenticated');
+      setAuthed(true);
+    } else {
+      setPwError('Wrong password');
+      setShaking(true);
+      setTimeout(() => setShaking(false), 400);
+    }
+  };
 
   const handleLiveData = useCallback((data) => {
     setLiveStocks(data);
@@ -64,6 +83,53 @@ export default function Page() {
 
   const wmtChange = formatChange(liveStocks.WMT?.price, liveStocks.WMT?.prev);
   const krChange  = formatChange(liveStocks.KR?.price,  liveStocks.KR?.prev);
+
+  // Still checking localStorage
+  if (authed === null) return null;
+
+  // Password gate
+  if (!authed) return (
+    <div style={{
+      position: 'fixed', inset: 0, background: 'var(--color-bg)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      flexDirection: 'column', gap: '24px', zIndex: 9999,
+    }}>
+      <div style={{ fontSize: '56px', opacity: 0.7 }}>🔒</div>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 800, color: 'var(--color-text)' }}>
+        Grocery Stock Compare
+      </div>
+      <div style={{
+        display: 'flex', gap: '8px',
+        animation: shaking ? 'shake 0.4s ease-in-out' : 'none',
+      }}>
+        <input
+          type="password"
+          placeholder="Password"
+          value={pwValue}
+          onChange={e => { setPwValue(e.target.value); setPwError(''); }}
+          onKeyDown={e => e.key === 'Enter' && tryLogin()}
+          autoFocus
+          style={{
+            background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)',
+            color: 'var(--color-text)', padding: '12px 18px', borderRadius: '10px',
+            fontFamily: 'var(--font-body)', fontSize: '16px', width: '220px', outline: 'none',
+          }}
+        />
+        <button
+          onClick={tryLogin}
+          style={{
+            background: 'var(--color-publix)', color: '#000', border: 'none',
+            padding: '12px 24px', borderRadius: '10px', fontFamily: 'var(--font-display)',
+            fontWeight: 700, cursor: 'pointer', fontSize: '15px',
+          }}
+        >
+          Enter
+        </button>
+      </div>
+      {pwError && <div style={{ color: 'var(--color-loss)', fontSize: '14px', fontFamily: 'var(--font-body)' }}>{pwError}</div>}
+      <style>{`@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}`}</style>
+    </div>
+  );
 
   return (
     <>
@@ -73,7 +139,42 @@ export default function Page() {
           <h1>Grocery Stock Compare</h1>
           <span className="header-badge">Finance</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+          <Link
+            href="/publix-history"
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--text-sm)',
+              fontWeight: 600,
+              color: 'var(--color-text-secondary)',
+              textDecoration: 'none',
+              letterSpacing: '0.02em',
+              transition: 'color 0.15s',
+              whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--color-publix)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--color-text-secondary)'}
+          >
+            Financial History
+          </Link>
+          <Link
+            href="/publix-ceo-timeline"
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--text-sm)',
+              fontWeight: 600,
+              color: 'var(--color-text-secondary)',
+              textDecoration: 'none',
+              letterSpacing: '0.02em',
+              transition: 'color 0.15s',
+              whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--color-publix)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--color-text-secondary)'}
+          >
+            CEO Timeline
+          </Link>
+          <div style={{ width: '1px', height: '16px', background: 'var(--color-border)' }} />
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
             LIVE
           </span>
@@ -322,40 +423,7 @@ export default function Page() {
               KR &amp; WMT prices via Yahoo Finance API (server-side proxy, cached 1hr).<br />
               Financial figures from public earnings reports. For informational purposes only — not financial advice.
             </p>
-            <p style={{ marginTop: 'var(--space-3)', textAlign: 'center' }}>
-              <Link
-                href="/publix-ceo-timeline"
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 'var(--text-xs)',
-                  color: 'var(--color-text-dim)',
-                  textDecoration: 'none',
-                  opacity: 0.6,
-                  transition: 'opacity 0.2s',
-                }}
-                onMouseEnter={e => e.currentTarget.style.opacity = '1'}
-                onMouseLeave={e => e.currentTarget.style.opacity = '0.6'}
-              >
-                Publix CEO Timeline
-              </Link>
-            </p>
-            <p style={{ marginTop: 'var(--space-2)', textAlign: 'center' }}>
-              <Link
-                href="/publix-history"
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 'var(--text-xs)',
-                  color: 'var(--color-text-dim)',
-                  textDecoration: 'none',
-                  opacity: 0.6,
-                  transition: 'opacity 0.2s',
-                }}
-                onMouseEnter={e => e.currentTarget.style.opacity = '1'}
-                onMouseLeave={e => e.currentTarget.style.opacity = '0.6'}
-              >
-                Publix Financial History
-              </Link>
-            </p>
+
           </footer>
 
         </div>
