@@ -2448,9 +2448,9 @@ function renderBSAssetsChart() {
         tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: c => `${c.dataset.label}: $${c.parsed.y.toFixed(2)}B` } },
         annotation: {
           annotations: {
-            asc321: { type: 'line', xMin: '2018-Q1', xMax: '2018-Q1', borderColor: 'rgba(255,255,255,0.2)', borderWidth: 1, borderDash: [3,3],
+            asc321: { type: 'line', xMin: bsPeriod === 'annual' ? '2018' : '2018-Q1', xMax: bsPeriod === 'annual' ? '2018' : '2018-Q1', borderColor: 'rgba(255,255,255,0.2)', borderWidth: 1, borderDash: [3,3],
               label: { display: true, content: 'ASC 321', position: 'start', color: '#a3a3a3', font: { size: 9 }, backgroundColor: 'transparent' } },
-            asc842: { type: 'line', xMin: '2019-Q1', xMax: '2019-Q1', borderColor: 'rgba(255,255,255,0.2)', borderWidth: 1, borderDash: [3,3],
+            asc842: { type: 'line', xMin: bsPeriod === 'annual' ? '2019' : '2019-Q1', xMax: bsPeriod === 'annual' ? '2019' : '2019-Q1', borderColor: 'rgba(255,255,255,0.2)', borderWidth: 1, borderDash: [3,3],
               label: { display: true, content: 'ASC 842', position: 'start', color: '#a3a3a3', font: { size: 9 }, backgroundColor: 'transparent' } }
           }
         }
@@ -2493,9 +2493,9 @@ function renderBSGrowthChart() {
         tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: c => c.dataset.label === 'Equity/Assets %' ? `Equity/Assets: ${c.parsed.y.toFixed(1)}%` : `${c.dataset.label}: $${c.parsed.y.toFixed(2)}B` } },
         annotation: {
           annotations: {
-            asc842: { type: 'line', xMin: '2019-Q1', xMax: '2019-Q1', borderColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderDash: [3,3],
+            asc842: { type: 'line', xMin: bsPeriod === 'annual' ? '2019' : '2019-Q1', xMax: bsPeriod === 'annual' ? '2019' : '2019-Q1', borderColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderDash: [3,3],
               label: { display: true, content: 'ASC 842', position: 'end', color: '#a3a3a3', font: { size: 9 }, backgroundColor: 'transparent' } },
-            covid: { type: 'line', xMin: '2020-Q1', xMax: '2020-Q1', borderColor: 'rgba(255,255,255,0.12)', borderWidth: 1, borderDash: [3,3],
+            covid: { type: 'line', xMin: bsPeriod === 'annual' ? '2020' : '2020-Q1', xMax: bsPeriod === 'annual' ? '2020' : '2020-Q1', borderColor: 'rgba(255,255,255,0.12)', borderWidth: 1, borderDash: [3,3],
               label: { display: true, content: 'COVID-19', position: 'end', color: '#a3a3a3', font: { size: 9 }, backgroundColor: 'transparent' } }
           }
         }
@@ -2605,7 +2605,7 @@ function renderBSLiabChart() {
         tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: c => `${c.dataset.label}: $${c.parsed.y.toFixed(2)}B` } },
         annotation: {
           annotations: {
-            asc842: { type: 'line', xMin: '2019-Q1', xMax: '2019-Q1', borderColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderDash: [3,3],
+            asc842: { type: 'line', xMin: bsPeriod === 'annual' ? '2019' : '2019-Q1', xMax: bsPeriod === 'annual' ? '2019' : '2019-Q1', borderColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderDash: [3,3],
               label: { display: true, content: 'ASC 842', position: 'start', color: '#a3a3a3', font: { size: 9 }, backgroundColor: 'transparent' } }
           }
         }
