@@ -835,8 +835,8 @@ function renderKPIs() {
     return ((cur - old) / Math.abs(old)) * 100;
   }
 
-  // Row 1: existing metrics
-  const gmChange = prev ? (latest.gross_margin_pct - prev.gross_margin_pct) : null;
+  // Row 1: existing metrics — use camelCase field names from QUARTERS
+  const gmChange = prev ? (latest.grossMarginPct - prev.grossMarginPct) : null;
   const niChange = prev ? changePct(latest.operatingNetIncome, prev.operatingNetIncome) : null;
   const scChange = prev ? changePct(latest.storeCount, prev.storeCount) : null;
 
@@ -846,16 +846,15 @@ function renderKPIs() {
   const prevTTMRevPerStore = prevTTMRev / (prev ? prev.storeCount : latest.storeCount);
   const rpsChange = ((ttmRevPerStore - prevTTMRevPerStore) / prevTTMRevPerStore) * 100;
 
-  // 6. Net New Stores (latest full year)
-  const latestYear = latest.fiscal_year;
-  const q4Latest = allQ.filter(q => q.fiscal_year === latestYear && q.quarter === 4)[0];
-  const q4PriorYear = allQ.filter(q => q.fiscal_year === latestYear - 1 && q.quarter === 4)[0];
+  // 6. Net New Stores (latest full year) — use fiscalYear (camelCase)
+  const latestYear = latest.fiscalYear;
+  const q4Latest = allQ.filter(q => q.fiscalYear === latestYear && q.quarter === 4)[0];
+  const q4PriorYear = allQ.filter(q => q.fiscalYear === latestYear - 1 && q.quarter === 4)[0];
   const netNewStores = q4Latest && q4PriorYear ? q4Latest.storeCount - q4PriorYear.storeCount : null;
 
   // 7. Implied Same-Store Growth (TTM rev YoY% minus store count YoY%)
   const storeCountYoY = prev ? ((latest.storeCount - prev.storeCount) / prev.storeCount) * 100 : 0;
   const impliedSSS = ttmRevChange - storeCountYoY;
-  // Prior year implied SSS for badge
   const ttmMinus1Rev = allQ.slice(-8, -4).reduce((s, q) => s + q.revenue, 0);
   const ttmMinus2Rev = allQ.slice(-12, -8).reduce((s, q) => s + q.revenue, 0);
   const prevTTMRevChange = allQ.length >= 12 ? ((ttmMinus1Rev - ttmMinus2Rev) / ttmMinus2Rev) * 100 : ttmRevChange;
@@ -863,19 +862,14 @@ function renderKPIs() {
   const prevImpliedSSS = prevTTMRevChange - prevStoreCountYoY;
   const sssChange = impliedSSS - prevImpliedSSS;
 
-  // 8. Capex Per New Store (latest full year)
-  // Sum capex for latest full year from CASHFLOW_DATA
-  const cfLatestYear = CASHFLOW_DATA.filter(d => {
-    const yr = parseInt(d.period.split('-')[0]);
-    return yr === latestYear;
-  });
+  // 8. Capex Per New Store (latest full year) — CASHFLOW_DATA uses snake_case
+  const cfLatestYear = CASHFLOW_DATA.filter(d => parseInt(d.period.split('-')[0]) === latestYear);
   const annualCapex = cfLatestYear.reduce((s, d) => s + Math.abs(d.capex || 0), 0);
   const capexPerNewStore = netNewStores && netNewStores > 0 ? annualCapex / netNewStores : null;
-  // Prior year
   const cfPriorYear = CASHFLOW_DATA.filter(d => parseInt(d.period.split('-')[0]) === latestYear - 1);
   const priorCapex = cfPriorYear.reduce((s, d) => s + Math.abs(d.capex || 0), 0);
-  const priorNetNew = q4PriorYear && allQ.filter(q => q.fiscal_year === latestYear - 2 && q.quarter === 4)[0]
-    ? q4PriorYear.storeCount - allQ.filter(q => q.fiscal_year === latestYear - 2 && q.quarter === 4)[0].storeCount
+  const priorNetNew = q4PriorYear && allQ.filter(q => q.fiscalYear === latestYear - 2 && q.quarter === 4)[0]
+    ? q4PriorYear.storeCount - allQ.filter(q => q.fiscalYear === latestYear - 2 && q.quarter === 4)[0].storeCount
     : null;
   const priorCapexPerStore = priorNetNew && priorNetNew > 0 ? priorCapex / priorNetNew : null;
   const cpnsChange = capexPerNewStore && priorCapexPerStore ? ((capexPerNewStore - priorCapexPerStore) / priorCapexPerStore) * 100 : null;
@@ -883,7 +877,7 @@ function renderKPIs() {
   const cards = [
     // Row 1
     { label: 'TTM REVENUE', value: fmtB(ttmRev), change: ttmRevChange, isDelta: false, spark: last8.map(q => q.revenue) },
-    { label: 'GROSS MARGIN', value: latest.gross_margin_pct.toFixed(1) + '%', change: gmChange, isDelta: true, spark: last8.map(q => q.gross_margin_pct) },
+    { label: 'GROSS MARGIN', value: latest.grossMarginPct.toFixed(1) + '%', change: gmChange, isDelta: true, spark: last8.map(q => q.grossMarginPct) },
     { label: 'ADJ. NET INCOME', value: fmtM(latest.operatingNetIncome), change: niChange, isDelta: false, spark: last8.map(q => q.operatingNetIncome) },
     { label: 'STORE COUNT', value: fmtNum(latest.storeCount), change: scChange, isDelta: false, spark: last8.map(q => q.storeCount) },
     // Row 2
