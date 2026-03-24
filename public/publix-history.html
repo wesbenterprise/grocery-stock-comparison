@@ -206,6 +206,16 @@ tr:hover td{background:rgba(76,175,80,.03)}
   <!-- KPI Cards -->
   <div class="kpi-grid" id="kpi-grid"></div>
 
+  <!-- IS Global Period Toggle (affects margins, RPS, balance, stores charts) -->
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+    <span style="font-family:var(--font-mono);font-size:12px;color:var(--muted);letter-spacing:.04em">VIEW</span>
+    <div class="chart-toggle" id="is-period-toggle">
+      <button class="toggle-btn active" data-period="quarterly">Quarterly</button>
+      <button class="toggle-btn" data-period="annual">Annual</button>
+    </div>
+    <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);opacity:.6">(applies to margins, revenue/store, balance &amp; stores charts)</span>
+  </div>
+
   <!-- Revenue & Operating Net Income -->
   <div class="chart-card">
     <h3>Revenue &amp; Adjusted Net Income</h3>
@@ -342,6 +352,10 @@ tr:hover td{background:rgba(76,175,80,.03)}
     <div class="chart-card">
       <h3>Cash Conversion</h3>
       <div class="chart-subtitle">Operating cash flow and free cash flow as % of revenue</div>
+      <div class="chart-toggle" id="cf-conv-toggle">
+        <button class="toggle-btn active" data-period="quarterly">Quarterly</button>
+        <button class="toggle-btn" data-period="annual">Annual</button>
+      </div>
       <div style="position:relative;height:280px"><canvas id="chart-cf-conversion"></canvas></div>
       <div class="narrative-card">
         <div class="narrative-header">&#9670; Anderson's Take</div>
@@ -423,6 +437,15 @@ tr:hover td{background:rgba(76,175,80,.03)}
 
   <div id="bs-section" style="display:none">
     <div class="kpi-grid" id="bs-kpi-grid"></div>
+
+    <!-- BS Global Period Toggle -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <span style="font-family:var(--font-mono);font-size:12px;color:var(--muted);letter-spacing:.04em">VIEW</span>
+      <div class="chart-toggle" id="bs-period-toggle">
+        <button class="toggle-btn active" data-period="quarterly">Quarterly</button>
+        <button class="toggle-btn" data-period="annual">Annual</button>
+      </div>
+    </div>
 
     <div class="chart-card">
       <h3>Asset Composition</h3>
@@ -714,14 +737,24 @@ const BS_DATA = [
 function computeAnnualTotals(quarters) {
   const byYear = {};
   quarters.forEach(q => {
-    if (!byYear[q.fiscalYear]) byYear[q.fiscalYear] = {year: q.fiscalYear, revenue: 0, netIncome: 0, operatingNetIncome: 0, grossProfit: 0, operatingIncome: 0};
+    if (!byYear[q.fiscalYear]) byYear[q.fiscalYear] = {year: q.fiscalYear, revenue: 0, netIncome: 0, operatingNetIncome: 0, grossProfit: 0, operatingIncome: 0, storeCount: 0, revenuePerStore: 0, _q4: null};
     byYear[q.fiscalYear].revenue += q.revenue;
     byYear[q.fiscalYear].netIncome += q.netIncome;
     byYear[q.fiscalYear].operatingNetIncome += q.operatingNetIncome;
     byYear[q.fiscalYear].grossProfit += q.grossProfit;
     byYear[q.fiscalYear].operatingIncome += q.operatingIncome;
+    if (q.quarter === 4) byYear[q.fiscalYear]._q4 = q; // capture Q4 snapshot
   });
-  return Object.values(byYear).sort((a,b) => a.year - b.year);
+  return Object.values(byYear).sort((a,b) => a.year - b.year).map(d => {
+    // Compute derived margin % from annual totals
+    d.grossMarginPct = d.revenue ? (d.grossProfit / d.revenue) * 100 : null;
+    d.operatingMarginPct = d.revenue ? (d.operatingIncome / d.revenue) * 100 : null;
+    d.operatingNetMarginPct = d.revenue ? (d.operatingNetIncome / d.revenue) * 100 : null;
+    // Store count and RPS from Q4 snapshot
+    d.storeCount = d._q4 ? d._q4.storeCount : null;
+    d.revenuePerStore = d._q4 && d._q4.storeCount ? d.revenue / d._q4.storeCount : null;
+    return d;
+  });
 }
 
 function computeCashflowAnnualTotals(data) {
@@ -754,6 +787,7 @@ let activePreset = 'all';
 let yearStart = 2015, yearEnd = 2025;
 let revPeriod = 'quarterly'; // 'quarterly' | 'annual'
 let revView = 'absolute';   // 'absolute' | 'yoy'
+let isPeriod = 'quarterly'; // global IS tab period (margins, RPS, balance, stores)
 let charts = {};
 let tableSortCol = 'period';
 let tableSortAsc = false;
@@ -1135,14 +1169,17 @@ document.getElementById('rev-view-toggle').addEventListener('click', e => {
 function renderMarginsChart() {
   const ctx = document.getElementById('chart-margins');
   if (charts.margins) charts.margins.destroy();
+  const mData = isPeriod === 'annual' ? computeAnnualTotals(filteredData) : filteredData;
+  const mLabels = isPeriod === 'annual' ? mData.map(d => String(d.year)) : mData.map(q => q.period);
+  const getField = (d, qField, aField) => isPeriod === 'annual' ? d[aField] : d[qField];
   charts.margins = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: filteredData.map(q => q.period),
+      labels: mLabels,
       datasets: [
-        { label: 'Gross Margin', data: filteredData.map(q => q.grossMarginPct), borderColor: '#4caf50', backgroundColor: 'rgba(76,175,80,.08)', borderWidth: 2, pointRadius: 1.5, fill: true, tension: 0.3 },
-        { label: 'Operating Margin', data: filteredData.map(q => q.operatingMarginPct), borderColor: '#2DD4BF', borderWidth: 2, pointRadius: 1.5, tension: 0.3 },
-        { label: 'Op. Net Margin (ex. G/L)', data: filteredData.map(q => q.operatingNetMarginPct), borderColor: '#818cf8', borderWidth: 2, pointRadius: 1.5, tension: 0.3 }
+        { label: 'Gross Margin', data: mData.map(d => getField(d, 'grossMarginPct', 'grossMarginPct')), borderColor: '#4caf50', backgroundColor: 'rgba(76,175,80,.08)', borderWidth: 2, pointRadius: isPeriod === 'annual' ? 4 : 1.5, fill: true, tension: 0.3 },
+        { label: 'Operating Margin', data: mData.map(d => getField(d, 'operatingMarginPct', 'operatingMarginPct')), borderColor: '#2DD4BF', borderWidth: 2, pointRadius: isPeriod === 'annual' ? 4 : 1.5, tension: 0.3 },
+        { label: 'Op. Net Margin (ex. G/L)', data: mData.map(d => getField(d, 'operatingNetMarginPct', 'operatingNetMarginPct')), borderColor: '#818cf8', borderWidth: 2, pointRadius: isPeriod === 'annual' ? 4 : 1.5, tension: 0.3 }
       ]
     },
     options: {
@@ -1171,15 +1208,17 @@ function renderMarginsChart() {
 function renderRPSChart() {
   const ctx = document.getElementById('chart-rps');
   if (charts.rps) charts.rps.destroy();
+  const rpsData = isPeriod === 'annual' ? computeAnnualTotals(filteredData) : filteredData;
+  const rpsLabels = isPeriod === 'annual' ? rpsData.map(d => String(d.year)) : rpsData.map(q => q.period);
   charts.rps = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: filteredData.map(q => q.period),
+      labels: rpsLabels,
       datasets: [{
         label: 'Revenue Per Store',
-        data: filteredData.map(q => q.revenuePerStore / 1e6),
+        data: rpsData.map(d => (isPeriod === 'annual' ? d.revenuePerStore : d.revenuePerStore) / 1e6),
         borderColor: '#4caf50', backgroundColor: 'rgba(76,175,80,.1)',
-        borderWidth: 2, pointRadius: 2, fill: true, tension: 0.3
+        borderWidth: 2, pointRadius: isPeriod === 'annual' ? 4 : 2, fill: true, tension: 0.3
       }]
     },
     options: {
@@ -1240,14 +1279,17 @@ function renderHeatmap() {
 function renderBalanceChart() {
   const ctx = document.getElementById('chart-balance');
   if (charts.balance) charts.balance.destroy();
+  const blData = isPeriod === 'annual' ? filteredData.filter(q => q.quarter === 4) : filteredData;
+  const blLabels = isPeriod === 'annual' ? blData.map(q => String(q.fiscalYear)) : blData.map(q => q.period);
+  const pr = isPeriod === 'annual' ? 5 : 1;
   charts.balance = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: filteredData.map(q => q.period),
+      labels: blLabels,
       datasets: [
-        { label: 'Total Assets', data: filteredData.map(q => q.totalAssets / 1e9), borderColor: '#4caf50', backgroundColor: 'rgba(76,175,80,.1)', borderWidth: 2, fill: true, pointRadius: 1, tension: 0.3 },
-        { label: 'Stockholders\' Equity', data: filteredData.map(q => q.stockholdersEquity / 1e9), borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.08)', borderWidth: 2, fill: true, pointRadius: 1, tension: 0.3 },
-        { label: 'Total Liabilities', data: filteredData.map(q => q.totalLiabilities / 1e9), borderColor: '#ef5350', backgroundColor: 'rgba(239,83,80,.06)', borderWidth: 2, fill: true, pointRadius: 1, tension: 0.3 }
+        { label: 'Total Assets', data: blData.map(q => q.totalAssets / 1e9), borderColor: '#4caf50', backgroundColor: 'rgba(76,175,80,.1)', borderWidth: 2, fill: true, pointRadius: pr, tension: 0.3 },
+        { label: 'Stockholders\' Equity', data: blData.map(q => q.stockholdersEquity / 1e9), borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.08)', borderWidth: 2, fill: true, pointRadius: pr, tension: 0.3 },
+        { label: 'Total Liabilities', data: blData.map(q => q.totalLiabilities / 1e9), borderColor: '#ef5350', backgroundColor: 'rgba(239,83,80,.06)', borderWidth: 2, fill: true, pointRadius: pr, tension: 0.3 }
       ]
     },
     options: {
@@ -1357,6 +1399,7 @@ document.getElementById('table-toggle').addEventListener('click', () => {
 let activeTab = 'is';
 let cfOcfPeriod = 'quarterly'; // 'quarterly' | 'annual'
 let cfOcfView = 'absolute';   // 'absolute' | 'yoy'
+let cfConvPeriod = 'quarterly'; // global CF conversion chart period
 let cfAllocMode = 'quarterly';
 
 function switchTab(tab) {
@@ -1638,23 +1681,40 @@ function renderCFConversionChart() {
   const ctx = document.getElementById('chart-cf-conversion');
   if (charts.cfConversion) charts.cfConversion.destroy();
 
-  const labels = CASHFLOW_DATA.map(d => d.period);
-  const ocfPct = CASHFLOW_DATA.map(d => {
-    const q = QUARTERS.find(q => q.period === d.period);
-    return q ? (d.operating_cash_flow / q.revenue) * 100 : null;
-  });
-  const fcfPct = CASHFLOW_DATA.map(d => {
-    const q = QUARTERS.find(q => q.period === d.period);
-    return q ? (d.free_cash_flow / q.revenue) * 100 : null;
-  });
+  let labels, ocfPct, fcfPct;
+  if (cfConvPeriod === 'annual') {
+    const annCF = computeCashflowAnnualTotals(CASHFLOW_DATA);
+    labels = annCF.map(d => String(d.year));
+    ocfPct = annCF.map(d => {
+      const annQ = QUARTERS.filter(q => q.fiscalYear === d.year);
+      const rev = annQ.reduce((s, q) => s + (q.revenue || 0), 0);
+      return rev ? (d.operating_cash_flow / rev) * 100 : null;
+    });
+    fcfPct = annCF.map(d => {
+      const annQ = QUARTERS.filter(q => q.fiscalYear === d.year);
+      const rev = annQ.reduce((s, q) => s + (q.revenue || 0), 0);
+      return rev ? (d.free_cash_flow / rev) * 100 : null;
+    });
+  } else {
+    labels = CASHFLOW_DATA.map(d => d.period);
+    ocfPct = CASHFLOW_DATA.map(d => {
+      const q = QUARTERS.find(q => q.period === d.period);
+      return q ? (d.operating_cash_flow / q.revenue) * 100 : null;
+    });
+    fcfPct = CASHFLOW_DATA.map(d => {
+      const q = QUARTERS.find(q => q.period === d.period);
+      return q ? (d.free_cash_flow / q.revenue) * 100 : null;
+    });
+  }
+  const cpr = cfConvPeriod === 'annual' ? 5 : 2;
 
   charts.cfConversion = new Chart(ctx, {
     type: 'line',
     data: {
       labels,
       datasets: [
-        { label: 'OCF % of Revenue', data: ocfPct, borderColor: '#4caf50', backgroundColor: 'rgba(76,175,80,.1)', borderWidth: 2, pointRadius: 2, fill: true, tension: 0.3 },
-        { label: 'FCF % of Revenue', data: fcfPct, borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.08)', borderWidth: 2, pointRadius: 2, fill: true, tension: 0.3 }
+        { label: 'OCF % of Revenue', data: ocfPct, borderColor: '#4caf50', backgroundColor: 'rgba(76,175,80,.1)', borderWidth: 2, pointRadius: cpr, fill: true, tension: 0.3 },
+        { label: 'FCF % of Revenue', data: fcfPct, borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.08)', borderWidth: 2, pointRadius: cpr, fill: true, tension: 0.3 }
       ]
     },
     options: {
@@ -2322,23 +2382,24 @@ function renderBSAssetsChart() {
   if (!ctx) return;
   if (charts.bsAssets) charts.bsAssets.destroy();
 
-  const labels = BS_DATA.map(d => d.period);
+  const bsSrc = bsPeriod === 'annual' ? BS_DATA.filter(d => d.period.endsWith('Q4')) : BS_DATA;
+  const labels = bsPeriod === 'annual' ? bsSrc.map(d => d.period.split('-')[0]) : bsSrc.map(d => d.period);
 
-  const ppe = BS_DATA.map(d => (d.ppe_net || 0) / 1e9);
-  const rou = BS_DATA.map(d => (d.rou_asset || 0) / 1e9);
-  const ltInv = BS_DATA.map(d => (d.long_term_investments || 0) / 1e9);
-  const eqSec = BS_DATA.map(d => (d.equity_securities_fv || 0) / 1e9);
-  const stLiquid = BS_DATA.map(d => {
+  const ppe = bsSrc.map(d => (d.ppe_net || 0) / 1e9);
+  const rou = bsSrc.map(d => (d.rou_asset || 0) / 1e9);
+  const ltInv = bsSrc.map(d => (d.long_term_investments || 0) / 1e9);
+  const eqSec = bsSrc.map(d => (d.equity_securities_fv || 0) / 1e9);
+  const stLiquid = bsSrc.map(d => {
     const cash = d.cash || 0;
     const sti = d.short_term_investments || 0;
     return (cash > 0 ? cash + sti : sti) / 1e9;
   });
-  const ar = BS_DATA.map(d => (d.accounts_receivable || 0) / 1e9);
-  const otherCurrent = BS_DATA.map((d, i) => {
+  const ar = bsSrc.map(d => (d.accounts_receivable || 0) / 1e9);
+  const otherCurrent = bsSrc.map((d, i) => {
     const other = (d.assets_current || 0) - (d.accounts_receivable || 0) - (d.cash || 0) - (d.short_term_investments || 0);
     return Math.max(0, other) / 1e9;
   });
-  const residual = BS_DATA.map((d, i) => {
+  const residual = bsSrc.map((d, i) => {
     const itemized = ppe[i] + rou[i] + ltInv[i] + eqSec[i] + stLiquid[i] + ar[i] + otherCurrent[i];
     return Math.max(0, d.total_assets / 1e9 - itemized);
   });
@@ -2385,11 +2446,12 @@ function renderBSGrowthChart() {
   if (!ctx) return;
   if (charts.bsGrowth) charts.bsGrowth.destroy();
 
-  const labels = BS_DATA.map(d => d.period);
-  const assets = BS_DATA.map(d => d.total_assets / 1e9);
-  const equity = BS_DATA.map(d => d.stockholders_equity / 1e9);
-  const liabilities = BS_DATA.map(d => d.total_liabilities / 1e9);
-  const etaRatio = BS_DATA.map(d => (d.stockholders_equity / d.total_assets) * 100);
+  const bsGSrc = bsPeriod === 'annual' ? BS_DATA.filter(d => d.period.endsWith('Q4')) : BS_DATA;
+  const labels = bsPeriod === 'annual' ? bsGSrc.map(d => d.period.split('-')[0]) : bsGSrc.map(d => d.period);
+  const assets = bsGSrc.map(d => d.total_assets / 1e9);
+  const equity = bsGSrc.map(d => d.stockholders_equity / 1e9);
+  const liabilities = bsGSrc.map(d => d.total_liabilities / 1e9);
+  const etaRatio = bsGSrc.map(d => (d.stockholders_equity / d.total_assets) * 100);
 
   charts.bsGrowth = new Chart(ctx, {
     type: 'line',
@@ -2430,16 +2492,16 @@ function renderBSEfficiencyChart() {
   if (!ctx) return;
   if (charts.bsEfficiency) charts.bsEfficiency.destroy();
 
-  const labels = BS_DATA.map(d => d.period);
-  const assetTurnover = BS_DATA.map((d, i) => {
+  const bsESrc = bsPeriod === 'annual' ? BS_DATA.filter(d => d.period.endsWith('Q4')) : BS_DATA;
+  const labels = bsPeriod === 'annual' ? bsESrc.map(d => d.period.split('-')[0]) : bsESrc.map(d => d.period);
+  const assetTurnover = bsESrc.map((d, i) => {
     if (i < 3) return null;
-    const bsIdx = i;
     const qIdx = QUARTERS.findIndex(q => q.period === d.period);
     if (qIdx < 3) return null;
     const ttmRev = QUARTERS.slice(qIdx - 3, qIdx + 1).reduce((s, q) => s + (q.revenue || 0), 0);
     return ttmRev / d.total_assets;
   });
-  const currentRatio = BS_DATA.map(d => d.assets_current / d.liabilities_current);
+  const currentRatio = bsESrc.map(d => d.assets_current / d.liabilities_current);
 
   charts.bsEfficiency = new Chart(ctx, {
     type: 'line',
@@ -2473,6 +2535,7 @@ function renderBSEfficiencyChart() {
 }
 
 let bsLiabMode = 'quarterly';
+let bsPeriod = 'quarterly'; // global BS tab period (assets, growth, efficiency)
 
 function renderBSLiabChart() {
   const ctx = document.getElementById('chart-bs-liab');
@@ -2538,6 +2601,41 @@ document.getElementById('bs-liab-toggle').addEventListener('click', e => {
   if (!btn) return;
   bsLiabMode = btn.dataset.mode;
   document.querySelectorAll('#bs-liab-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+  renderBSLiabChart();
+});
+
+// IS global period toggle
+document.getElementById('is-period-toggle').addEventListener('click', e => {
+  const btn = e.target.closest('.toggle-btn');
+  if (!btn) return;
+  isPeriod = btn.dataset.period;
+  document.querySelectorAll('#is-period-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+  renderMarginsChart();
+  renderRPSChart();
+  renderBalanceChart();
+  renderStoresChart();
+});
+
+// CF conversion toggle
+document.getElementById('cf-conv-toggle').addEventListener('click', e => {
+  const btn = e.target.closest('.toggle-btn');
+  if (!btn) return;
+  cfConvPeriod = btn.dataset.period;
+  document.querySelectorAll('#cf-conv-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+  renderCFConversionChart();
+});
+
+// BS global period toggle
+document.getElementById('bs-period-toggle').addEventListener('click', e => {
+  const btn = e.target.closest('.toggle-btn');
+  if (!btn) return;
+  bsPeriod = btn.dataset.period;
+  bsLiabMode = btn.dataset.period; // sync liability chart too
+  document.querySelectorAll('#bs-period-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+  document.querySelectorAll('#bs-liab-toggle .toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === bsPeriod));
+  renderBSAssetsChart();
+  renderBSGrowthChart();
+  renderBSEfficiencyChart();
   renderBSLiabChart();
 });
 
