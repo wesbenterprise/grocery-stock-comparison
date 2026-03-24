@@ -1191,6 +1191,19 @@ function renderCFKPIs() {
   });
 }
 
+// Least-squares linear regression — returns [slope, intercept]
+function linearRegression(values) {
+  const n = values.length;
+  const xs = values.map((_, i) => i);
+  const sumX = xs.reduce((a, b) => a + b, 0);
+  const sumY = values.reduce((a, b) => a + b, 0);
+  const sumXY = xs.reduce((s, x, i) => s + x * values[i], 0);
+  const sumX2 = xs.reduce((s, x) => s + x * x, 0);
+  const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+  const intercept = (sumY - slope * sumX) / n;
+  return { slope, intercept };
+}
+
 function renderCFOcfChart() {
   const ctx = document.getElementById('chart-cf-ocf');
   if (charts.cfOcf) charts.cfOcf.destroy();
@@ -1209,19 +1222,50 @@ function renderCFOcfChart() {
     fcf = ann.map(d => d.free_cash_flow / 1e9);
   }
 
+  // FCF trendline (linear regression) — shown on annual view only for clarity
+  const datasets = [
+    { label: 'Operating CF', data: ocf, backgroundColor: 'rgba(200,160,80,.45)', borderColor: '#C8A050', borderWidth: 1, borderRadius: 3, yAxisID: 'y', order: 2 },
+    { label: 'Capex', data: capex, backgroundColor: 'rgba(239,83,80,.4)', borderColor: '#ef5350', borderWidth: 1, borderRadius: 3, yAxisID: 'y', order: 3 },
+    { label: 'Free Cash Flow', data: fcf, type: 'line', borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.1)', borderWidth: 2, pointRadius: cfOcfMode === 'annual' ? 4 : 2, pointHoverRadius: 5, fill: false, tension: 0.3, yAxisID: 'y', order: 1 }
+  ];
+
+  if (cfOcfMode === 'annual') {
+    const { slope, intercept } = linearRegression(fcf);
+    const trendData = fcf.map((_, i) => parseFloat((intercept + slope * i).toFixed(3)));
+    datasets.push({
+      label: 'FCF Trend',
+      data: trendData,
+      type: 'line',
+      borderColor: 'rgba(45,212,191,.45)',
+      backgroundColor: 'transparent',
+      borderWidth: 1.5,
+      borderDash: [6, 4],
+      pointRadius: 0,
+      pointHoverRadius: 0,
+      fill: false,
+      tension: 0,
+      yAxisID: 'y',
+      order: 4,
+    });
+  }
+
   charts.cfOcf = new Chart(ctx, {
     type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        { label: 'Operating CF', data: ocf, backgroundColor: 'rgba(200,160,80,.45)', borderColor: '#C8A050', borderWidth: 1, borderRadius: 3, yAxisID: 'y', order: 2 },
-        { label: 'Capex', data: capex, backgroundColor: 'rgba(239,83,80,.4)', borderColor: '#ef5350', borderWidth: 1, borderRadius: 3, yAxisID: 'y', order: 3 },
-        { label: 'Free Cash Flow', data: fcf, type: 'line', borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,.1)', borderWidth: 2, pointRadius: 2, pointHoverRadius: 5, fill: false, tension: 0.3, yAxisID: 'y', order: 1 }
-      ]
-    },
+    data: { labels, datasets },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { ...chartDefaults.plugins, tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: ctx => ctx.dataset.label + ': $' + ctx.parsed.y.toFixed(2) + 'B' } } },
+      plugins: {
+        ...chartDefaults.plugins,
+        tooltip: {
+          ...chartDefaults.plugins.tooltip,
+          callbacks: {
+            label: ctx => {
+              if (ctx.dataset.label === 'FCF Trend') return `FCF Trend: $${ctx.parsed.y.toFixed(2)}B`;
+              return ctx.dataset.label + ': $' + ctx.parsed.y.toFixed(2) + 'B';
+            }
+          }
+        }
+      },
       scales: {
         x: chartDefaults.scales.x,
         y: { ...chartDefaults.scales.y, ticks: { ...chartDefaults.scales.y.ticks, callback: v => '$' + v.toFixed(1) + 'B' }, title: { display: true, text: '($B)', color: '#606080' } }
