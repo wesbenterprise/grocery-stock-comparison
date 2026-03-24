@@ -57,8 +57,14 @@ export default function CashFlowDashboard({ filteredData, yearRange }) {
   const [sortDir, setSortDir] = useState('asc');
 
   // ── Year range from income statement data ──
-  const minYear = useMemo(() => Math.min(...filteredData.map(q => q.fiscalYear ?? q.fiscal_year)), [filteredData]);
-  const maxYear = useMemo(() => Math.max(...filteredData.map(q => q.fiscalYear ?? q.fiscal_year)), [filteredData]);
+  const minYear = useMemo(() => {
+    if (!filteredData || filteredData.length === 0) return 2015;
+    return Math.min(...filteredData.map(q => q.fiscalYear ?? q.fiscal_year));
+  }, [filteredData]);
+  const maxYear = useMemo(() => {
+    if (!filteredData || filteredData.length === 0) return 2025;
+    return Math.max(...filteredData.map(q => q.fiscalYear ?? q.fiscal_year));
+  }, [filteredData]);
 
   const cfData = useMemo(
     () => CASHFLOW_QUARTERS.filter(q => q.fiscal_year >= minYear && q.fiscal_year <= maxYear),
@@ -97,19 +103,24 @@ export default function CashFlowDashboard({ filteredData, yearRange }) {
     return { ttmOCF, ttmFCF, ttmCapex, ttmFCFMargin, ttmReturns };
   }, [cfData, filteredData]);
 
-  // Sparklines — last 8 quarters
-  const last8 = cfData.slice(-8);
-  const sparkOCF = last8.map(q => q.operating_cash_flow / 1e9);
-  const sparkFCF = last8.map(q => q.free_cash_flow / 1e9);
-  const sparkCapex = last8.map(q => Math.abs(q.capex) / 1e9);
-  const sparkFCFMargin = useMemo(() => {
-    return last8.map(q => {
+  // Sparklines — last 8 quarters (memoized to avoid stale refs)
+  const sparklines = useMemo(() => {
+    const last8 = cfData.slice(-8);
+    if (last8.length === 0) return { ocf: [0], fcf: [0], capex: [0], fcfMargin: [0], returns: [0] };
+    const ocf = last8.map(q => q.operating_cash_flow / 1e9);
+    const fcf = last8.map(q => q.free_cash_flow / 1e9);
+    const capex = last8.map(q => Math.abs(q.capex) / 1e9);
+    const fcfMarginRaw = last8.map(q => {
       const rev = revenueByPeriod[q.period];
       if (!rev) return null;
       return (q.free_cash_flow / rev) * 100;
     });
-  }, [last8, revenueByPeriod]);
-  const sparkReturns = last8.map(q => (Math.abs(q.stock_repurchases) + Math.abs(q.dividends_paid)) / 1e9);
+    const fcfMargin = fcfMarginRaw.filter(v => v != null);
+    const returns = last8.map(q => (Math.abs(q.stock_repurchases) + Math.abs(q.dividends_paid)) / 1e9);
+    return { ocf, fcf, capex, fcfMargin: fcfMargin.length > 0 ? fcfMargin : [0], returns };
+  }, [cfData, revenueByPeriod]);
+
+  const { ocf: sparkOCF, fcf: sparkFCF, capex: sparkCapex, fcfMargin: sparkFCFMargin, returns: sparkReturns } = sparklines;
 
   // ── Charts data ──
   const activeCF = periodMode === 'quarterly' ? cfData : annualCF;

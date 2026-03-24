@@ -45,12 +45,14 @@ export default function KPICard({ label, value, trendValue, trendDirection, spar
         }}>
           {label}
         </span>
-        <span style={{
-          background: t.bg, color: t.color, borderRadius: 9999,
-          padding: '2px 8px', fontSize: '0.75rem', fontWeight: 600,
-        }}>
-          {t.arrow} {typeof trendValue === 'number' ? Math.abs(trendValue).toFixed(1) + '%' : trendValue}
-        </span>
+        {trendValue !== null && trendValue !== undefined && (
+          <span style={{
+            background: t.bg, color: t.color, borderRadius: 9999,
+            padding: '2px 8px', fontSize: '0.75rem', fontWeight: 600,
+          }}>
+            {t.arrow} {typeof trendValue === 'number' ? Math.abs(trendValue).toFixed(1) + '%' : trendValue}
+          </span>
+        )}
       </div>
       <div style={{
         fontSize: '1.75rem', fontWeight: 700, color: valueColor || '#e5e5e5',
