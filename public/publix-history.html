@@ -1271,7 +1271,25 @@ function renderCFOcfChart() {
         labels,
         datasets: [
           { label: 'Operating CF YoY %', data: yoyOCF, borderColor: '#C8A050', backgroundColor: 'transparent', borderWidth: 2, pointRadius: isAnnual ? 4 : 2, pointHoverRadius: 5, tension: 0.3, spanGaps: true },
-          { label: 'FCF YoY %', data: yoyFCF, borderColor: '#2DD4BF', backgroundColor: 'transparent', borderWidth: 2, pointRadius: isAnnual ? 4 : 2, pointHoverRadius: 5, tension: 0.3, spanGaps: true },
+          {
+            label: 'FCF YoY %', data: yoyFCF, borderColor: '#2DD4BF', borderWidth: 2,
+            pointRadius: isAnnual ? 4 : 2, pointHoverRadius: 5, tension: 0.3, spanGaps: true,
+            // Shade below zero red, above zero teal
+            fill: 'origin',
+            backgroundColor: (ctx) => {
+              const chart = ctx.chart;
+              const { ctx: canvasCtx, chartArea } = chart;
+              if (!chartArea) return 'transparent';
+              const grad = canvasCtx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+              const zeroY = chart.scales.y.getPixelForValue(0);
+              const pct = Math.max(0, Math.min(1, (zeroY - chartArea.top) / (chartArea.bottom - chartArea.top)));
+              grad.addColorStop(0, 'rgba(45,212,191,0.15)');
+              grad.addColorStop(pct, 'rgba(45,212,191,0.05)');
+              grad.addColorStop(pct, 'rgba(239,83,80,0.08)');
+              grad.addColorStop(1, 'rgba(239,83,80,0.18)');
+              return grad;
+            }
+          },
           { label: 'Capex YoY %', data: yoyCapex, borderColor: '#ef5350', backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [4, 3], pointRadius: 0, pointHoverRadius: 4, tension: 0.3, spanGaps: true }
         ]
       },
@@ -1279,7 +1297,16 @@ function renderCFOcfChart() {
         responsive: true, maintainAspectRatio: false,
         plugins: {
           ...chartDefaults.plugins,
-          tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: c => c.parsed.y != null ? c.dataset.label + ': ' + (c.parsed.y >= 0 ? '+' : '') + c.parsed.y.toFixed(1) + '%' : '' } }
+          tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: c => c.parsed.y != null ? c.dataset.label + ': ' + (c.parsed.y >= 0 ? '+' : '') + c.parsed.y.toFixed(1) + '%' : '' } },
+          annotation: {
+            annotations: {
+              zeroLine: {
+                type: 'line', yMin: 0, yMax: 0,
+                borderColor: 'rgba(255,255,255,0.25)', borderWidth: 1.5, borderDash: [4, 4],
+                label: { display: true, content: '0%', position: 'start', color: 'rgba(255,255,255,0.4)', font: { size: 10 }, backgroundColor: 'transparent' }
+              }
+            }
+          }
         },
         scales: {
           x: chartDefaults.scales.x,
