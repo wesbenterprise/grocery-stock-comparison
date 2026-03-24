@@ -3,6 +3,7 @@
 import {
   SEASONALITY_MATRIX, REVENUE_MATRIX, getCellBackground, getMinMax, getCellTooltip,
 } from '../../../lib/publix-financials';
+// Note: REVENUE_MATRIX still used by getCellTooltip via prop
 
 export default function SeasonalHeatmap({ yearRange }) {
   const startYear = yearRange[0];
@@ -10,7 +11,7 @@ export default function SeasonalHeatmap({ yearRange }) {
 
   const visibleMargin = SEASONALITY_MATRIX.filter(r => r.year >= startYear && r.year <= endYear);
   const visibleYears = visibleMargin.map(r => r.year);
-  const { min, max } = getMinMax(REVENUE_MATRIX, visibleYears);
+  const { min, max } = getMinMax(SEASONALITY_MATRIX, visibleYears);
 
   const quarters = [1, 2, 3, 4];
 
@@ -19,7 +20,7 @@ export default function SeasonalHeatmap({ yearRange }) {
       background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 12, padding: 24,
     }}>
       <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#e5e5e5', margin: '0 0 16px 0' }}>
-        Revenue Seasonality
+        Net Margin by Quarter
       </h2>
       <div style={{
         display: 'grid',
@@ -39,7 +40,6 @@ export default function SeasonalHeatmap({ yearRange }) {
 
         {/* Data rows */}
         {visibleMargin.map(row => {
-          const revRow = REVENUE_MATRIX.find(r => r.year === row.year);
           return [
             <div key={`y-${row.year}`} style={{
               fontSize: '0.75rem', fontWeight: 500, color: '#a3a3a3',
@@ -49,9 +49,8 @@ export default function SeasonalHeatmap({ yearRange }) {
             </div>,
             ...quarters.map(q => {
               const qKey = `q${q}`;
-              const revenue = revRow ? revRow[qKey] : 0;
               const marginVal = row[qKey];
-              const bg = getCellBackground(revenue, min, max);
+              const bg = getCellBackground(marginVal, min, max);
               const tooltip = getCellTooltip(row, q, REVENUE_MATRIX);
               return (
                 <div key={`${row.year}-q${q}`} title={tooltip} style={{
@@ -69,7 +68,7 @@ export default function SeasonalHeatmap({ yearRange }) {
         })}
       </div>
       <p style={{ fontSize: '0.7rem', color: '#a3a3a3', marginTop: 8, textAlign: 'center' }}>
-        Cell color = revenue intensity · Values = net margin %
+        Cell color = net margin % · Darker green = higher margin
       </p>
     </div>
   );
