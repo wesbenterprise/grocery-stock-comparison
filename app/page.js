@@ -339,6 +339,23 @@ export default function Page() {
                 Publix CEO Timeline
               </Link>
             </p>
+            <p style={{ marginTop: 'var(--space-2)', textAlign: 'center' }}>
+              <Link
+                href="/publix-history"
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 'var(--text-xs)',
+                  color: 'var(--color-text-dim)',
+                  textDecoration: 'none',
+                  opacity: 0.6,
+                  transition: 'opacity 0.2s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                onMouseLeave={e => e.currentTarget.style.opacity = '0.6'}
+              >
+                Publix Financial History
+              </Link>
+            </p>
           </footer>
 
         </div>
