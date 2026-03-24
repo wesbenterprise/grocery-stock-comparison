@@ -2,6 +2,15 @@
 
 import { useState, useEffect, useRef } from "react";
 
+const CEO_PORTRAITS = {
+  "George W. Jenkins":    "/images/ceo-portraits/george-w-jenkins.jpg",
+  "Howard M. Jenkins":    "/images/ceo-portraits/howard-jenkins.jpg",
+  "Charles H. Jenkins Jr.": "/images/ceo-portraits/charles-jenkins-jr.jpg",
+  "Ed Crenshaw":          "/images/ceo-portraits/ed-crenshaw.jpg",
+  "Todd Jones":           "/images/ceo-portraits/todd-jones.jpg",
+  "Kevin Murphy":         "/images/ceo-portraits/kevin-murphy.jpg",
+};
+
 const ceos = [
   {
     name: "George W. Jenkins", note: "Founder · \u201cMr. George\u201d", tenure: "1930 – 1990", years: 60,
@@ -311,15 +320,21 @@ function DesktopRow({ ceo, isLast, isExpanded, onToggle }) {
     <>
       <tr onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onClick={onToggle}>
         <td style={td}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 16, color: "#1a3a1a", display: "flex", alignItems: "center", gap: 8 }}>
-              {ceo.name}
-              <span style={{ fontSize: 12, color: "#3B7C3B", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", display: "inline-block" }}>▼</span>
-            </span>
-            <span style={{ fontSize: 11, color: "#6b6b6b" }}>
-              {ceo.note}
-              {ceo.active && <ActiveTag />}
-            </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {CEO_PORTRAITS[ceo.name] && (
+              <img src={CEO_PORTRAITS[ceo.name]} alt={ceo.name}
+                style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", objectPosition: "top", border: "2px solid #3B7C3B", flexShrink: 0 }} />
+            )}
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 16, color: "#1a3a1a", display: "flex", alignItems: "center", gap: 8 }}>
+                {ceo.name}
+                <span style={{ fontSize: 12, color: "#3B7C3B", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", display: "inline-block" }}>▼</span>
+              </span>
+              <span style={{ fontSize: 11, color: "#6b6b6b" }}>
+                {ceo.note}
+                {ceo.active && <ActiveTag />}
+              </span>
+            </div>
           </div>
         </td>
         <td style={td}><span style={{ fontWeight: 600, fontSize: 13 }}>{ceo.tenure}<span style={{ display: "block", fontSize: 11, color: "#6b6b6b", fontWeight: 400, marginTop: 2 }}>{ceo.years} year{ceo.years !== 1 ? "s" : ""}</span></span></td>
@@ -329,8 +344,14 @@ function DesktopRow({ ceo, isLast, isExpanded, onToggle }) {
         <td style={{ ...tdR, fontWeight: 700, fontSize: 14, color: ceo.isFounder ? "#8a6d1b" : "#3B7C3B" }}>{ceo.cagr}</td>
       </tr>
       {isExpanded && (
-        <tr><td colSpan={6} style={{ padding: "0 18px 20px 18px", background: "#f4f9f4", borderBottom: isLast ? "none" : "1px solid #f0ede8" }}>
-          <div style={{ fontSize: 13, lineHeight: 1.7, color: "#3a3a3a", maxWidth: 820, whiteSpace: "pre-line", borderLeft: "3px solid #3B7C3B", paddingLeft: 16, marginTop: 4 }}>{ceo.summary}</div>
+        <tr><td colSpan={6} style={{ padding: "0 18px 24px 18px", background: "#f4f9f4", borderBottom: isLast ? "none" : "1px solid #f0ede8" }}>
+          <div style={{ display: "flex", gap: 28, alignItems: "flex-start", marginTop: 8 }}>
+            {CEO_PORTRAITS[ceo.name] && (
+              <img src={CEO_PORTRAITS[ceo.name]} alt={ceo.name}
+                style={{ width: 180, height: 240, objectFit: "cover", objectPosition: "top", borderRadius: 8, flexShrink: 0, boxShadow: "0 4px 20px rgba(0,0,0,0.15)", border: "3px solid #3B7C3B" }} />
+            )}
+            <div style={{ fontSize: 13, lineHeight: 1.7, color: "#3a3a3a", whiteSpace: "pre-line", borderLeft: "3px solid #3B7C3B", paddingLeft: 16 }}>{ceo.summary}</div>
+          </div>
         </td></tr>
       )}
     </>
@@ -355,13 +376,19 @@ function MobileCard({ ceo, isExpanded, onToggle }) {
     <div style={{ background: "#fff", borderRadius: 14, padding: 20, boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06)" }}>
       <div onClick={onToggle} style={{ cursor: "pointer" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16, gap: 12 }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 17, color: "#1a3a1a", display: "flex", alignItems: "center", gap: 8 }}>
-              {ceo.name}
-              <span style={{ fontSize: 12, color: "#3B7C3B", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", display: "inline-block" }}>▼</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#6b6b6b", marginTop: 2 }}>
-              {ceo.note}{ceo.active && <ActiveTag />}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}>
+            {CEO_PORTRAITS[ceo.name] && (
+              <img src={CEO_PORTRAITS[ceo.name]} alt={ceo.name}
+                style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", objectPosition: "top", border: "2px solid #3B7C3B", flexShrink: 0 }} />
+            )}
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 17, color: "#1a3a1a", display: "flex", alignItems: "center", gap: 8 }}>
+                {ceo.name}
+                <span style={{ fontSize: 12, color: "#3B7C3B", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", display: "inline-block" }}>▼</span>
+              </div>
+              <div style={{ fontSize: 11, color: "#6b6b6b", marginTop: 2 }}>
+                {ceo.note}{ceo.active && <ActiveTag />}
+              </div>
             </div>
           </div>
           <div style={{ textAlign: "right", flexShrink: 0 }}>
@@ -379,7 +406,13 @@ function MobileCard({ ceo, isExpanded, onToggle }) {
         <GrowthBox label="CAGR" value={ceo.cagr} bg={growthBg} color={green} />
       </div>
       {isExpanded && (
-        <div style={{ marginTop: 16, fontSize: 13, lineHeight: 1.7, color: "#3a3a3a", whiteSpace: "pre-line", borderLeft: "3px solid #3B7C3B", paddingLeft: 14 }}>{ceo.summary}</div>
+        <div style={{ marginTop: 16 }}>
+          {CEO_PORTRAITS[ceo.name] && (
+            <img src={CEO_PORTRAITS[ceo.name]} alt={ceo.name}
+              style={{ width: "100%", maxHeight: 280, objectFit: "cover", objectPosition: "top center", borderRadius: 8, marginBottom: 16, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", border: "3px solid #3B7C3B" }} />
+          )}
+          <div style={{ fontSize: 13, lineHeight: 1.7, color: "#3a3a3a", whiteSpace: "pre-line", borderLeft: "3px solid #3B7C3B", paddingLeft: 14 }}>{ceo.summary}</div>
+        </div>
       )}
       {!isExpanded && (
         <div onClick={onToggle} style={{ textAlign: "center", marginTop: 12, fontSize: 12, color: "#3B7C3B", fontWeight: 600, cursor: "pointer" }}>Tap to read full summary ▾</div>
