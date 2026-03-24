@@ -909,6 +909,27 @@ h1, h2, h3, h4, h5, h6 {
 /* ============================================================
    RESPONSIVE — Tablet (≤900px)
    ============================================================ */
+/* Header responsive */
+@media (max-width: 860px) {
+  .app-header { padding: 0 16px; }
+  .header-brand-sub { display: none; }
+  .header-brand h1 { font-size: 13px; }
+  .header-nav-link { padding: 5px 8px; font-size: 11px; }
+  .header-live-label { display: none; }
+}
+
+@media (max-width: 620px) {
+  .header-brand-p { font-size: 20px; }
+  .header-nav-link { padding: 5px 6px; font-size: 10px; letter-spacing: 0; }
+  .header-live { padding-left: 6px; margin-left: 4px; }
+}
+
+@media (max-width: 480px) {
+  /* Hide nav text labels — show just dots/icons at very small sizes */
+  .header-nav { gap: 2px; }
+  .header-nav-link { padding: 5px 7px; }
+}
+
 @media (max-width: 900px) {
   .cards-grid {
     grid-template-columns: 1fr;

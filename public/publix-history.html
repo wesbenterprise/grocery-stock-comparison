@@ -140,6 +140,15 @@ tr:hover td{background:rgba(76,175,80,.03)}
   .kpi-grid{grid-template-columns:repeat(2,1fr)}
   .chart-grid{grid-template-columns:1fr}
 }
+@media(max-width:860px){
+  .app-header{padding:0 16px}
+  .header-brand-sub{display:none}
+  .header-nav-link{padding:5px 8px;font-size:11px}
+}
+@media(max-width:620px){
+  .header-brand-p{font-size:20px}
+  .header-nav-link{padding:5px 6px;font-size:10px;letter-spacing:0}
+}
 @media(max-width:768px){
   /* Tab switcher — scrollable on mobile */
   .tab-switcher{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;white-space:nowrap;display:block}
@@ -147,7 +156,6 @@ tr:hover td{background:rgba(76,175,80,.03)}
   .tab-btn{display:inline-block;padding:10px 18px;font-size:14px}
   /* Header */
   .app-header{padding:0 16px}
-  .header-brand h1{font-size:14px}
   .header-badge{display:none}
   /* Dashboard padding — account for fixed header */
   #dashboard{padding:72px 14px 48px}
