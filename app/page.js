@@ -302,7 +302,7 @@ export default function Page() {
               <span className="section-subtitle">Side-by-Side Comparison</span>
             </div>
 
-            <div className="metrics-table">
+            <div className="metrics-table-wrap"><div className="metrics-table">
               <div className="metrics-table-inner">
                 <div className="metrics-table-header">
                   <div className="metrics-table-header-cell">Metric</div>
@@ -367,7 +367,7 @@ export default function Page() {
                   </div>
                 ))}
               </div>
-            </div>
+            </div></div>
           </section>
 
           {/* Footer */}
