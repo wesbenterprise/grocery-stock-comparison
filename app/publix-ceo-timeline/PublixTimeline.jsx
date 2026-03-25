@@ -189,6 +189,30 @@ export default function PublixTimeline() {
   );
 }
 
+function SloganPhoto({ isWide }) {
+  const [hovered, setHovered] = useState(false);
+  const w = isWide ? 200 : "100%";
+  const h = isWide ? 134 : 200;
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ position: "relative", width: w, height: h, flexShrink: 0, borderRadius: 8, overflow: "hidden", border: "2px solid rgba(201,168,76,0.4)" }}
+    >
+      <img src="/images/schroter-watercolor.png" alt="Bill Schroter and George Jenkins" style={{
+        position: "absolute", inset: 0, width: "100%", height: "100%",
+        objectFit: "cover", objectPosition: "top center",
+        opacity: hovered ? 0 : 1, transition: "opacity 0.35s ease",
+      }} />
+      <img src="/images/schroter-illustrated.png" alt="Bill Schroter and George Jenkins illustrated" style={{
+        position: "absolute", inset: 0, width: "100%", height: "100%",
+        objectFit: "cover", objectPosition: "top center",
+        opacity: hovered ? 1 : 0, transition: "opacity 0.35s ease",
+      }} />
+    </div>
+  );
+}
+
 function Slogan({ isWide }) {
   return (
     <div style={{
@@ -241,16 +265,25 @@ function Slogan({ isWide }) {
 
       {/* Origin story */}
       <div style={{
-        maxWidth: 580,
+        maxWidth: 680,
         margin: "0 auto",
-        fontSize: isWide ? 14 : 13,
-        lineHeight: 1.75,
-        color: "rgba(255,255,255,0.65)",
-        fontFamily: "'DM Sans', system-ui, sans-serif",
+        display: "flex",
+        gap: isWide ? 28 : 16,
+        alignItems: "center",
+        flexDirection: isWide ? "row" : "column",
       }}>
-        In 1954, advertising director <span style={{ color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Bill Schroter</span> listened to customers saying
-        "Publix is such a pleasant place to shop" and brought a new slogan to founder George Jenkins.
-        After a long, silent pause, Jenkins said: <span style={{ color: "#c9a84c", fontStyle: "italic" }}>"I like it. I like the promise. I like the meaning. Let's adopt it."</span>
+        <SloganPhoto isWide={isWide} />
+        <div style={{
+          fontSize: isWide ? 14 : 13,
+          lineHeight: 1.75,
+          color: "rgba(255,255,255,0.65)",
+          fontFamily: "'DM Sans', system-ui, sans-serif",
+          textAlign: "left",
+        }}>
+          In 1954, advertising director <span style={{ color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Bill Schroter</span> listened to customers saying
+          "Publix is such a pleasant place to shop" and brought a new slogan to founder George Jenkins.
+          After a long, silent pause, Jenkins said: <span style={{ color: "#c9a84c", fontStyle: "italic" }}>"I like it. I like the promise. I like the meaning. Let's adopt it."</span>
+        </div>
       </div>
 
       {/* Jenkins quote */}
