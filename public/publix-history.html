@@ -979,20 +979,28 @@ function renderKPIs() {
   const priorCapexPerStore = priorNetNew && priorNetNew > 0 ? priorCapex / priorNetNew : null;
   const cpnsChange = capexPerNewStore && priorCapexPerStore ? ((capexPerNewStore - priorCapexPerStore) / priorCapexPerStore) * 100 : null;
 
+  // Annual data helpers — last 8 fiscal years for sparklines
+  const annualYrs = Array.from({length:8}, (_,i) => latestYear - 7 + i);
+  const annualRevSpark = annualYrs.map(y => { const qs=allQ.filter(q=>q.fiscalYear===y); return qs.length?qs.reduce((s,q)=>s+q.revenue,0):null; }).filter(v=>v!=null);
+  const annualGMSpark = annualYrs.map(y => { const q4=allQ.filter(q=>q.fiscalYear===y&&q.quarter===4)[0]; return q4?q4.grossMarginPct:null; }).filter(v=>v!=null);
+  const annualNISpark = annualYrs.map(y => { const qs=allQ.filter(q=>q.fiscalYear===y); return qs.length?qs.reduce((s,q)=>s+(q.operatingNetIncome||0),0):null; }).filter(v=>v!=null);
+  const annualSCSpark = annualYrs.map(y => { const q4=allQ.filter(q=>q.fiscalYear===y&&q.quarter===4)[0]; return q4?q4.storeCount:null; }).filter(v=>v!=null);
+  const annualRPSSpark = annualYrs.map(y => { const qs=allQ.filter(q=>q.fiscalYear===y); const q4=allQ.filter(q=>q.fiscalYear===y&&q.quarter===4)[0]; if(!qs.length||!q4||!q4.storeCount) return null; return qs.reduce((s,q)=>s+q.revenue,0)/q4.storeCount/1e6; }).filter(v=>v!=null);
+
   const cards = [
-    // Row 1
-    { label: 'TTM REVENUE', value: fmtB(ttmRev), change: ttmRevChange, isDelta: false, spark: last8.map(q => q.revenue) },
-    { label: 'GROSS MARGIN', value: latest.grossMarginPct.toFixed(1) + '%', change: gmChange, isDelta: true, spark: last8.map(q => q.grossMarginPct) },
-    { label: 'ADJ. NET INCOME', value: fmtM(latest.operatingNetIncome), change: niChange, isDelta: false, spark: last8.map(q => q.operatingNetIncome) },
-    { label: 'STORE COUNT', value: fmtNum(latest.storeCount), change: scChange, isDelta: false, spark: last8.map(q => q.storeCount) },
-    // Row 2
-    { label: 'REVENUE / STORE (TTM)', value: '$' + (ttmRevPerStore / 1e6).toFixed(1) + 'M', change: rpsChange, isDelta: false, spark: allQ.slice(-8).map(q => q.revenuePerStore / 1e6) },
+    // Row 1 — annual sparklines (8 years)
+    { label: 'TTM REVENUE', value: fmtB(ttmRev), change: ttmRevChange, isDelta: false, spark: annualRevSpark },
+    { label: 'GROSS MARGIN', value: latest.grossMarginPct.toFixed(1) + '%', change: gmChange, isDelta: true, spark: annualGMSpark },
+    { label: 'ADJ. NET INCOME', value: fmtM(latest.operatingNetIncome), change: niChange, isDelta: false, spark: annualNISpark },
+    { label: 'STORE COUNT', value: fmtNum(latest.storeCount), change: scChange, isDelta: false, spark: annualSCSpark },
+    // Row 2 — annual sparklines (8 years)
+    { label: 'REVENUE / STORE (TTM)', value: '$' + (ttmRevPerStore / 1e6).toFixed(1) + 'M', change: rpsChange, isDelta: false, spark: annualRPSSpark },
     { label: 'NET NEW STORES (' + latestYear + ')', value: netNewStores != null ? (netNewStores >= 0 ? '+' : '') + netNewStores : 'N/A', change: null, isDelta: false, isBar: true,
-      spark: (() => { const yrs = [latestYear-3,latestYear-2,latestYear-1,latestYear]; return yrs.map(y => { const a=allQ.filter(q=>q.fiscalYear===y&&q.quarter===4)[0]; const b=allQ.filter(q=>q.fiscalYear===y-1&&q.quarter===4)[0]; return a&&b?a.storeCount-b.storeCount:null; }).filter(v=>v!=null); })() },
+      spark: (() => { const yrs=Array.from({length:8},(_,i)=>latestYear-7+i); return yrs.map(y=>{ const a=allQ.filter(q=>q.fiscalYear===y&&q.quarter===4)[0]; const b=allQ.filter(q=>q.fiscalYear===y-1&&q.quarter===4)[0]; return a&&b?a.storeCount-b.storeCount:null; }).filter(v=>v!=null); })() },
     { label: 'IMPLIED SAME-STORE GROWTH', value: (impliedSSS >= 0 ? '+' : '') + impliedSSS.toFixed(1) + '%', change: sssChange, isDelta: true,
-      spark: (() => { const yrs=[latestYear-3,latestYear-2,latestYear-1,latestYear]; return yrs.map(y=>{ const ttmY=allQ.filter(q=>q.fiscalYear===y); const ttmYp=allQ.filter(q=>q.fiscalYear===y-1); if(!ttmY.length||!ttmYp.length) return null; const r=ttmY.reduce((s,q)=>s+q.revenue,0); const rp=ttmYp.reduce((s,q)=>s+q.revenue,0); const sc=ttmY[ttmY.length-1].storeCount; const scp=ttmYp[ttmYp.length-1].storeCount; return ((r-rp)/rp*100) - ((sc-scp)/scp*100); }).filter(v=>v!=null); })() },
+      spark: (() => { const yrs=Array.from({length:8},(_,i)=>latestYear-7+i); return yrs.map(y=>{ const ttmY=allQ.filter(q=>q.fiscalYear===y); const ttmYp=allQ.filter(q=>q.fiscalYear===y-1); if(!ttmY.length||!ttmYp.length) return null; const r=ttmY.reduce((s,q)=>s+q.revenue,0); const rp=ttmYp.reduce((s,q)=>s+q.revenue,0); const sc=ttmY[ttmY.length-1].storeCount; const scp=ttmYp[ttmYp.length-1].storeCount; return ((r-rp)/rp*100)-((sc-scp)/scp*100); }).filter(v=>v!=null); })() },
     { label: 'CAPEX / NEW STORE', value: capexPerNewStore ? '$' + (capexPerNewStore / 1e6).toFixed(1) + 'M' : 'N/A', change: cpnsChange, isDelta: false,
-      spark: (() => { const yrs=[latestYear-3,latestYear-2,latestYear-1,latestYear]; return yrs.map(y=>{ const cf=CASHFLOW_DATA.filter(d=>parseInt(d.period.split('-')[0])===y); const cap=cf.reduce((s,d)=>s+Math.abs(d.capex||0),0); const a=allQ.filter(q=>q.fiscalYear===y&&q.quarter===4)[0]; const b=allQ.filter(q=>q.fiscalYear===y-1&&q.quarter===4)[0]; const nn=a&&b?a.storeCount-b.storeCount:null; return nn&&nn>0?cap/nn/1e6:null; }).filter(v=>v!=null); })() },
+      spark: (() => { const yrs=Array.from({length:8},(_,i)=>latestYear-7+i); return yrs.map(y=>{ const cf=CASHFLOW_DATA.filter(d=>parseInt(d.period.split('-')[0])===y); const cap=cf.reduce((s,d)=>s+Math.abs(d.capex||0),0); const a=allQ.filter(q=>q.fiscalYear===y&&q.quarter===4)[0]; const b=allQ.filter(q=>q.fiscalYear===y-1&&q.quarter===4)[0]; const nn=a&&b?a.storeCount-b.storeCount:null; return nn&&nn>0?cap/nn/1e6:null; }).filter(v=>v!=null); })() },
   ];
 
   cards.forEach(k => {
