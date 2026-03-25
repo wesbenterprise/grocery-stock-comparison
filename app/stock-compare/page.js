@@ -3,10 +3,10 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import SiteHeader from './components/SiteHeader';
+import SiteHeader from '../components/SiteHeader';
 
 // Dynamic imports to avoid SSR issues with Chart.js
-const PredictionPanel = dynamic(() => import('./components/PredictionPanel'), {
+const PredictionPanel = dynamic(() => import('../components/PredictionPanel'), {
   ssr: false,
   loading: () => (
     <div className="prediction-panel loading">
@@ -16,7 +16,7 @@ const PredictionPanel = dynamic(() => import('./components/PredictionPanel'), {
   ),
 });
 
-const StockChart = dynamic(() => import('./components/StockChart'), {
+const StockChart = dynamic(() => import('../components/StockChart'), {
   ssr: false,
   loading: () => (
     <div className="chart-section">
