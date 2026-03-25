@@ -81,7 +81,8 @@ h1,h2,h3,h4,h5,h6{font-family:var(--font-display);font-weight:800;line-height:1.
 .kpi-card .change{font-family:var(--font-mono);font-size:12px;margin-top:4px;font-weight:600}
 .kpi-card .change.up{color:var(--green)}
 .kpi-card .change.down{color:var(--red)}
-.kpi-card canvas{position:absolute;bottom:0;right:0;width:100px;height:40px;opacity:.5}
+.kpi-card canvas{position:absolute;bottom:0;right:0;width:100px;height:40px;opacity:.6;pointer-events:none}
+.kpi-card .kpi-spark{position:absolute;bottom:0;right:0;width:100px;height:40px;opacity:.6;pointer-events:none}
 
 /* Chart Cards */
 .chart-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.05);position:relative;overflow:hidden}
@@ -986,9 +987,12 @@ function renderKPIs() {
     { label: 'STORE COUNT', value: fmtNum(latest.storeCount), change: scChange, isDelta: false, spark: last8.map(q => q.storeCount) },
     // Row 2
     { label: 'REVENUE / STORE (TTM)', value: '$' + (ttmRevPerStore / 1e6).toFixed(1) + 'M', change: rpsChange, isDelta: false, spark: allQ.slice(-8).map(q => q.revenuePerStore / 1e6) },
-    { label: 'NET NEW STORES (' + latestYear + ')', value: netNewStores != null ? (netNewStores >= 0 ? '+' : '') + netNewStores : 'N/A', change: null, isDelta: false, spark: null },
-    { label: 'IMPLIED SAME-STORE GROWTH', value: (impliedSSS >= 0 ? '+' : '') + impliedSSS.toFixed(1) + '%', change: sssChange, isDelta: true, spark: null },
-    { label: 'CAPEX / NEW STORE', value: capexPerNewStore ? '$' + (capexPerNewStore / 1e6).toFixed(1) + 'M' : 'N/A', change: cpnsChange, isDelta: false, spark: null },
+    { label: 'NET NEW STORES (' + latestYear + ')', value: netNewStores != null ? (netNewStores >= 0 ? '+' : '') + netNewStores : 'N/A', change: null, isDelta: false, isBar: true,
+      spark: (() => { const yrs = [latestYear-3,latestYear-2,latestYear-1,latestYear]; return yrs.map(y => { const a=allQ.filter(q=>q.fiscalYear===y&&q.quarter===4)[0]; const b=allQ.filter(q=>q.fiscalYear===y-1&&q.quarter===4)[0]; return a&&b?a.storeCount-b.storeCount:null; }).filter(v=>v!=null); })() },
+    { label: 'IMPLIED SAME-STORE GROWTH', value: (impliedSSS >= 0 ? '+' : '') + impliedSSS.toFixed(1) + '%', change: sssChange, isDelta: true,
+      spark: (() => { const yrs=[latestYear-3,latestYear-2,latestYear-1,latestYear]; return yrs.map(y=>{ const ttmY=allQ.filter(q=>q.fiscalYear===y); const ttmYp=allQ.filter(q=>q.fiscalYear===y-1); if(!ttmY.length||!ttmYp.length) return null; const r=ttmY.reduce((s,q)=>s+q.revenue,0); const rp=ttmYp.reduce((s,q)=>s+q.revenue,0); const sc=ttmY[ttmY.length-1].storeCount; const scp=ttmYp[ttmYp.length-1].storeCount; return ((r-rp)/rp*100) - ((sc-scp)/scp*100); }).filter(v=>v!=null); })() },
+    { label: 'CAPEX / NEW STORE', value: capexPerNewStore ? '$' + (capexPerNewStore / 1e6).toFixed(1) + 'M' : 'N/A', change: cpnsChange, isDelta: false,
+      spark: (() => { const yrs=[latestYear-3,latestYear-2,latestYear-1,latestYear]; return yrs.map(y=>{ const cf=CASHFLOW_DATA.filter(d=>parseInt(d.period.split('-')[0])===y); const cap=cf.reduce((s,d)=>s+Math.abs(d.capex||0),0); const a=allQ.filter(q=>q.fiscalYear===y&&q.quarter===4)[0]; const b=allQ.filter(q=>q.fiscalYear===y-1&&q.quarter===4)[0]; const nn=a&&b?a.storeCount-b.storeCount:null; return nn&&nn>0?cap/nn/1e6:null; }).filter(v=>v!=null); })() },
   ];
 
   cards.forEach(k => {
@@ -997,8 +1001,52 @@ function renderKPIs() {
     const rawChg = k.change != null ? (k.invertChange ? -k.change : k.change) : null;
     const chVal = rawChg != null ? (k.isDelta ? (rawChg >= 0 ? '+' : '') + rawChg.toFixed(2) + 'pp' : (rawChg >= 0 ? '+' : '') + rawChg.toFixed(1) + '%') : '';
     const chClass = rawChg != null ? (rawChg >= 0 ? 'up' : 'down') : '';
-    card.innerHTML = `<div class="label">${k.label}</div><div class="value">${k.value}</div><div class="change ${chClass}">${chVal}${rawChg != null ? ' YoY' : ''}</div>`;
+    card.innerHTML = `<div class="label">${k.label}</div><div class="value">${k.value}</div><div class="change ${chClass}">${chVal}${rawChg != null ? ' YoY' : ''}</div>${k.spark && k.spark.length > 1 ? '<canvas class="kpi-spark"></canvas>' : ''}`;
     grid.appendChild(card);
+    // Draw sparkline
+    if (k.spark && k.spark.length > 1) {
+      const canvas = card.querySelector('.kpi-spark');
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = 100 * dpr; canvas.height = 40 * dpr;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+      const data = k.spark.filter(v => v != null);
+      const min = Math.min(...data), max = Math.max(...data);
+      const range = max - min || 1;
+      const w = 100, h = 40, pad = 4;
+      const color = rawChg != null ? (rawChg >= 0 ? '#4ade80' : '#f87171') : '#4ade80';
+      if (k.isBar) {
+        // Bar sparkline for store-count type metrics
+        const bw = Math.floor((w - pad * 2) / data.length) - 2;
+        data.forEach((v, i) => {
+          const x = pad + i * ((w - pad * 2) / data.length);
+          const barH = Math.max(2, ((v - min) / range) * (h - pad * 2));
+          ctx.fillStyle = color;
+          ctx.globalAlpha = 0.7;
+          ctx.fillRect(x, h - pad - barH, bw, barH);
+        });
+      } else {
+        // Line sparkline
+        ctx.beginPath();
+        data.forEach((v, i) => {
+          const x = pad + (i / (data.length - 1)) * (w - pad * 2);
+          const y = h - pad - ((v - min) / range) * (h - pad * 2);
+          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        });
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        ctx.globalAlpha = 0.8;
+        ctx.stroke();
+        // Fill area under line
+        const lastX = pad + ((data.length - 1) / (data.length - 1)) * (w - pad * 2);
+        ctx.lineTo(lastX, h - pad);
+        ctx.lineTo(pad, h - pad);
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.12;
+        ctx.fill();
+      }
+    }
   });
 }
 
