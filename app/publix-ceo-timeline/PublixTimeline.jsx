@@ -202,13 +202,13 @@ function SchroterPhoto({ isWide }) {
         {/* Illustrated — default */}
         <img src="/images/schroter-illustrated.png" alt="Bill Schroter and George Jenkins illustrated" style={{
           position: "absolute", inset: 0, width: "100%", height: "100%",
-          objectFit: "contain", objectPosition: "center",
+          objectFit: "cover", objectPosition: "center 35%",
           opacity: hovered ? 0 : 1, transition: "opacity 0.35s ease",
         }} />
         {/* B&W photo — reveals on hover */}
         <img src="/images/schroter-photo.jpg" alt="Bill Schroter and George Jenkins" style={{
           position: "absolute", inset: 0, width: "100%", height: "100%",
-          objectFit: "contain", objectPosition: "center",
+          objectFit: "cover", objectPosition: "center 35%",
           opacity: hovered ? 1 : 0, transition: "opacity 0.35s ease",
         }} />
       </div>
