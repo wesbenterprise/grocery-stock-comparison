@@ -11,6 +11,44 @@ const CEO_PORTRAITS = {
   "Kevin Murphy":         "/images/ceo-portraits/kevin-murphy.jpg",
 };
 
+const CEO_THUMBNAILS = {
+  "George W. Jenkins":    "/images/ceo-thumbnails/george-w-jenkins-thumb.png",
+  "Howard M. Jenkins":    "/images/ceo-thumbnails/howard-jenkins-thumb.png",
+  "Charles H. Jenkins Jr.": "/images/ceo-thumbnails/charles-jenkins-jr-thumb.png",
+  "Ed Crenshaw":          "/images/ceo-thumbnails/ed-crenshaw-thumb.png",
+  "Todd Jones":           "/images/ceo-thumbnails/todd-jones-thumb.png",
+  "Kevin Murphy":         "/images/ceo-thumbnails/kevin-murphy-thumb.png",
+};
+
+function HoverPortrait({ name, size = 44 }) {
+  const [hovered, setHovered] = useState(false);
+  const thumb = CEO_THUMBNAILS[name];
+  const full = CEO_PORTRAITS[name];
+  if (!thumb && !full) return null;
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ position: "relative", width: size, height: size, flexShrink: 0 }}
+    >
+      {/* Silhouette — default */}
+      <img src={thumb || full} alt={name} style={{
+        position: "absolute", inset: 0, width: "100%", height: "100%",
+        borderRadius: "50%", objectFit: "cover", objectPosition: "top center",
+        border: "2px solid #3B7C3B", overflow: "hidden",
+        opacity: hovered ? 0 : 1, transition: "opacity 0.35s ease",
+      }} />
+      {/* Watercolor — reveals on hover */}
+      <img src={full} alt={name} style={{
+        position: "absolute", inset: 0, width: "100%", height: "100%",
+        borderRadius: "50%", objectFit: "cover", objectPosition: "top center",
+        border: "2px solid #3B7C3B",
+        opacity: hovered ? 1 : 0, transition: "opacity 0.35s ease",
+      }} />
+    </div>
+  );
+}
+
 const ceos = [
   {
     name: "George W. Jenkins", note: "Founder · \u201cMr. George\u201d", tenure: "1930 – 1990", years: 60,
@@ -321,10 +359,7 @@ function DesktopRow({ ceo, isLast, isExpanded, onToggle }) {
       <tr onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onClick={onToggle}>
         <td style={td}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            {CEO_PORTRAITS[ceo.name] && !isExpanded && (
-              <img src={CEO_PORTRAITS[ceo.name]} alt={ceo.name}
-                style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", objectPosition: "top", border: "2px solid #3B7C3B", flexShrink: 0 }} />
-            )}
+            {!isExpanded && <HoverPortrait name={ceo.name} size={44} />}
             <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
               <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 16, color: "#1a3a1a", display: "flex", alignItems: "center", gap: 8 }}>
                 {ceo.name}
@@ -377,10 +412,7 @@ function MobileCard({ ceo, isExpanded, onToggle }) {
       <div onClick={onToggle} style={{ cursor: "pointer" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16, gap: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}>
-            {CEO_PORTRAITS[ceo.name] && !isExpanded && (
-              <img src={CEO_PORTRAITS[ceo.name]} alt={ceo.name}
-                style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", objectPosition: "top", border: "2px solid #3B7C3B", flexShrink: 0 }} />
-            )}
+            {!isExpanded && <HoverPortrait name={ceo.name} size={40} />}
             <div style={{ flex: 1 }}>
               <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 17, color: "#1a3a1a", display: "flex", alignItems: "center", gap: 8 }}>
                 {ceo.name}
