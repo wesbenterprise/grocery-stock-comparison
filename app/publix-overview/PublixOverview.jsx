@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -25,7 +25,7 @@ const MILESTONES = [
   {
     year: '1935',
     title: 'The Model Store',
-    body: 'Jenkins opens a new, revolutionary store — air-conditioned, with wide aisles, electric-eye doors, and frozen food cases. Floridians had never seen anything like it.',
+    body: 'Jenkins opens a revolutionary new store — air-conditioned, with wide aisles, electric-eye doors, and frozen food cases. It was a supermarket before the word existed. Floridians had never seen anything like it.',
     tag: 'Innovation',
     tagColor: 'blue',
   },
@@ -39,9 +39,16 @@ const MILESTONES = [
   {
     year: '1956',
     title: 'Headquarters Moves to Lakeland',
-    body: 'Publix relocates its headquarters to Lakeland, Florida, where it remains today. The iconic green marble building becomes a landmark of the city.',
+    body: 'Publix relocates its headquarters to Lakeland, Florida, where it remains today. The iconic green marble building becomes a landmark of the city and a symbol of the company\'s permanence.',
     tag: 'Growth',
     tagColor: 'green',
+  },
+  {
+    year: '1966',
+    title: 'Publix Super Markets Charities',
+    body: 'Jenkins establishes Publix Super Markets Charities, formalizing the company\'s commitment to giving back to the communities where its associates live and work. To date, the foundation has donated hundreds of millions of dollars.',
+    tag: 'Community',
+    tagColor: 'gold',
   },
   {
     year: '1974',
@@ -51,23 +58,37 @@ const MILESTONES = [
     tagColor: 'gold',
   },
   {
-    year: '1984',
+    year: '1991',
+    title: 'The Deli Changes Everything',
+    body: 'Publix expands its fresh deli and prepared foods program — the Pub Sub is born. What started as a convenience becomes a cultural institution. Customers don\'t just shop at Publix; they eat at Publix.',
+    tag: 'Innovation',
+    tagColor: 'blue',
+  },
+  {
+    year: '1991',
     title: 'Expanding Beyond Florida',
-    body: 'After decades of dominance in Florida, Publix begins its measured, deliberate expansion into neighboring states — always on its own terms, never acquired, never merged.',
+    body: 'After six decades of dominance in Florida, Publix opens its first store outside the state — in Georgia. Measured, deliberate growth follows into South Carolina, Alabama, Tennessee, North Carolina, and Virginia. Always on its own terms.',
     tag: 'Expansion',
     tagColor: 'blue',
   },
   {
     year: '1996',
     title: 'George Jenkins Passes',
-    body: '"Mr. George" passes away at age 88. He leaves behind a company with 500+ stores, 100,000 employees who own it, and a culture built entirely on his conviction that people matter.',
+    body: '"Mr. George" passes away at age 88. He leaves behind a company with 500+ stores, more than 100,000 employees who own it, and a culture built entirely on his conviction that people matter more than profit.',
     tag: 'Legacy',
     tagColor: 'muted',
   },
   {
-    year: '2024',
+    year: '2003',
+    title: 'Publix Crosses $1,000 Stores',
+    body: 'Publix opens its 1,000th store — a milestone achieved without a single acquisition, merger, or leveraged buyout. Every one of those stores was built, not bought.',
+    tag: 'Growth',
+    tagColor: 'green',
+  },
+  {
+    year: '2025',
     title: 'Still Standing. Still Private. Still Theirs.',
-    body: 'Publix operates over 1,400 stores across 8 states. It has never been acquired, never gone public, never stopped being owned by the people who run it. The shelves are stocked by shareholders.',
+    body: 'Publix operates over 1,400 stores across 8 states with $60B+ in annual revenue. It has never been acquired, never gone public, never stopped being owned by the people who run it. The shelves are stocked by shareholders.',
     tag: 'Today',
     tagColor: 'green',
   },
@@ -83,8 +104,6 @@ const TAG_COLORS = {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function PublixOverview() {
-  const [expandedMilestone, setExpandedMilestone] = useState(null);
-
   return (
     <main className="main-content">
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '48px 24px 80px' }}>
@@ -184,7 +203,12 @@ export default function PublixOverview() {
               with the regional manager of <strong style={{ color: 'var(--color-text)' }}>Piggly Wiggly</strong> —
               the chain where he'd been working — to ask about a promotion.
             </p>
-            <p style={{ fontSize: '1.0625rem', lineHeight: 1.8, color: 'var(--color-text-secondary)', marginBottom: 20 }}>
+            <p style={{
+              fontSize: '1.25rem', lineHeight: 1.8, color: 'var(--color-text)',
+              marginBottom: 28, marginTop: 8,
+              fontFamily: 'var(--font-serif)', fontStyle: 'italic',
+              paddingLeft: 20, borderLeft: '2px solid rgba(76,175,80,0.3)',
+            }}>
               The manager was too busy playing golf to see him.
             </p>
             <p style={{ fontSize: '1.0625rem', lineHeight: 1.8, color: 'var(--color-text-secondary)', marginBottom: 20 }}>
@@ -350,7 +374,7 @@ export default function PublixOverview() {
         {/* ── Timeline ── */}
         <section style={{ marginBottom: 72 }}>
           <span className="section-eyebrow">From Then to Now</span>
-          <h2 className="section-headline" style={{ marginBottom: 8 }}>94 Years of History</h2>
+          <h2 className="section-headline" style={{ marginBottom: 8 }}>95 Years of History</h2>
           <div className="section-rule" style={{ marginBottom: 36 }} />
 
           <div style={{ position: 'relative' }}>
@@ -471,12 +495,34 @@ export default function PublixOverview() {
               fontSize: '1rem',
               lineHeight: 1.8,
               color: 'var(--color-text-secondary)',
-              maxWidth: 600,
-              margin: '0 auto',
+              maxWidth: 640,
+              margin: '0 auto 16px',
             }}>
               Introduced in the 1950s, the slogan wasn't marketing copy — it was a
               description of what Jenkins had actually built. Wide aisles. Clean stores.
               Employees who smiled because they owned a stake in the outcome.
+            </p>
+            <p style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: '1rem',
+              lineHeight: 1.8,
+              color: 'var(--color-text-secondary)',
+              maxWidth: 640,
+              margin: '0 auto 16px',
+            }}>
+              Other grocers tried to copy the customer experience. They couldn't.
+              Because the difference was never the layout or the lighting —
+              it was that the person helping you find the olive oil owned
+              part of the building you were standing in.
+            </p>
+            <p style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.8125rem',
+              letterSpacing: '0.03em',
+              color: 'var(--color-publix)',
+              maxWidth: 640,
+              margin: '0 auto',
+            }}>
               The pleasure wasn't manufactured. It was structural.
             </p>
           </div>
