@@ -278,10 +278,10 @@ function Slogan({ isWide }) {
       </div>
 
       {/* Rule */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, margin: isWide ? "28px auto" : "20px auto", maxWidth: 580 }}>
-        <div style={{ flex: 1, height: 1, background: "rgba(201,168,76,0.4)" }} />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, margin: isWide ? "28px auto" : "20px auto" }}>
+        <div style={{ flex: 1, maxWidth: 120, height: 1, background: "rgba(201,168,76,0.4)" }} />
         <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#c9a84c" }} />
-        <div style={{ flex: 1, height: 1, background: "rgba(201,168,76,0.4)" }} />
+        <div style={{ flex: 1, maxWidth: 120, height: 1, background: "rgba(201,168,76,0.4)" }} />
       </div>
 
       {/* Schroter illustrated */}
@@ -291,10 +291,10 @@ function Slogan({ isWide }) {
       </div>
 
       {/* Rule */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, margin: isWide ? "28px auto" : "20px auto", maxWidth: 580 }}>
-        <div style={{ flex: 1, height: 1, background: "rgba(201,168,76,0.4)" }} />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, margin: isWide ? "28px auto" : "20px auto" }}>
+        <div style={{ flex: 1, maxWidth: 120, height: 1, background: "rgba(201,168,76,0.4)" }} />
         <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#c9a84c" }} />
-        <div style={{ flex: 1, height: 1, background: "rgba(201,168,76,0.4)" }} />
+        <div style={{ flex: 1, maxWidth: 120, height: 1, background: "rgba(201,168,76,0.4)" }} />
       </div>
 
       {/* Jenkins quote */}
