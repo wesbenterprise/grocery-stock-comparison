@@ -290,6 +290,13 @@ function Slogan({ isWide }) {
           style={{ width: isWide ? 420 : "100%", maxWidth: "100%", borderRadius: 8, border: "2px solid rgba(201,168,76,0.3)" }} />
       </div>
 
+      {/* Rule */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, margin: isWide ? "28px auto" : "20px auto", maxWidth: 580 }}>
+        <div style={{ flex: 1, height: 1, background: "rgba(201,168,76,0.4)" }} />
+        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#c9a84c" }} />
+        <div style={{ flex: 1, height: 1, background: "rgba(201,168,76,0.4)" }} />
+      </div>
+
       {/* Jenkins quote */}
       <div style={{
         maxWidth: 560,
