@@ -134,9 +134,10 @@ export default function PublixOverview() {
             maxWidth: 620,
             margin: '0 auto 32px',
           }}>
-            A <strong style={{ color: 'var(--color-text)' }}>$1,800 loan</strong>, a cold shoulder in Atlanta,
-            and an unshakeable belief that the people who show up every day
-            deserve to own what they build.
+            A <strong style={{ color: 'var(--color-text)' }}>$1,800 loan</strong>.
+            A manager who wouldn't leave his golf conversation.
+            And a twenty-two-year-old who opened his own store
+            across the street from the one that wouldn't promote him.
           </p>
 
           {/* Decorative rule */}
@@ -205,11 +206,15 @@ export default function PublixOverview() {
             </p>
             <p style={{
               fontSize: '1.25rem', lineHeight: 1.8, color: 'var(--color-text)',
-              marginBottom: 28, marginTop: 8,
+              marginBottom: 12, marginTop: 8,
               fontFamily: 'var(--font-serif)', fontStyle: 'italic',
               paddingLeft: 20, borderLeft: '2px solid rgba(76,175,80,0.3)',
             }}>
-              The manager was too busy playing golf to see him.
+              The manager wouldn't see him. Jenkins could hear him through the door — talking about golf.
+            </p>
+            <p style={{ fontSize: '0.875rem', lineHeight: 1.6, color: 'var(--color-text-muted)', marginBottom: 28, paddingLeft: 20 }}>
+              Not playing golf. Not in a meeting. Just talking about it while a twenty-two-year-old
+              who would build a $60 billion company sat waiting on the other side of the wall.
             </p>
             <p style={{ fontSize: '1.0625rem', lineHeight: 1.8, color: 'var(--color-text-secondary)', marginBottom: 20 }}>
               Jenkins drove home to Winter Haven, Florida. He borrowed{' '}
@@ -378,24 +383,28 @@ export default function PublixOverview() {
           <div className="section-rule" style={{ marginBottom: 36 }} />
 
           <div style={{ position: 'relative' }}>
-            {/* Vertical line */}
-            <div style={{
-              position: 'absolute',
-              left: 52,
-              top: 0,
-              bottom: 0,
-              width: 1,
-              background: 'linear-gradient(to bottom, var(--color-publix), rgba(76,175,80,0.1))',
-            }} />
+            <style>{`
+              .tl-line { position: absolute; top: 0; bottom: 0; width: 1px; background: linear-gradient(to bottom, var(--color-publix), rgba(76,175,80,0.1)); left: 52px; }
+              .tl-row { display: flex; gap: 0; align-items: flex-start; }
+              .tl-left { width: 104px; flex-shrink: 0; display: flex; align-items: center; padding-top: 18px; }
+              .tl-card { margin-left: 16px; margin-bottom: 12px; }
+              @media (max-width: 600px) {
+                .tl-line { left: 16px; }
+                .tl-row { flex-direction: column; padding-left: 36px; position: relative; }
+                .tl-left { width: auto; padding-top: 0; margin-bottom: 4px; position: absolute; left: -36px; top: 16px; flex-direction: column; align-items: center; gap: 2px; }
+                .tl-card { margin-left: 0; }
+              }
+            `}</style>
+            <div className="tl-line" />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
               {MILESTONES.map((m, i) => {
                 const tc = TAG_COLORS[m.tagColor];
                 const isLast = i === MILESTONES.length - 1;
                 return (
-                  <div key={m.year} style={{ display: 'flex', gap: 0, alignItems: 'flex-start' }}>
+                  <div key={`${m.year}-${i}`} className="tl-row">
                     {/* Year + dot */}
-                    <div style={{ width: 104, flexShrink: 0, display: 'flex', alignItems: 'center', paddingTop: 18 }}>
+                    <div className="tl-left">
                       <span style={{
                         fontFamily: 'var(--font-mono)',
                         fontSize: '0.75rem',
@@ -417,14 +426,12 @@ export default function PublixOverview() {
                     </div>
 
                     {/* Content */}
-                    <div style={{
+                    <div className="tl-card" style={{
                       flex: 1,
                       background: 'var(--color-bg-card)',
                       border: '1px solid var(--color-border)',
                       borderRadius: 'var(--radius-lg)',
                       padding: '16px 20px',
-                      marginLeft: 16,
-                      marginBottom: 12,
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
                         <h3 style={{
@@ -498,9 +505,9 @@ export default function PublixOverview() {
               maxWidth: 640,
               margin: '0 auto 16px',
             }}>
-              Introduced in the 1950s, the slogan wasn't marketing copy — it was a
-              description of what Jenkins had actually built. Wide aisles. Clean stores.
-              Employees who smiled because they owned a stake in the outcome.
+              The slogan didn't come from an ad agency. It came from a Publix employee — someone
+              who worked in the stores and understood what Mr. George was building from the inside.
+              Management liked it. Jenkins loved it. It stuck.
             </p>
             <p style={{
               fontFamily: 'var(--font-body)',
@@ -510,10 +517,20 @@ export default function PublixOverview() {
               maxWidth: 640,
               margin: '0 auto 16px',
             }}>
-              Other grocers tried to copy the customer experience. They couldn't.
-              Because the difference was never the layout or the lighting —
-              it was that the person helping you find the olive oil owned
-              part of the building you were standing in.
+              That's the whole Publix story in five words. The pleasure was real because the people
+              creating it had a stake in the outcome. Wide aisles. Clean stores.
+              Employees who smiled because they owned part of the building you were standing in.
+            </p>
+            <p style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: '1rem',
+              lineHeight: 1.8,
+              color: 'var(--color-text-secondary)',
+              maxWidth: 640,
+              margin: '0 auto 16px',
+            }}>
+              Other grocers tried to copy the experience. They couldn't.
+              Because the difference was never the layout or the lighting.
             </p>
             <p style={{
               fontFamily: 'var(--font-mono)',
