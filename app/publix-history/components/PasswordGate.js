@@ -9,7 +9,7 @@ export default function PasswordGate({ onAuth }) {
   const inputRef = useRef(null);
 
   const handleSubmit = () => {
-    if (value === 'bfp2026') {
+    if (value === 'tom15bald') {
       localStorage.setItem('publix-auth', 'authenticated');
       onAuth();
     } else {
