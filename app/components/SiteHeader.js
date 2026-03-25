@@ -7,10 +7,10 @@ export default function SiteHeader() {
   const pathname = usePathname();
 
   const nav = [
-    { href: '/publix-overview', label: 'Publix: Built to Last' },
+    { href: '/', label: 'Publix: Built to Last' },
     { href: '/publix-ceo-timeline', label: 'CEO Timeline' },
     { href: '/publix-history', label: 'Financial History' },
-    { href: '/', label: 'Stock Compare' },
+    { href: '/stock-compare', label: 'Stock Compare' },
   ];
 
   return (

@@ -606,7 +606,7 @@ export default function PublixOverview() {
               }}>
                 → Financial History
               </Link>
-              <Link href="/" style={{
+              <Link href="/stock-compare" style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 8,
