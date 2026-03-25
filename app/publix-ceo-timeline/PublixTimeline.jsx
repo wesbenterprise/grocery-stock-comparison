@@ -201,13 +201,6 @@ function Slogan({ isWide }) {
       position: "relative",
       overflow: "hidden",
     }}>
-      {/* Decorative top rule */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginBottom: isWide ? 32 : 24 }}>
-        <div style={{ flex: 1, maxWidth: 120, height: 1, background: "rgba(201,168,76,0.4)" }} />
-        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#c9a84c" }} />
-        <div style={{ flex: 1, maxWidth: 120, height: 1, background: "rgba(201,168,76,0.4)" }} />
-      </div>
-
       {/* Eyebrow */}
       <div style={{ fontSize: 10, letterSpacing: 4, textTransform: "uppercase", color: "rgba(201,168,76,0.7)", fontWeight: 700, marginBottom: 20 }}>
         The Publix Promise · Since 1954
