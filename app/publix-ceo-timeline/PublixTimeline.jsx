@@ -208,7 +208,8 @@ function SchroterPhoto({ isWide }) {
         {/* B&W photo — reveals on hover */}
         <img src="/images/schroter-photo.jpg" alt="Bill Schroter and George Jenkins" style={{
           position: "absolute", inset: 0, width: "100%", height: "100%",
-          objectFit: "cover", objectPosition: "center 35%",
+          objectFit: "cover", objectPosition: "35% 35%",
+          transform: "scale(1.25) translateX(-4%)",
           opacity: hovered ? 1 : 0, transition: "opacity 0.35s ease",
         }} />
       </div>
