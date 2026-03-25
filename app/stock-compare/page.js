@@ -3,7 +3,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import SiteHeader from '../components/SiteHeader';
 
 // Dynamic imports to avoid SSR issues with Chart.js
 const PredictionPanel = dynamic(() => import('../components/PredictionPanel'), {
@@ -134,7 +133,6 @@ export default function Page() {
 
   return (
     <>
-      <SiteHeader />
 
       {/* Main */}
       <main className="main-content">

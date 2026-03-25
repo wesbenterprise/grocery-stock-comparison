@@ -1,4 +1,5 @@
 import './globals.css';
+import SiteHeader from './components/SiteHeader';
 
 export const metadata = {
   title: 'Grocery Stock Comparison | Publix · Walmart · Kroger',
@@ -19,7 +20,10 @@ export default function RootLayout({ children }) {
         <meta name="color-scheme" content="dark" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
       </head>
-      <body>{children}</body>
+      <body>
+        <SiteHeader />
+        {children}
+      </body>
     </html>
   );
 }

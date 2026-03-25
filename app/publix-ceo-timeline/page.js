@@ -1,7 +1,6 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import SiteHeader from '../components/SiteHeader';
 
 const PublixTimeline = dynamic(() => import('./PublixTimeline'), {
   ssr: false,
@@ -14,11 +13,8 @@ const PublixTimeline = dynamic(() => import('./PublixTimeline'), {
 
 export default function PublixCEOTimelinePage() {
   return (
-    <>
-      <SiteHeader />
-      <div style={{ paddingTop: 60, width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
-        <PublixTimeline />
-      </div>
-    </>
+    <div style={{ paddingTop: 60, width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
+      <PublixTimeline />
+    </div>
   );
 }

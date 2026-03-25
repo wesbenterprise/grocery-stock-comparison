@@ -621,7 +621,7 @@ export default function PublixOverview() {
                 background: 'var(--color-bg-elevated)',
                 transition: 'all 0.15s ease',
               }}>
-                → Stock Compare
+                → Stock Comparison
               </Link>
             </div>
           </div>
