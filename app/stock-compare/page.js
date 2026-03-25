@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 
@@ -56,26 +56,7 @@ function ChangeTag({ pct, isGain }) {
 }
 
 export default function Page() {
-  const [authed, setAuthed] = useState(null); // null = checking, true = in, false = gate
-  const [pwValue, setPwValue] = useState('');
-  const [pwError, setPwError] = useState('');
-  const [shaking, setShaking] = useState(false);
   const [liveStocks, setLiveStocks] = useState({ KR: null, WMT: null, ADRNY: null, ACI: null, WMK: null });
-
-  useEffect(() => {
-    setAuthed(localStorage.getItem('bfp-auth') === 'authenticated');
-  }, []);
-
-  const tryLogin = () => {
-    if (pwValue === 'bfp2026') {
-      localStorage.setItem('bfp-auth', 'authenticated');
-      setAuthed(true);
-    } else {
-      setPwError('Wrong password');
-      setShaking(true);
-      setTimeout(() => setShaking(false), 400);
-    }
-  };
 
   const handleLiveData = useCallback((data) => {
     setLiveStocks(data);
@@ -83,53 +64,6 @@ export default function Page() {
 
   const wmtChange = formatChange(liveStocks.WMT?.price, liveStocks.WMT?.prev);
   const krChange  = formatChange(liveStocks.KR?.price,  liveStocks.KR?.prev);
-
-  // Still checking localStorage
-  if (authed === null) return null;
-
-  // Password gate
-  if (!authed) return (
-    <div style={{
-      position: 'fixed', inset: 0, background: 'var(--color-bg)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      flexDirection: 'column', gap: '24px', zIndex: 9999,
-    }}>
-      <div style={{ fontSize: '56px', opacity: 0.7 }}>🔒</div>
-      <div style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 800, color: 'var(--color-text)' }}>
-        Grocery Stock Compare
-      </div>
-      <div style={{
-        display: 'flex', gap: '8px',
-        animation: shaking ? 'shake 0.4s ease-in-out' : 'none',
-      }}>
-        <input
-          type="password"
-          placeholder="Password"
-          value={pwValue}
-          onChange={e => { setPwValue(e.target.value); setPwError(''); }}
-          onKeyDown={e => e.key === 'Enter' && tryLogin()}
-          autoFocus
-          style={{
-            background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)',
-            color: 'var(--color-text)', padding: '12px 18px', borderRadius: '10px',
-            fontFamily: 'var(--font-body)', fontSize: '16px', width: '220px', outline: 'none',
-          }}
-        />
-        <button
-          onClick={tryLogin}
-          style={{
-            background: 'var(--color-publix)', color: '#000', border: 'none',
-            padding: '12px 24px', borderRadius: '10px', fontFamily: 'var(--font-display)',
-            fontWeight: 700, cursor: 'pointer', fontSize: '15px',
-          }}
-        >
-          Enter
-        </button>
-      </div>
-      {pwError && <div style={{ color: 'var(--color-loss)', fontSize: '14px', fontFamily: 'var(--font-body)' }}>{pwError}</div>}
-      <style>{`@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}`}</style>
-    </div>
-  );
 
   return (
     <>

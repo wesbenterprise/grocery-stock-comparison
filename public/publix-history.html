@@ -38,11 +38,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);line-he
 a{color:var(--amber)}
 h1,h2,h3,h4,h5,h6{font-family:var(--font-display);font-weight:800;line-height:1.2;letter-spacing:-0.01em}
 
-/* Password Gate */
-#gate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:24px}
-#gate .lock{font-size:64px;opacity:.8}
-#gate .gate-box{display:flex;gap:8px}
-#gate input{background:var(--bg-surface);border:1px solid var(--border);color:var(--text);padding:12px 18px;border-radius:10px;font-family:var(--font-body);font-size:16px;width:240px;outline:none;transition:border-color .2s}
+
 #gate input:focus{border-color:var(--amber)}
 #gate button{background:var(--amber);color:#000;border:none;padding:12px 24px;border-radius:10px;font-family:var(--font-display);font-weight:700;cursor:pointer;font-size:15px;transition:opacity .2s}
 #gate button:hover{opacity:.9}
@@ -191,9 +187,7 @@ tr:hover td{background:rgba(76,175,80,.03)}
 </nav>
 
 <!-- Password Gate -->
-<div id="gate">
-  <div class="lock">&#128274;</div>
-  <div class="gate-box">
+<div class="gate-box">
     <input type="password" id="pw-input" placeholder="Enter password" autocomplete="off">
     <button id="pw-btn">Unlock</button>
   </div>
@@ -840,25 +834,7 @@ let tableSortAsc = false;
 // ──────────────────────────────────────────────────────────────
 // Auth
 // ──────────────────────────────────────────────────────────────
-function checkAuth() {
-  if (localStorage.getItem('bfp-auth') === 'authenticated') {
-    showDashboard();
-  }
-}
-
-function tryLogin() {
-  const pw = document.getElementById('pw-input').value;
-  if (pw === 'bfp2026') {
-    localStorage.setItem('bfp-auth', 'authenticated');
-    showDashboard();
-  } else {
-    const box = document.querySelector('.gate-box');
-    const err = document.getElementById('pw-error');
-    err.textContent = 'Wrong password';
-    box.classList.add('shake');
-    setTimeout(() => { box.classList.remove('shake'); err.textContent = ''; }, 1500);
-    document.getElementById('pw-input').value = '';
-  }
+function checkAuth() { showDashboard(); }
 }
 
 document.getElementById('pw-btn').addEventListener('click', tryLogin);

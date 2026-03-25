@@ -243,35 +243,7 @@ const PHOTOS = [
 const ERAS = ['1930s', '1940s', '1950s', '1960s', '1970s', '1980s', '1990s', '2000s', '2020s', 'Brand'];
 
 export default function PhotoLibrary() {
-  const [authed, setAuthed] = useState(false);
-  const [pw, setPw] = useState('');
   const [filter, setFilter] = useState('All');
-
-  if (!authed) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#0a0a0f' }}>
-        <h1 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#f0f0f5', marginBottom: 8 }}>📸 Photo Library — Internal Only</h1>
-        <p style={{ fontSize: '0.8rem', color: '#666', marginBottom: 24 }}>This page is not listed in navigation.</p>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <input
-            type="password"
-            value={pw}
-            onChange={e => setPw(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && pw === 'bfp2026' && setAuthed(true)}
-            placeholder="Password"
-            style={{ width: 200, height: 40, background: '#1a1a1a', border: '1px solid #333', borderRadius: 6, color: '#fff', padding: '0 12px', fontSize: '0.875rem', outline: 'none' }}
-            autoFocus
-          />
-          <button
-            onClick={() => pw === 'bfp2026' && setAuthed(true)}
-            style={{ height: 40, padding: '0 20px', background: '#4caf50', border: 'none', borderRadius: 6, color: '#fff', fontWeight: 600, cursor: 'pointer' }}
-          >
-            Enter
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   const filtered = filter === 'All' ? PHOTOS : PHOTOS.filter(p => p.era === filter);
 
