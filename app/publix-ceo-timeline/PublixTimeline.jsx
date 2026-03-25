@@ -265,25 +265,29 @@ function Slogan({ isWide }) {
 
       {/* Origin story */}
       <div style={{
-        maxWidth: 680,
+        maxWidth: 580,
         margin: "0 auto",
-        display: "flex",
-        gap: isWide ? 28 : 16,
-        alignItems: "center",
-        flexDirection: isWide ? "row" : "column",
+        fontSize: isWide ? 14 : 13,
+        lineHeight: 1.75,
+        color: "rgba(255,255,255,0.65)",
+        fontFamily: "'DM Sans', system-ui, sans-serif",
       }}>
-        <SloganPhoto isWide={isWide} />
-        <div style={{
-          fontSize: isWide ? 14 : 13,
-          lineHeight: 1.75,
-          color: "rgba(255,255,255,0.65)",
-          fontFamily: "'DM Sans', system-ui, sans-serif",
-          textAlign: "left",
-        }}>
-          In 1954, advertising director <span style={{ color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Bill Schroter</span> listened to customers saying
-          "Publix is such a pleasant place to shop" and brought a new slogan to founder George Jenkins.
-          After a long, silent pause, Jenkins said: <span style={{ color: "#c9a84c", fontStyle: "italic" }}>"I like it. I like the promise. I like the meaning. Let's adopt it."</span>
-        </div>
+        In 1954, advertising director <span style={{ color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Bill Schroter</span> listened to customers saying
+        "Publix is such a pleasant place to shop" and brought a new slogan to founder George Jenkins.
+        After a long, silent pause, Jenkins said: <span style={{ color: "#c9a84c", fontStyle: "italic" }}>"I like it. I like the promise. I like the meaning. Let's adopt it."</span>
+      </div>
+
+      {/* Rule */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, margin: isWide ? "28px auto" : "20px auto", maxWidth: 580 }}>
+        <div style={{ flex: 1, height: 1, background: "rgba(201,168,76,0.4)" }} />
+        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#c9a84c" }} />
+        <div style={{ flex: 1, height: 1, background: "rgba(201,168,76,0.4)" }} />
+      </div>
+
+      {/* Schroter illustrated */}
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <img src="/images/schroter-illustrated.png" alt="Bill Schroter and George Jenkins"
+          style={{ width: isWide ? 420 : "100%", maxWidth: "100%", borderRadius: 8, border: "2px solid rgba(201,168,76,0.3)" }} />
       </div>
 
       {/* Jenkins quote */}
