@@ -10,7 +10,7 @@ export default function SiteHeader() {
     { href: '/', label: 'Publix: Built to Last' },
     { href: '/publix-ceo-timeline', label: 'CEO Timeline' },
     { href: '/publix-history', label: 'Financial History' },
-    { href: '/stock-compare', label: 'Stock Compare' },
+    { href: '/stock-compare', label: 'Stock Comparison' },
   ];
 
   return (
