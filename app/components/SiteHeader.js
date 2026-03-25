@@ -7,9 +7,10 @@ export default function SiteHeader() {
   const pathname = usePathname();
 
   const nav = [
-    { href: '/', label: 'Stock Compare' },
-    { href: '/publix-history', label: 'Financial History' },
+    { href: '/publix-overview', label: 'Publix: Built to Last' },
     { href: '/publix-ceo-timeline', label: 'CEO Timeline' },
+    { href: '/publix-history', label: 'Financial History' },
+    { href: '/', label: 'Stock Compare' },
   ];
 
   return (
@@ -18,7 +19,7 @@ export default function SiteHeader() {
         <span className="header-brand-p">P</span>
         <div>
           <h1>Publix Intelligence</h1>
-          <span className="header-brand-sub">Grocery Stock Compare</span>
+          <span className="header-brand-sub">Built to Last</span>
         </div>
       </div>
       <nav className="header-nav">
