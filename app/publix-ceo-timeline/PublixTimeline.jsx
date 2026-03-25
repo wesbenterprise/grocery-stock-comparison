@@ -31,7 +31,7 @@ function HoverPortrait({ name, size = 44 }) {
       onMouseLeave={() => setHovered(false)}
       style={{ position: "relative", width: size, height: size, flexShrink: 0 }}
     >
-      {/* Silhouette — default */}
+      {/* Illustrated — default */}
       <img src={thumb || full} alt={name} style={{
         position: "absolute", inset: 0, width: "100%", height: "100%",
         borderRadius: "50%", objectFit: "cover", objectPosition: "top center",
@@ -45,6 +45,41 @@ function HoverPortrait({ name, size = 44 }) {
         border: "2px solid #3B7C3B",
         opacity: hovered ? 1 : 0, transition: "opacity 0.35s ease",
       }} />
+    </div>
+  );
+}
+
+function HoverFullPortrait({ name, width, height, style = {} }) {
+  const [hovered, setHovered] = useState(false);
+  const thumb = CEO_THUMBNAILS[name];
+  const full = CEO_PORTRAITS[name];
+  if (!full) return null;
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ position: "relative", width, height, flexShrink: 0, ...style }}
+    >
+      {/* Watercolor — default */}
+      <img src={full} alt={name} style={{
+        position: "absolute", inset: 0, width: "100%", height: "100%",
+        objectFit: "cover", objectPosition: "top",
+        borderRadius: style.borderRadius || 8,
+        boxShadow: style.boxShadow || "0 4px 20px rgba(0,0,0,0.15)",
+        border: "3px solid #3B7C3B",
+        opacity: hovered ? 0 : 1, transition: "opacity 0.35s ease",
+      }} />
+      {/* Illustrated — reveals on hover */}
+      {thumb && (
+        <img src={thumb} alt={name} style={{
+          position: "absolute", inset: 0, width: "100%", height: "100%",
+          objectFit: "cover", objectPosition: "top",
+          borderRadius: style.borderRadius || 8,
+          boxShadow: style.boxShadow || "0 4px 20px rgba(0,0,0,0.15)",
+          border: "3px solid #3B7C3B",
+          opacity: hovered ? 1 : 0, transition: "opacity 0.35s ease",
+        }} />
+      )}
     </div>
   );
 }
@@ -382,8 +417,7 @@ function DesktopRow({ ceo, isLast, isExpanded, onToggle }) {
         <tr><td colSpan={6} style={{ padding: "0 18px 24px 18px", background: "#f4f9f4", borderBottom: isLast ? "none" : "1px solid #f0ede8" }}>
           <div style={{ display: "flex", gap: 28, alignItems: "flex-start", marginTop: 8 }}>
             {CEO_PORTRAITS[ceo.name] && (
-              <img src={CEO_PORTRAITS[ceo.name]} alt={ceo.name}
-                style={{ width: 180, height: 240, objectFit: "cover", objectPosition: "top", borderRadius: 8, flexShrink: 0, boxShadow: "0 4px 20px rgba(0,0,0,0.15)", border: "3px solid #3B7C3B" }} />
+              <HoverFullPortrait name={ceo.name} width={180} height={240} style={{ borderRadius: 8, boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }} />
             )}
             <div style={{ fontSize: 13, lineHeight: 1.7, color: "#3a3a3a", whiteSpace: "pre-line", borderLeft: "3px solid #3B7C3B", paddingLeft: 16 }}>{ceo.summary}</div>
           </div>
@@ -440,8 +474,7 @@ function MobileCard({ ceo, isExpanded, onToggle }) {
       {isExpanded && (
         <div style={{ marginTop: 16 }}>
           {CEO_PORTRAITS[ceo.name] && (
-            <img src={CEO_PORTRAITS[ceo.name]} alt={ceo.name}
-              style={{ width: "100%", maxHeight: 280, objectFit: "cover", objectPosition: "top center", borderRadius: 8, marginBottom: 16, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", border: "3px solid #3B7C3B" }} />
+            <HoverFullPortrait name={ceo.name} width="100%" height={280} style={{ borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", marginBottom: 16 }} />
           )}
           <div style={{ fontSize: 13, lineHeight: 1.7, color: "#3a3a3a", whiteSpace: "pre-line", borderLeft: "3px solid #3B7C3B", paddingLeft: 14 }}>{ceo.summary}</div>
         </div>
