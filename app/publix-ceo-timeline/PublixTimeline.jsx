@@ -189,6 +189,33 @@ export default function PublixTimeline() {
   );
 }
 
+function SchroterPhoto({ isWide }) {
+  const [hovered, setHovered] = useState(false);
+  const w = isWide ? 420 : "100%";
+  return (
+    <div style={{ display: "flex", justifyContent: "center" }}>
+      <div
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{ position: "relative", width: w, aspectRatio: "3/2", borderRadius: 8, overflow: "hidden", border: "2px solid rgba(201,168,76,0.3)" }}
+      >
+        {/* Illustrated — default */}
+        <img src="/images/schroter-illustrated.png" alt="Bill Schroter and George Jenkins illustrated" style={{
+          position: "absolute", inset: 0, width: "100%", height: "100%",
+          objectFit: "cover", objectPosition: "top center",
+          opacity: hovered ? 0 : 1, transition: "opacity 0.35s ease",
+        }} />
+        {/* B&W photo — reveals on hover */}
+        <img src="/images/schroter-photo.jpg" alt="Bill Schroter and George Jenkins" style={{
+          position: "absolute", inset: 0, width: "100%", height: "100%",
+          objectFit: "cover", objectPosition: "top center",
+          opacity: hovered ? 1 : 0, transition: "opacity 0.35s ease",
+        }} />
+      </div>
+    </div>
+  );
+}
+
 function SloganPhoto({ isWide }) {
   const [hovered, setHovered] = useState(false);
   const w = isWide ? 200 : "100%";
@@ -284,11 +311,8 @@ function Slogan({ isWide }) {
         <div style={{ flex: 1, maxWidth: 120, height: 1, background: "rgba(201,168,76,0.4)" }} />
       </div>
 
-      {/* Schroter illustrated */}
-      <div style={{ display: "flex", justifyContent: "center" }}>
-        <img src="/images/schroter-illustrated.png" alt="Bill Schroter and George Jenkins"
-          style={{ width: isWide ? 420 : "100%", maxWidth: "100%", borderRadius: 8, border: "2px solid rgba(201,168,76,0.3)" }} />
-      </div>
+      {/* Schroter illustrated / photo hover */}
+      <SchroterPhoto isWide={isWide} />
 
       {/* Rule */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, margin: isWide ? "28px auto" : "20px auto" }}>
