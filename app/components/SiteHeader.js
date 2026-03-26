@@ -9,10 +9,10 @@ export default function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const nav = [
-    { href: '/', label: 'Publix: Built to Last' },
-    { href: '/publix-ceo-timeline', label: 'CEO Timeline' },
-    { href: '/publix-history', label: 'Financial History' },
-    { href: '/stock-compare', label: 'Stock Comparison' },
+    { href: '/', label: '🟢 Publix: Built to Last' },
+    { href: '/publix-ceo-timeline', label: '👔 CEO Timeline' },
+    { href: '/publix-history', label: '📊 Financial History' },
+    { href: '/stock-compare', label: '📈 Stock Comparison' },
     { href: '/mr-george', label: "🏛️ Mr. George's Office" },
   ];
 
