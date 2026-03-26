@@ -215,7 +215,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .header-nav-link {
-  font-family: var(--font-mono);
+  font-family: var(--font-mono), 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', emoji;
   font-size: 12px;
   font-weight: 600;
   color: var(--color-text-muted);
@@ -970,7 +970,7 @@ h1, h2, h3, h4, h5, h6 {
   flex-direction: column;
 }
 .mobile-nav-link {
-  font-family: var(--font-mono);
+  font-family: var(--font-mono), 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', emoji;
   font-size: 14px;
   font-weight: 600;
   color: var(--color-text-muted);
