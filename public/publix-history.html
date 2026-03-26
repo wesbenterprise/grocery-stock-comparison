@@ -214,6 +214,7 @@ tr:hover td{background:rgba(76,175,80,.03)}
     <button class="tab-btn" id="tab-cf" onclick="switchTab('cf')">Cash Flow</button>
     <button class="tab-btn" data-tab="equity" onclick="switchTab('equity')">Equity</button>
     <button class="tab-btn" data-tab="balance-sheet" onclick="switchTab('balance-sheet')">Balance Sheet</button>
+    <button class="tab-btn" data-tab="mr-george" onclick="switchTab('mr-george')" style="display:flex;align-items:center;gap:6px;">🏛️ Mr. George's Office</button>
   </div>
 
   <!-- Income Statement Section -->
@@ -524,6 +525,28 @@ tr:hover td{background:rgba(76,175,80,.03)}
   </div>
 
 </div>
+
+  <!-- Mr. George's Office -->
+  <div id="mr-george-section" style="display:none">
+    <div style="text-align:center;padding:48px 24px 32px;">
+      <div style="font-size:48px;margin-bottom:16px;">🏛️</div>
+      <h2 style="font-family:var(--font-serif);font-size:2rem;font-weight:800;color:var(--text);margin-bottom:12px;">Mr. George's Office</h2>
+      <p style="color:var(--muted);font-size:1rem;max-width:480px;margin:0 auto 32px;line-height:1.6;">A virtual walkthrough of George W. Jenkins' historic Lakeland office — preserved exactly as he left it.</p>
+      <div style="display:inline-block;background:var(--amber);color:#000;font-family:var(--font-serif);font-weight:700;font-size:13px;padding:8px 20px;border-radius:8px;letter-spacing:0.05em;margin-bottom:48px;">COMING SOON</div>
+    </div>
+    <div style="position:relative;width:100%;max-width:960px;margin:0 auto;border-radius:16px;overflow:hidden;border:1px solid var(--border);aspect-ratio:16/9;background:#111;">
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+        <div style="font-size:64px;opacity:0.15;">🏛️</div>
+        <p style="color:var(--muted);font-size:13px;font-family:var(--font-mono);letter-spacing:0.06em;text-transform:uppercase;">Matterport 3D Tour — Loading Soon</p>
+      </div>
+    </div>
+    <div style="max-width:960px;margin:40px auto 0;padding:0 24px;">
+      <div class="narrative-card">
+        <div class="narrative-header">◆ About This Space</div>
+        <div class="narrative-text">"Mr. George" — George W. Jenkins — opened the first Publix on September 6, 1930 in Winter Haven, Florida, with $1,300 in savings and a conviction that a grocery store could treat people right. His Lakeland office became the operational heart of an empire built on that belief. This 3D walkthrough preserves the space as he left it: the desk, the mementos, the evidence of sixty years spent building something that outlasted him. Every Publix associate today works in the shadow of what happened in this room.</div>
+      </div>
+    </div>
+  </div>
 
 <script>
 // ──────────────────────────────────────────────────────────────
@@ -1462,6 +1485,7 @@ function switchTab(tab) {
   document.getElementById('cf-section').style.display = tab === 'cf' ? 'block' : 'none';
   document.getElementById('equity-section').style.display = tab === 'equity' ? 'block' : 'none';
   document.getElementById('bs-section').style.display = tab === 'balance-sheet' ? 'block' : 'none';
+  document.getElementById('mr-george-section').style.display = tab === 'mr-george' ? 'block' : 'none';
   document.getElementById('tab-is').classList.toggle('active', tab === 'is');
   document.getElementById('tab-cf').classList.toggle('active', tab === 'cf');
   // Equity and Balance Sheet tab buttons use data-tab attribute instead of id
