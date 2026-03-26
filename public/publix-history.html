@@ -2160,6 +2160,7 @@ function renderEquitySharesChart() {
         },
         y1: {
           ...chartDefaults.scales.y, position: 'right',
+          min: 2000,
           title: { display: true, text: 'Shares Outstanding (M)', color: '#606080' },
           ticks: { ...chartDefaults.scales.y.ticks, callback: v => v.toFixed(0) + 'M' },
           grid: { drawOnChartArea: false }
