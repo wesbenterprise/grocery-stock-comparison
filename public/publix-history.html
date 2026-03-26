@@ -149,7 +149,7 @@ tr:hover td{background:rgba(76,175,80,.03)}
 }
 @media(max-width:768px){
   /* Tab switcher — scrollable on mobile */
-  .tab-switcher{display:grid!important;grid-template-columns:repeat(4,1fr);overflow:visible;border-bottom:2px solid var(--border)}
+  .tab-switcher{display:flex!important;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-bottom:2px solid var(--border)}
   .tab-btn{display:flex!important;align-items:center;justify-content:center;text-align:center;white-space:normal;line-height:1.25;padding:10px 6px;font-size:12px;min-height:48px}
   /* Header */
   .app-header{padding:0 16px}
@@ -195,6 +195,27 @@ tr:hover td{background:rgba(76,175,80,.03)}
   .hamburger-btn{display:none!important}
   .mobile-nav-overlay{display:none!important}
 }
+/* ── Projection Components ── */
+.projection-toggle-bar { text-align:center; margin:32px 0 0; padding-top:24px; border-top:1px solid var(--border); }
+.projection-toggle-btn { background:rgba(76,175,80,0.1); border:1px solid rgba(76,175,80,0.3); color:var(--amber); font-family:var(--font-mono); font-size:13px; font-weight:700; padding:10px 24px; border-radius:8px; cursor:pointer; letter-spacing:0.03em; transition:all .15s; }
+.projection-toggle-btn:hover { background:rgba(76,175,80,0.2); border-color:rgba(76,175,80,0.5); }
+.projections-section { margin-top:24px; }
+.projection-case-toggle { display:flex; gap:8px; justify-content:center; margin:16px 0; }
+.case-btn { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--muted); font-family:var(--font-mono); font-size:11px; font-weight:700; padding:6px 16px; border-radius:6px; cursor:pointer; transition:all .15s; letter-spacing:0.04em; }
+.case-btn.active { background:rgba(76,175,80,0.15); border-color:rgba(76,175,80,0.4); color:var(--amber); }
+.projection-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:12px; margin-top:16px; }
+.projection-table th { color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.06em; padding:8px 10px; text-align:right; border-bottom:1px solid var(--border); font-size:10px; }
+.projection-table th:first-child { text-align:left; }
+.projection-table td { padding:7px 10px; text-align:right; border-bottom:1px solid rgba(255,255,255,.03); color:var(--text-secondary); font-size:11px; }
+.projection-table td:first-child { text-align:left; color:var(--muted); }
+.proj-bull { color:#4caf50; }
+.proj-bear { color:#ef5350; }
+.proj-base { color:#f0c040; }
+.proj-pill { display:inline-block; background:rgba(76,175,80,0.08); border:1px solid rgba(76,175,80,0.2); color:var(--text-secondary); font-family:var(--font-mono); font-size:10px; font-weight:600; padding:3px 10px; border-radius:20px; letter-spacing:0.03em; }
+@media(max-width:768px){
+  .projection-table th,.projection-table td{padding:5px 6px;font-size:10px}
+  .tab-btn{flex-shrink:0;white-space:nowrap}
+}
 </style>
 </head>
 <body>
@@ -239,7 +260,7 @@ tr:hover td{background:rgba(76,175,80,.03)}
     <button class="tab-btn" id="tab-cf" onclick="switchTab('cf')">Cash Flow</button>
     <button class="tab-btn" data-tab="equity" onclick="switchTab('equity')">Equity</button>
     <button class="tab-btn" data-tab="balance-sheet" onclick="switchTab('balance-sheet')">Balance Sheet</button>
-
+    <button class="tab-btn" data-tab="dividends" onclick="switchTab('dividends')">💰 Dividends</button>
   </div>
 
   <!-- Income Statement Section -->
@@ -352,6 +373,47 @@ tr:hover td{background:rgba(76,175,80,.03)}
     </div>
   </div>
 
+  <!-- IS 10-Year Projection Toggle -->
+  <div class="projection-toggle-bar">
+    <button class="projection-toggle-btn" onclick="toggleProjections('is')">
+      📈 Show 10-Year Projections
+    </button>
+  </div>
+  <div id="is-projections" class="projections-section" style="display:none">
+    <div class="chart-card">
+      <span class="chart-eyebrow">Anderson Model · FY2026–FY2035</span>
+      <h3>Revenue &amp; Net Margin — 10-Year Projection</h3>
+      <div class="chart-subtitle">Revenue bars (left axis) + Net Income Margin % (right axis) across Bear / Base / Bull scenarios</div>
+      <div class="projection-case-toggle" id="is-proj-case-toggle">
+        <button class="case-btn active" data-case="base" onclick="setProjCase('is','base')">BASE</button>
+        <button class="case-btn" data-case="bull" onclick="setProjCase('is','bull')">BULL</button>
+        <button class="case-btn" data-case="bear" onclick="setProjCase('is','bear')">BEAR</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <span class="proj-pill">Rev CAGR (base): 5.0%</span>
+        <span class="proj-pill">Rev CAGR (bull): 6.5%</span>
+        <span class="proj-pill">Rev CAGR (bear): 3.5%</span>
+        <span class="proj-pill">Net Margin (base): 7.20%</span>
+      </div>
+      <div style="position:relative;height:320px"><canvas id="chart-is-proj"></canvas></div>
+      <table class="projection-table" style="margin-top:20px">
+        <thead>
+          <tr>
+            <th>YEAR</th>
+            <th class="proj-bear">BEAR REV</th>
+            <th class="proj-base">BASE REV</th>
+            <th class="proj-bull">BULL REV</th>
+            <th class="proj-bear">BEAR NI</th>
+            <th class="proj-base">BASE NI</th>
+            <th class="proj-bull">BULL NI</th>
+            <th class="proj-base">BASE EPS</th>
+          </tr>
+        </thead>
+        <tbody id="is-proj-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
   </div><!-- end #is-section -->
 
   <!-- Cash Flow Section -->
@@ -422,6 +484,45 @@ tr:hover td{background:rgba(76,175,80,.03)}
         </table>
       </div>
     </div>
+  <!-- CF 10-Year Projection Toggle -->
+  <div class="projection-toggle-bar">
+    <button class="projection-toggle-btn" onclick="toggleProjections('cf')">
+      📈 Show 10-Year Projections
+    </button>
+  </div>
+  <div id="cf-projections" class="projections-section" style="display:none">
+    <div class="chart-card">
+      <span class="chart-eyebrow">Anderson Model · FY2026–FY2035</span>
+      <h3>Free Cash Flow &amp; Dividends — 10-Year Projection</h3>
+      <div class="chart-subtitle">FCF bars (left axis) + Dividends Paid line across Bear / Base / Bull scenarios</div>
+      <div class="projection-case-toggle" id="cf-proj-case-toggle">
+        <button class="case-btn active" data-case="base" onclick="setProjCase('cf','base')">BASE</button>
+        <button class="case-btn" data-case="bull" onclick="setProjCase('cf','bull')">BULL</button>
+        <button class="case-btn" data-case="bear" onclick="setProjCase('cf','bear')">BEAR</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <span class="proj-pill">FCF base '35: $5.6B</span>
+        <span class="proj-pill">FCF bull '35: $8.7B</span>
+        <span class="proj-pill">Div pool CAGR (base): 5.6%</span>
+      </div>
+      <div style="position:relative;height:320px"><canvas id="chart-cf-proj"></canvas></div>
+      <table class="projection-table" style="margin-top:20px">
+        <thead>
+          <tr>
+            <th>YEAR</th>
+            <th class="proj-bear">BEAR FCF</th>
+            <th class="proj-base">BASE FCF</th>
+            <th class="proj-bull">BULL FCF</th>
+            <th class="proj-bear">BEAR DIV</th>
+            <th class="proj-base">BASE DIV</th>
+            <th class="proj-bull">BULL DIV</th>
+          </tr>
+        </thead>
+        <tbody id="cf-proj-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
   </div><!-- end #cf-section -->
 
   <div id="equity-section" style="display:none">
@@ -485,6 +586,46 @@ tr:hover td{background:rgba(76,175,80,.03)}
         <div class="narrative-text">Publix returns capital through both dividends and buybacks, and the Capital Return Rate — total returns as a percentage of operating net income — tells the real story about management's capital philosophy. In years where it exceeds 100%, Publix is returning more than it earned: drawing on operating cash flow above the net income line. This is not financial stress — OCF consistently exceeds net income due to D&A and working capital dynamics. It is a deliberate signal: Publix is not building a war chest. It is returning capital to its associates. The consistency of that commitment, year after year, is the policy.</div>
       </div>
     </div>
+
+  <!-- Equity 10-Year Projection Toggle -->
+  <div class="projection-toggle-bar">
+    <button class="projection-toggle-btn" onclick="toggleProjections('equity')">
+      📈 Show 10-Year Projections
+    </button>
+  </div>
+  <div id="equity-projections" class="projections-section" style="display:none">
+    <div class="chart-card">
+      <span class="chart-eyebrow">Anderson Model · FY2026–FY2035</span>
+      <h3>Shares Outstanding &amp; EPS — 10-Year Projection</h3>
+      <div class="chart-subtitle">Shares outstanding (line, left axis) + EPS (line, right axis) declining share count drives EPS amplification</div>
+      <div class="projection-case-toggle" id="equity-proj-case-toggle">
+        <button class="case-btn active" data-case="base" onclick="setProjCase('equity','base')">BASE</button>
+        <button class="case-btn" data-case="bull" onclick="setProjCase('equity','bull')">BULL</button>
+        <button class="case-btn" data-case="bear" onclick="setProjCase('equity','bear')">BEAR</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <span class="proj-pill">Share reduction (base): ~60M/yr</span>
+        <span class="proj-pill">Share reduction (bull): ~75M/yr</span>
+        <span class="proj-pill">EPS CAGR (base '26–'35): ~6.9%</span>
+      </div>
+      <div style="position:relative;height:320px"><canvas id="chart-equity-proj"></canvas></div>
+      <table class="projection-table" style="margin-top:20px">
+        <thead>
+          <tr>
+            <th>YEAR</th>
+            <th class="proj-bear">BEAR SHS</th>
+            <th class="proj-base">BASE SHS</th>
+            <th class="proj-bull">BULL SHS</th>
+            <th class="proj-bear">BEAR EPS</th>
+            <th class="proj-base">BASE EPS</th>
+            <th class="proj-bull">BULL EPS</th>
+          </tr>
+        </thead>
+        <tbody id="equity-proj-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
   </div>
 
   <div id="bs-section" style="display:none">
@@ -547,7 +688,93 @@ tr:hover td{background:rgba(76,175,80,.03)}
         <div class="narrative-text">Publix's liabilities are almost entirely operating in nature — vendor payables and lease obligations. The AP balance is float: Publix sells groceries for cash before it has to pay the producers. The lease stack grew significantly in 2019 but that's ASC 842 bringing long-standing operating leases onto the balance sheet for the first time — it's the same stores, same leases, just now visible. The deferred tax liability is ~$1.6B, which is accounting timing, not a real cash claim in any near-term window. Long-term debt is functionally zero. For a company with $40B in assets, this is an extraordinary capital structure — one that only works when you generate enough free cash flow to never need outside financing.</div>
       </div>
     </div>
+
+  <!-- BS 10-Year Projection Toggle -->
+  <div class="projection-toggle-bar">
+    <button class="projection-toggle-btn" onclick="toggleProjections('bs')">
+      📈 Show 10-Year Projections
+    </button>
   </div>
+  <div id="bs-projections" class="projections-section" style="display:none">
+    <div class="chart-card">
+      <span class="chart-eyebrow">Anderson Model · FY2026–FY2035</span>
+      <h3>Total Assets &amp; Equity — 10-Year Projection</h3>
+      <div class="chart-subtitle">Total assets bars (left axis) + Stockholders' Equity line across Bear / Base / Bull scenarios</div>
+      <div class="projection-case-toggle" id="bs-proj-case-toggle">
+        <button class="case-btn active" data-case="base" onclick="setProjCase('bs','base')">BASE</button>
+        <button class="case-btn" data-case="bull" onclick="setProjCase('bs','bull')">BULL</button>
+        <button class="case-btn" data-case="bear" onclick="setProjCase('bs','bear')">BEAR</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <span class="proj-pill">Assets/Rev ratio (base): 0.64x</span>
+        <span class="proj-pill">Current ratio '35 (base): 1.52x</span>
+        <span class="proj-pill">Equity CAGR (base): ~5.8%</span>
+      </div>
+      <div style="position:relative;height:320px"><canvas id="chart-bs-proj"></canvas></div>
+      <table class="projection-table" style="margin-top:20px">
+        <thead>
+          <tr>
+            <th>YEAR</th>
+            <th class="proj-bear">BEAR ASSETS</th>
+            <th class="proj-base">BASE ASSETS</th>
+            <th class="proj-bull">BULL ASSETS</th>
+            <th class="proj-bear">BEAR EQ</th>
+            <th class="proj-base">BASE EQ</th>
+            <th class="proj-bull">BULL EQ</th>
+          </tr>
+        </thead>
+        <tbody id="bs-proj-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  </div><!-- end bs-section -->
+
+  <!-- Dividends Tab Section -->
+  <div id="dividends-section" style="display:none">
+    <div class="chart-card">
+      <span class="chart-eyebrow">Historical Record · FY2015–FY2025</span>
+      <h3>Dividend Per Share — Historical</h3>
+      <div class="chart-subtitle">Actual DPS paid per year. Publix pays quarterly dividends; figures shown are annual totals.</div>
+      <div style="position:relative;height:280px"><canvas id="chart-dps-hist"></canvas></div>
+    </div>
+
+    <div class="chart-card" style="margin-top:20px">
+      <span class="chart-eyebrow">Anderson Model · FY2026–FY2035</span>
+      <h3>Dividend Per Share — 10-Year Projection</h3>
+      <div class="chart-subtitle">Bear / Base / Bull DPS trajectories. Base CAGR: 7.0% — driven by both dividend pool growth and declining share count.</div>
+      <div style="position:relative;height:280px"><canvas id="chart-dps-proj"></canvas></div>
+    </div>
+
+    <!-- Callout Card -->
+    <div class="narrative-card" style="margin-top:20px">
+      <div class="narrative-header">◆ The Share-Count Amplification Effect</div>
+      <div class="narrative-text">
+        When Publix buys back shares, the total dividend pool grows slowly — but the per-share dividend grows faster. This amplification is mechanical: the same (or slightly larger) pool divided by fewer shares = higher DPS each year.<br><br>
+        Example (base case): From FY2025 to FY2035, the total annual dividends paid grows from ~$1.41B to ~$2.52B — a 78% increase over 10 years. But DPS grows from $0.439 to $0.864 — a <strong>97% increase</strong>. The extra 19 percentage points is the buyback amplification. For an associate who holds their shares through a 15-year career, this compounds meaningfully into a growing passive income stream. That's not just a financial instrument — that's the structural reason Publix's employee ownership model outperforms traditional profit-sharing in wealth creation.
+      </div>
+    </div>
+
+    <!-- DPS Data Table -->
+    <div class="chart-card" style="margin-top:20px">
+      <span class="chart-eyebrow">Full Data Table</span>
+      <h3>DPS History &amp; Projections</h3>
+      <table class="projection-table">
+        <thead>
+          <tr>
+            <th>YEAR</th>
+            <th>ACTUAL / BASE DPS</th>
+            <th>ANNUAL GROWTH %</th>
+            <th class="proj-bear">BEAR DPS</th>
+            <th class="proj-bull">BULL DPS</th>
+            <th>TOTAL DIV PAID (BASE)</th>
+            <th>SHARES OUT (BASE)</th>
+          </tr>
+        </thead>
+        <tbody id="dps-table-tbody"></tbody>
+      </table>
+    </div>
+  </div><!-- end dividends-section -->
 
 </div>
 
@@ -849,6 +1076,100 @@ function computeCashflowAnnualTotals(data) {
   });
   return Object.values(byYear).sort((a,b) => a.year - b.year);
 }
+
+// ──────────────────────────────────────────────────────────────
+// Anderson 10-Year Projections (March 2026)
+// ──────────────────────────────────────────────────────────────
+const PROJECTIONS = {
+  methodology: {
+    revenueCagrBase: 0.050, revenueCagrBull: 0.065, revenueCagrBear: 0.035,
+    revenueBase2025: 63209000,
+    grossMarginBase2025: 25.9, grossMarginDeclinePerYrBase: -0.10, grossMarginDeclinePerYrBull: 0.00, grossMarginDeclinePerYrBear: -0.20,
+    operatingMarginBase: 7.25, operatingMarginBull: 7.60, operatingMarginBear: 7.20,
+    netMarginBase: 7.20, netMarginBull: 7.75, netMarginBear: 5.80,
+    shareReductionPerYrBase: 60, shareReductionPerYrBull: 75, shareReductionPerYrBear: 45,
+    sharesBase2025: 3216,
+    dpsGrowthBase: 0.070, dpsGrowthBull: 0.090, dpsGrowthBear: 0.050, dpsBase2025: 0.439,
+    capexGrowthBase: 0.050, capexGrowthBull: 0.030, capexGrowthBear: 0.080, capexBase2025: -2252000,
+    buybacksBase2026: -1750000, buybacksGrowthBase: 0.028,
+    dividendPoolGrowthBase: 0.056, dividendPoolGrowthBull: 0.075, dividendPoolGrowthBear: 0.032,
+    effectiveTaxRate: 0.254, assetRevenueRatioBase: 0.640,
+    currentRatioBase2026: 1.40, currentRatioTrendBase: 0.012,
+    foodInflationBase: 0.025, foodInflationBull: 0.035, foodInflationBear: 0.010,
+    netStoreAddsBase: 35, netStoreAddsBull: 45, netStoreAddsBear: 25,
+  },
+  incomeStatement: [
+    { year:2026, revenue_base:66369000, revenue_bull:67318000, revenue_bear:65421000, grossProfit_base:17157000, grossMargin_base:25.85, grossProfit_bull:17576000, grossMargin_bull:26.11, grossProfit_bear:16826000, grossMargin_bear:25.72, operatingIncome_base:4811000, operatingMargin_base:7.25, operatingIncome_bull:5114000, operatingMargin_bull:7.60, operatingIncome_bear:4704000, operatingMargin_bear:7.19, netIncome_base:4779000, netMargin_base:7.20, netIncome_bull:5214000, netMargin_bull:7.75, netIncome_bear:3795000, netMargin_bear:5.80, eps_base:1.54, eps_bull:1.70, eps_bear:1.22 },
+    { year:2027, revenue_base:69688000, revenue_bull:71693000, revenue_bear:67711000, grossProfit_base:17948000, grossMargin_base:25.75, grossProfit_bull:18788000, grossMargin_bull:26.21, grossProfit_bear:17244000, grossMargin_bear:25.46, operatingIncome_base:5051000, operatingMargin_base:7.25, operatingIncome_bull:5576000, operatingMargin_bull:7.78, operatingIncome_bear:4796000, operatingMargin_bear:7.08, netIncome_base:5018000, netMargin_base:7.20, netIncome_bull:5555000, netMargin_bull:7.75, netIncome_bear:3930000, netMargin_bear:5.80, eps_base:1.63, eps_bull:1.84, eps_bear:1.28 },
+    { year:2028, revenue_base:73172000, revenue_bull:76354000, revenue_bear:70081000, grossProfit_base:18757000, grossMargin_base:25.64, grossProfit_bull:20076000, grossMargin_bull:26.30, grossProfit_bear:17640000, grossMargin_bear:25.17, operatingIncome_base:5305000, operatingMargin_base:7.25, operatingIncome_bull:6102000, operatingMargin_bull:7.99, operatingIncome_bear:4825000, operatingMargin_bear:6.88, netIncome_base:5268000, netMargin_base:7.20, netIncome_bull:5915000, netMargin_bull:7.75, netIncome_bear:4065000, netMargin_bear:5.80, eps_base:1.74, eps_bull:2.00, eps_bear:1.35 },
+    { year:2029, revenue_base:76831000, revenue_bull:81317000, revenue_bear:72534000, grossProfit_base:19577000, grossMargin_base:25.48, grossProfit_bull:21389000, grossMargin_bull:26.31, grossProfit_bear:17996000, grossMargin_bear:24.81, operatingIncome_base:5570000, operatingMargin_base:7.25, operatingIncome_bull:6579000, operatingMargin_bull:8.09, operatingIncome_bear:4851000, operatingMargin_bear:6.69, netIncome_base:5532000, netMargin_base:7.20, netIncome_bull:6302000, netMargin_bull:7.75, netIncome_bear:4207000, netMargin_bear:5.80, eps_base:1.86, eps_bull:2.17, eps_bear:1.42 },
+    { year:2030, revenue_base:80672000, revenue_bull:86602000, revenue_bear:75073000, grossProfit_base:20412000, grossMargin_base:25.30, grossProfit_bull:22763000, grossMargin_bull:26.28, grossProfit_bear:18331000, grossMargin_bear:24.42, operatingIncome_base:5849000, operatingMargin_base:7.25, operatingIncome_bull:7015000, operatingMargin_bull:8.10, operatingIncome_bear:4867000, operatingMargin_bear:6.48, netIncome_base:5808000, netMargin_base:7.20, netIncome_bull:6722000, netMargin_bull:7.76, netIncome_bear:4354000, netMargin_bear:5.80, eps_base:1.99, eps_bull:2.37, eps_bear:1.50 },
+    { year:2031, revenue_base:84706000, revenue_bull:92231000, revenue_bear:77700000, grossProfit_base:21260000, grossMargin_base:25.10, grossProfit_bull:24210000, grossMargin_bull:26.25, grossProfit_bear:18641000, grossMargin_bear:23.99, operatingIncome_base:6141000, operatingMargin_base:7.25, operatingIncome_bull:7473000, operatingMargin_bull:8.10, operatingIncome_bear:4862000, operatingMargin_bear:6.26, netIncome_base:6099000, netMargin_base:7.20, netIncome_bull:7164000, netMargin_bull:7.77, netIncome_bear:4507000, netMargin_bear:5.80, eps_base:2.14, eps_bull:2.59, eps_bear:1.59 },
+    { year:2032, revenue_base:88941000, revenue_bull:98226000, revenue_bear:80420000, grossProfit_base:22102000, grossMargin_base:24.85, grossProfit_bull:25707000, grossMargin_bull:26.17, grossProfit_bear:18897000, grossMargin_bear:23.50, operatingIncome_base:6448000, operatingMargin_base:7.25, operatingIncome_bull:7958000, operatingMargin_bull:8.10, operatingIncome_bear:4834000, operatingMargin_bear:6.01, netIncome_base:6404000, netMargin_base:7.20, netIncome_bull:7643000, netMargin_bull:7.78, netIncome_bear:4664000, netMargin_bear:5.80, eps_base:2.29, eps_bull:2.84, eps_bear:1.68 },
+    { year:2033, revenue_base:93388000, revenue_bull:104611000, revenue_bear:83234000, grossProfit_base:22958000, grossMargin_base:24.59, grossProfit_bull:27268000, grossMargin_bull:26.07, grossProfit_bear:19145000, grossMargin_bear:23.00, operatingIncome_base:6771000, operatingMargin_base:7.25, operatingIncome_bull:8479000, operatingMargin_bull:8.10, operatingIncome_bear:4825000, operatingMargin_bear:5.80, netIncome_base:6724000, netMargin_base:7.20, netIncome_bull:8157000, netMargin_bull:7.80, netIncome_bear:4828000, netMargin_bear:5.80, eps_base:2.46, eps_bull:3.12, eps_bear:1.78 },
+    { year:2034, revenue_base:98057000, revenue_bull:111410000, revenue_bear:86147000, grossProfit_base:23844000, grossMargin_base:24.32, grossProfit_bull:28936000, grossMargin_bull:25.98, grossProfit_bear:19393000, grossMargin_bear:22.51, operatingIncome_base:7109000, operatingMargin_base:7.25, operatingIncome_bull:9028000, operatingMargin_bull:8.10, operatingIncome_bear:4816000, operatingMargin_bear:5.59, netIncome_base:7060000, netMargin_base:7.20, netIncome_bull:8710000, netMargin_bull:7.82, netIncome_bear:5000000, netMargin_bear:5.80, eps_base:2.64, eps_bull:3.43, eps_bear:1.89 },
+    { year:2035, revenue_base:102960000, revenue_bull:118652000, revenue_bear:89162000, grossProfit_base:24716000, grossMargin_base:24.00, grossProfit_bull:30629000, grossMargin_bull:25.81, grossProfit_bear:19615000, grossMargin_bear:21.99, operatingIncome_base:7464000, operatingMargin_base:7.25, operatingIncome_bull:9636000, operatingMargin_bull:8.12, operatingIncome_bear:4794000, operatingMargin_bear:5.38, netIncome_base:7413000, netMargin_base:7.20, netIncome_bull:9287000, netMargin_bull:7.83, netIncome_bear:5171000, netMargin_bear:5.80, eps_base:2.83, eps_bull:3.78, eps_bear:2.01 },
+  ],
+  cashFlow: [
+    { year:2026, ocf_base:5974000, ocf_bull:6518000, ocf_bear:4744000, capex_base:-2365000, capex_bull:-2200000, capex_bear:-2432000, fcf_base:3609000, fcf_bull:4318000, fcf_bear:2312000, buybacks_base:-1750000, buybacks_bull:-2050000, buybacks_bear:-1300000, dividendsPaid_base:-1511000, dividendsPaid_bull:-1557000, dividendsPaid_bear:-1470000, dps_base:0.470, dps_bull:0.479, dps_bear:0.461 },
+    { year:2027, ocf_base:6273000, ocf_bull:6944000, ocf_bear:4913000, capex_base:-2483000, capex_bull:-2266000, capex_bear:-2626000, fcf_base:3790000, fcf_bull:4678000, fcf_bear:2287000, buybacks_base:-1800000, buybacks_bull:-2150000, buybacks_bear:-1350000, dividendsPaid_base:-1600000, dividendsPaid_bull:-1697000, dividendsPaid_bear:-1516000, dps_base:0.503, dps_bull:0.522, dps_bear:0.484 },
+    { year:2028, ocf_base:6585000, ocf_bull:7394000, ocf_bear:5081000, capex_base:-2607000, capex_bull:-2334000, capex_bear:-2836000, fcf_base:3978000, fcf_bull:5060000, fcf_bear:2245000, buybacks_base:-1850000, buybacks_bull:-2250000, buybacks_bear:-1400000, dividendsPaid_base:-1693000, dividendsPaid_bull:-1851000, dividendsPaid_bear:-1562000, dps_base:0.538, dps_bull:0.569, dps_bear:0.508 },
+    { year:2029, ocf_base:6915000, ocf_bull:7878000, ocf_bear:5259000, capex_base:-2737000, capex_bull:-2404000, capex_bear:-3063000, fcf_base:4178000, fcf_bull:5474000, fcf_bear:2196000, buybacks_base:-1900000, buybacks_bull:-2350000, buybacks_bear:-1450000, dividendsPaid_base:-1793000, dividendsPaid_bull:-2019000, dividendsPaid_bear:-1611000, dps_base:0.576, dps_bull:0.620, dps_bear:0.534 },
+    { year:2030, ocf_base:7260000, ocf_bull:8403000, ocf_bear:5443000, capex_base:-2874000, capex_bull:-2476000, capex_bear:-3308000, fcf_base:4386000, fcf_bull:5927000, fcf_bear:2135000, buybacks_base:-1950000, buybacks_bull:-2450000, buybacks_bear:-1500000, dividendsPaid_base:-1897000, dividendsPaid_bull:-2202000, dividendsPaid_bear:-1661000, dps_base:0.616, dps_bull:0.676, dps_bear:0.560 },
+    { year:2031, ocf_base:7624000, ocf_bull:8955000, ocf_bear:5634000, capex_base:-3018000, capex_bull:-2550000, capex_bear:-3572000, fcf_base:4606000, fcf_bull:6405000, fcf_bear:2062000, buybacks_base:-2000000, buybacks_bull:-2550000, buybacks_bear:-1550000, dividendsPaid_base:-2007000, dividendsPaid_bull:-2400000, dividendsPaid_bear:-1713000, dps_base:0.659, dps_bull:0.737, dps_bear:0.589 },
+    { year:2032, ocf_base:8005000, ocf_bull:9554000, ocf_bear:5830000, capex_base:-3169000, capex_bull:-2627000, capex_bear:-3858000, fcf_base:4836000, fcf_bull:6927000, fcf_bear:1972000, buybacks_base:-2050000, buybacks_bull:-2650000, buybacks_bear:-1600000, dividendsPaid_base:-2124000, dividendsPaid_bull:-2616000, dividendsPaid_bear:-1768000, dps_base:0.705, dps_bull:0.804, dps_bear:0.618 },
+    { year:2033, ocf_base:8405000, ocf_bull:10196000, ocf_bear:6035000, capex_base:-3327000, capex_bull:-2706000, capex_bear:-4167000, fcf_base:5078000, fcf_bull:7490000, fcf_bear:1868000, buybacks_base:-2100000, buybacks_bull:-2750000, buybacks_bear:-1650000, dividendsPaid_base:-2248000, dividendsPaid_bull:-2852000, dividendsPaid_bear:-1825000, dps_base:0.754, dps_bull:0.876, dps_bear:0.649 },
+    { year:2034, ocf_base:8825000, ocf_bull:10888000, ocf_bear:6250000, capex_base:-3493000, capex_bull:-2787000, capex_bear:-4500000, fcf_base:5332000, fcf_bull:8101000, fcf_bear:1750000, buybacks_base:-2150000, buybacks_bull:-2850000, buybacks_bear:-1700000, dividendsPaid_base:-2380000, dividendsPaid_bull:-3109000, dividendsPaid_bear:-1884000, dps_base:0.807, dps_bull:0.955, dps_bear:0.681 },
+    { year:2035, ocf_base:9266000, ocf_bull:11609000, ocf_bear:6463000, capex_base:-3668000, capex_bull:-2871000, capex_bear:-4860000, fcf_base:5598000, fcf_bull:8738000, fcf_bear:1603000, buybacks_base:-2200000, buybacks_bull:-2950000, buybacks_bear:-1750000, dividendsPaid_base:-2519000, dividendsPaid_bull:-3389000, dividendsPaid_bear:-1944000, dps_base:0.864, dps_bull:1.041, dps_bear:0.715 },
+  ],
+  equity: [
+    { year:2026, sharesOutstanding_base:3156, sharesOutstanding_bull:3141, sharesOutstanding_bear:3171, eps_base:1.54, eps_bull:1.70, eps_bear:1.22, bookValuePerShare_base:8.45, bookValuePerShare_bull:8.64, bookValuePerShare_bear:8.07, capitalReturnRate_base:68.1, capitalReturnRate_bull:69.3, capitalReturnRate_bear:73.0 },
+    { year:2027, sharesOutstanding_base:3096, sharesOutstanding_bull:3066, sharesOutstanding_bear:3126, eps_base:1.63, eps_bull:1.84, eps_bear:1.28, bookValuePerShare_base:9.13, bookValuePerShare_bull:9.58, bookValuePerShare_bear:8.33, capitalReturnRate_base:67.8, capitalReturnRate_bull:69.2, capitalReturnRate_bear:73.4 },
+    { year:2028, sharesOutstanding_base:3036, sharesOutstanding_bull:2991, sharesOutstanding_bear:3081, eps_base:1.74, eps_bull:2.00, eps_bear:1.35, bookValuePerShare_base:9.88, bookValuePerShare_bull:10.62, bookValuePerShare_bear:8.61, capitalReturnRate_base:67.6, capitalReturnRate_bull:69.4, capitalReturnRate_bear:73.8 },
+    { year:2029, sharesOutstanding_base:2976, sharesOutstanding_bull:2916, sharesOutstanding_bear:3036, eps_base:1.86, eps_bull:2.17, eps_bear:1.42, bookValuePerShare_base:10.70, bookValuePerShare_bull:11.80, bookValuePerShare_bear:8.93, capitalReturnRate_base:67.5, capitalReturnRate_bull:69.3, capitalReturnRate_bear:74.1 },
+    { year:2030, sharesOutstanding_base:2916, sharesOutstanding_bull:2841, sharesOutstanding_bear:2991, eps_base:1.99, eps_bull:2.37, eps_bear:1.50, bookValuePerShare_base:11.59, bookValuePerShare_bull:13.12, bookValuePerShare_bear:9.26, capitalReturnRate_base:67.2, capitalReturnRate_bull:69.3, capitalReturnRate_bear:74.1 },
+    { year:2031, sharesOutstanding_base:2856, sharesOutstanding_bull:2766, sharesOutstanding_bear:2946, eps_base:2.14, eps_bull:2.59, eps_bear:1.59, bookValuePerShare_base:12.57, bookValuePerShare_bull:14.60, bookValuePerShare_bear:9.61, capitalReturnRate_base:67.0, capitalReturnRate_bull:69.3, capitalReturnRate_bear:73.6 },
+    { year:2032, sharesOutstanding_base:2796, sharesOutstanding_bull:2691, sharesOutstanding_bear:2901, eps_base:2.29, eps_bull:2.84, eps_bear:1.68, bookValuePerShare_base:13.64, bookValuePerShare_bull:16.26, bookValuePerShare_bear:10.00, capitalReturnRate_base:66.8, capitalReturnRate_bull:69.2, capitalReturnRate_bear:72.8 },
+    { year:2033, sharesOutstanding_base:2736, sharesOutstanding_bull:2616, sharesOutstanding_bear:2856, eps_base:2.46, eps_bull:3.12, eps_bear:1.78, bookValuePerShare_base:14.80, bookValuePerShare_bull:18.13, bookValuePerShare_bear:10.42, capitalReturnRate_base:66.5, capitalReturnRate_bull:69.1, capitalReturnRate_bear:72.5 },
+    { year:2034, sharesOutstanding_base:2676, sharesOutstanding_bull:2541, sharesOutstanding_bear:2811, eps_base:2.64, eps_bull:3.43, eps_bear:1.89, bookValuePerShare_base:16.08, bookValuePerShare_bull:20.21, bookValuePerShare_bear:10.88, capitalReturnRate_base:66.1, capitalReturnRate_bull:68.9, capitalReturnRate_bear:72.1 },
+    { year:2035, sharesOutstanding_base:2616, sharesOutstanding_bull:2466, sharesOutstanding_bear:2766, eps_base:2.83, eps_bull:3.78, eps_bear:2.01, bookValuePerShare_base:17.48, bookValuePerShare_bull:22.56, bookValuePerShare_bear:11.37, capitalReturnRate_base:65.8, capitalReturnRate_bull:68.7, capitalReturnRate_bear:71.7 },
+  ],
+  balanceSheet: [
+    { year:2026, totalAssets_base:43500000, totalLiabilities_base:11400000, equity_base:26659000, currentRatio_base:1.40, totalAssets_bull:44800000, totalLiabilities_bull:11700000, equity_bull:27148000, currentRatio_bull:1.42, totalAssets_bear:42600000, totalLiabilities_bear:11200000, equity_bear:25576000, currentRatio_bear:1.36 },
+    { year:2027, totalAssets_base:46200000, totalLiabilities_base:11950000, equity_base:28277000, currentRatio_base:1.42, totalAssets_bull:48800000, totalLiabilities_bull:12600000, equity_bull:29356000, currentRatio_bull:1.44, totalAssets_bear:44400000, totalLiabilities_bear:11600000, equity_bear:26040000, currentRatio_bear:1.35 },
+    { year:2028, totalAssets_base:49000000, totalLiabilities_base:12530000, equity_base:30002000, currentRatio_base:1.44, totalAssets_bull:53200000, totalLiabilities_bull:13500000, equity_bull:31770000, currentRatio_bull:1.46, totalAssets_bear:46200000, totalLiabilities_bear:11950000, equity_bear:26543000, currentRatio_bear:1.34 },
+    { year:2029, totalAssets_base:52000000, totalLiabilities_base:13140000, equity_base:31841000, currentRatio_base:1.45, totalAssets_bull:57900000, totalLiabilities_bull:14500000, equity_bull:34403000, currentRatio_bull:1.48, totalAssets_bear:48000000, totalLiabilities_bear:12300000, equity_bear:27089000, currentRatio_bear:1.34 },
+    { year:2030, totalAssets_base:55100000, totalLiabilities_base:13780000, equity_base:33802000, currentRatio_base:1.47, totalAssets_bull:63000000, totalLiabilities_bull:15600000, equity_bull:37273000, currentRatio_bull:1.50, totalAssets_bear:49900000, totalLiabilities_bear:12700000, equity_bear:27682000, currentRatio_bear:1.33 },
+    { year:2031, totalAssets_base:58400000, totalLiabilities_base:14450000, equity_base:35894000, currentRatio_base:1.48, totalAssets_bull:68500000, totalLiabilities_bull:16700000, equity_bull:40387000, currentRatio_bull:1.51, totalAssets_bear:51900000, totalLiabilities_bear:13100000, equity_bear:28326000, currentRatio_bear:1.33 },
+    { year:2032, totalAssets_base:61900000, totalLiabilities_base:15150000, equity_base:38124000, currentRatio_base:1.49, totalAssets_bull:74400000, totalLiabilities_bull:17900000, equity_bull:43764000, currentRatio_bull:1.52, totalAssets_bear:53900000, totalLiabilities_bear:13500000, equity_bear:29022000, currentRatio_bear:1.32 },
+    { year:2033, totalAssets_base:65600000, totalLiabilities_base:15880000, equity_base:40500000, currentRatio_base:1.50, totalAssets_bull:80800000, totalLiabilities_bull:19200000, equity_bull:47415000, currentRatio_bull:1.53, totalAssets_bear:56100000, totalLiabilities_bear:13900000, equity_bear:29775000, currentRatio_bear:1.32 },
+    { year:2034, totalAssets_base:69500000, totalLiabilities_base:16640000, equity_base:43030000, currentRatio_base:1.51, totalAssets_bull:87700000, totalLiabilities_bull:20500000, equity_bull:51366000, currentRatio_bull:1.54, totalAssets_bear:58300000, totalLiabilities_bear:14400000, equity_bear:30591000, currentRatio_bear:1.31 },
+    { year:2035, totalAssets_base:73700000, totalLiabilities_base:17430000, equity_base:45724000, currentRatio_base:1.52, totalAssets_bull:95100000, totalLiabilities_bull:21900000, equity_bull:55624000, currentRatio_bull:1.55, totalAssets_bear:60700000, totalLiabilities_bear:14900000, equity_bear:31468000, currentRatio_bear:1.31 },
+  ],
+  dividendPerShare: [
+    { year:2015, dps:0.158, type:'actual' },
+    { year:2016, dps:0.174, type:'actual' },
+    { year:2017, dps:0.178, type:'actual' },
+    { year:2018, dps:0.208, type:'actual' },
+    { year:2019, dps:0.240, type:'actual' },
+    { year:2020, dps:0.256, type:'actual' },
+    { year:2021, dps:0.296, type:'actual' },
+    { year:2022, dps:0.344, type:'actual' },
+    { year:2023, dps:0.390, type:'actual' },
+    { year:2024, dps:0.4225, type:'actual' },
+    { year:2025, dps:0.439, type:'actual' },
+    { year:2026, dps_base:0.470, dps_bull:0.479, dps_bear:0.461, type:'projected' },
+    { year:2027, dps_base:0.503, dps_bull:0.522, dps_bear:0.484, type:'projected' },
+    { year:2028, dps_base:0.538, dps_bull:0.569, dps_bear:0.508, type:'projected' },
+    { year:2029, dps_base:0.576, dps_bull:0.620, dps_bear:0.534, type:'projected' },
+    { year:2030, dps_base:0.616, dps_bull:0.676, dps_bear:0.560, type:'projected' },
+    { year:2031, dps_base:0.659, dps_bull:0.737, dps_bear:0.588, type:'projected' },
+    { year:2032, dps_base:0.705, dps_bull:0.804, dps_bear:0.618, type:'projected' },
+    { year:2033, dps_base:0.754, dps_bull:0.876, dps_bear:0.649, type:'projected' },
+    { year:2034, dps_base:0.807, dps_bull:0.955, dps_bear:0.681, type:'projected' },
+    { year:2035, dps_base:0.864, dps_bull:1.041, dps_bear:0.715, type:'projected' },
+  ],
+};
 
 // ──────────────────────────────────────────────────────────────
 // Helpers
@@ -1510,10 +1831,11 @@ function switchTab(tab) {
   document.getElementById('cf-section').style.display = tab === 'cf' ? 'block' : 'none';
   document.getElementById('equity-section').style.display = tab === 'equity' ? 'block' : 'none';
   document.getElementById('bs-section').style.display = tab === 'balance-sheet' ? 'block' : 'none';
+  document.getElementById('dividends-section').style.display = tab === 'dividends' ? 'block' : 'none';
   document.getElementById('mr-george-section').style.display = tab === 'mr-george' ? 'block' : 'none';
   document.getElementById('tab-is').classList.toggle('active', tab === 'is');
   document.getElementById('tab-cf').classList.toggle('active', tab === 'cf');
-  // Equity and Balance Sheet tab buttons use data-tab attribute instead of id
+  // Equity, Balance Sheet, Dividends tab buttons use data-tab attribute
   document.querySelectorAll('.tab-btn[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   if (tab === 'cf') renderCashFlowTab();
   if (tab === 'equity') {
@@ -1529,6 +1851,9 @@ function switchTab(tab) {
     renderBSGrowthChart();
     renderBSEfficiencyChart();
     renderBSLiabChart();
+  }
+  if (tab === 'dividends') {
+    renderDividendCharts();
   }
 }
 
@@ -2746,6 +3071,456 @@ function toggleMobileNav() {
   const isOpen = overlay.style.display !== 'none';
   overlay.style.display = isOpen ? 'none' : 'block';
   icon.classList.toggle('open', !isOpen);
+}
+
+// ──────────────────────────────────────────────────────────────
+// Projection Charts & Functions (Anderson 10-Year Model)
+// ──────────────────────────────────────────────────────────────
+const chartsRendered = { isProj:false, cfProj:false, equityProj:false, bsProj:false, dps:false };
+const projCharts = {};
+
+function toggleProjections(tab) {
+  const el = document.getElementById(tab + '-projections');
+  const btn = el.previousElementSibling.querySelector('.projection-toggle-btn');
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+  btn.textContent = isOpen ? '📈 Show 10-Year Projections' : '📉 Hide Projections';
+  if (!isOpen) {
+    renderProjectionCharts(tab);
+  }
+}
+
+function setProjCase(tab, cas) {
+  const toggle = document.getElementById(tab + '-proj-case-toggle');
+  if (!toggle) return;
+  toggle.querySelectorAll('.case-btn').forEach(b => b.classList.toggle('active', b.dataset.case === cas));
+  // Re-render chart with new case highlighted
+  renderProjectionCharts(tab, cas);
+}
+
+function fmtProjB(v) { return '$' + (Math.abs(v)/1000).toFixed(1) + 'B'; }
+function fmtProjM(v) { return '$' + (Math.abs(v)).toFixed(0) + 'M'; }
+
+function getActiveCase(tab) {
+  const toggle = document.getElementById(tab + '-proj-case-toggle');
+  if (!toggle) return 'base';
+  const active = toggle.querySelector('.case-btn.active');
+  return active ? active.dataset.case : 'base';
+}
+
+function renderProjectionCharts(tab, forceCase) {
+  if (tab === 'is') renderISProjection(forceCase);
+  if (tab === 'cf') renderCFProjection(forceCase);
+  if (tab === 'equity') renderEquityProjection(forceCase);
+  if (tab === 'bs') renderBSProjection(forceCase);
+}
+
+// ── IS Projection ──────────────────────────────────────────────
+function renderISProjection(forceCase) {
+  const is = PROJECTIONS.incomeStatement;
+  const years = is.map(d => d.year);
+  const cas = forceCase || getActiveCase('is');
+
+  // Destroy existing chart if re-rendering
+  if (projCharts.is) { projCharts.is.destroy(); }
+
+  const ctx = document.getElementById('chart-is-proj');
+  projCharts.is = new Chart(ctx, {
+    data: {
+      labels: years,
+      datasets: [
+        {
+          type: 'bar', label: 'Bear Revenue ($M)', data: is.map(d => d.revenue_bear/1000),
+          backgroundColor: 'rgba(239,83,80,0.25)', borderColor: 'rgba(239,83,80,0.6)', borderWidth: 1,
+          hidden: cas !== 'bear', yAxisID: 'y'
+        },
+        {
+          type: 'bar', label: 'Base Revenue ($M)', data: is.map(d => d.revenue_base/1000),
+          backgroundColor: 'rgba(76,175,80,0.35)', borderColor: 'rgba(76,175,80,0.7)', borderWidth: 1,
+          hidden: cas !== 'base', yAxisID: 'y'
+        },
+        {
+          type: 'bar', label: 'Bull Revenue ($M)', data: is.map(d => d.revenue_bull/1000),
+          backgroundColor: 'rgba(76,175,80,0.55)', borderColor: 'rgba(76,175,80,0.9)', borderWidth: 1,
+          hidden: cas !== 'bull', yAxisID: 'y'
+        },
+        {
+          type: 'line', label: 'Net Margin % (bear)', data: is.map(d => d.netMargin_bear),
+          borderColor: '#ef5350', borderDash: [4,3], borderWidth: 2, pointRadius: 3,
+          fill: false, tension: 0.3, hidden: cas !== 'bear', yAxisID: 'y2'
+        },
+        {
+          type: 'line', label: 'Net Margin % (base)', data: is.map(d => d.netMargin_base),
+          borderColor: '#f0c040', borderWidth: 2, pointRadius: 3,
+          fill: false, tension: 0.3, hidden: cas !== 'base', yAxisID: 'y2'
+        },
+        {
+          type: 'line', label: 'Net Margin % (bull)', data: is.map(d => d.netMargin_bull),
+          borderColor: '#4caf50', borderDash: [4,3], borderWidth: 2, pointRadius: 3,
+          fill: false, tension: 0.3, hidden: cas !== 'bull', yAxisID: 'y2'
+        },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, labels: { color: '#a0a0b8', font: { size: 11, family: 'Space Grotesk' } } } },
+      scales: {
+        x: { ticks: { color: '#606080', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { position: 'left', ticks: { color: '#606080', callback: v => '$' + v + 'B' }, grid: { color: 'rgba(255,255,255,0.04)' }, title: { display: true, text: 'Revenue ($B)', color: '#606080' } },
+        y2: { position: 'right', ticks: { color: '#f0c040', callback: v => v.toFixed(1) + '%' }, grid: { drawOnChartArea: false }, title: { display: true, text: 'Net Margin %', color: '#f0c040' }, min: 4, max: 10 }
+      }
+    }
+  });
+  chartsRendered.isProj = true;
+
+  // Populate table
+  const tbody = document.getElementById('is-proj-tbody');
+  if (tbody) {
+    tbody.innerHTML = is.map(d => `
+      <tr>
+        <td>${d.year}</td>
+        <td class="proj-bear">$${(d.revenue_bear/1000).toFixed(1)}B</td>
+        <td class="proj-base">$${(d.revenue_base/1000).toFixed(1)}B</td>
+        <td class="proj-bull">$${(d.revenue_bull/1000).toFixed(1)}B</td>
+        <td class="proj-bear">$${(d.netIncome_bear/1000).toFixed(1)}B</td>
+        <td class="proj-base">$${(d.netIncome_base/1000).toFixed(1)}B</td>
+        <td class="proj-bull">$${(d.netIncome_bull/1000).toFixed(1)}B</td>
+        <td class="proj-base">$${d.eps_base.toFixed(2)}</td>
+      </tr>`).join('');
+  }
+}
+
+// ── CF Projection ──────────────────────────────────────────────
+function renderCFProjection(forceCase) {
+  const cf = PROJECTIONS.cashFlow;
+  const years = cf.map(d => d.year);
+  const cas = forceCase || getActiveCase('cf');
+
+  if (projCharts.cf) { projCharts.cf.destroy(); }
+
+  const ctx = document.getElementById('chart-cf-proj');
+  projCharts.cf = new Chart(ctx, {
+    data: {
+      labels: years,
+      datasets: [
+        {
+          type: 'bar', label: 'FCF Bear', data: cf.map(d => d.fcf_bear/1000),
+          backgroundColor: 'rgba(239,83,80,0.3)', borderColor: '#ef5350', borderWidth: 1,
+          hidden: cas !== 'bear', yAxisID: 'y'
+        },
+        {
+          type: 'bar', label: 'FCF Base', data: cf.map(d => d.fcf_base/1000),
+          backgroundColor: 'rgba(76,175,80,0.35)', borderColor: '#4caf50', borderWidth: 1,
+          hidden: cas !== 'base', yAxisID: 'y'
+        },
+        {
+          type: 'bar', label: 'FCF Bull', data: cf.map(d => d.fcf_bull/1000),
+          backgroundColor: 'rgba(76,175,80,0.55)', borderColor: '#66bb6a', borderWidth: 1,
+          hidden: cas !== 'bull', yAxisID: 'y'
+        },
+        {
+          type: 'line', label: 'Dividends Paid (bear)', data: cf.map(d => Math.abs(d.dividendsPaid_bear)/1000),
+          borderColor: '#ef5350', borderDash: [4,3], borderWidth: 2, pointRadius: 3,
+          fill: false, tension: 0.3, hidden: cas !== 'bear', yAxisID: 'y'
+        },
+        {
+          type: 'line', label: 'Dividends Paid (base)', data: cf.map(d => Math.abs(d.dividendsPaid_base)/1000),
+          borderColor: '#f0c040', borderWidth: 2, pointRadius: 3,
+          fill: false, tension: 0.3, hidden: cas !== 'base', yAxisID: 'y'
+        },
+        {
+          type: 'line', label: 'Dividends Paid (bull)', data: cf.map(d => Math.abs(d.dividendsPaid_bull)/1000),
+          borderColor: '#4caf50', borderDash: [4,3], borderWidth: 2, pointRadius: 3,
+          fill: false, tension: 0.3, hidden: cas !== 'bull', yAxisID: 'y'
+        },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, labels: { color: '#a0a0b8', font: { size: 11, family: 'Space Grotesk' } } } },
+      scales: {
+        x: { ticks: { color: '#606080', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#606080', callback: v => '$' + v.toFixed(1) + 'B' }, grid: { color: 'rgba(255,255,255,0.04)' }, title: { display: true, text: '($B)', color: '#606080' } }
+      }
+    }
+  });
+  chartsRendered.cfProj = true;
+
+  const tbody = document.getElementById('cf-proj-tbody');
+  if (tbody) {
+    tbody.innerHTML = cf.map(d => `
+      <tr>
+        <td>${d.year}</td>
+        <td class="proj-bear">$${(d.fcf_bear/1000).toFixed(1)}B</td>
+        <td class="proj-base">$${(d.fcf_base/1000).toFixed(1)}B</td>
+        <td class="proj-bull">$${(d.fcf_bull/1000).toFixed(1)}B</td>
+        <td class="proj-bear">$(${(Math.abs(d.dividendsPaid_bear)/1000).toFixed(1)}B)</td>
+        <td class="proj-base">$(${(Math.abs(d.dividendsPaid_base)/1000).toFixed(1)}B)</td>
+        <td class="proj-bull">$(${(Math.abs(d.dividendsPaid_bull)/1000).toFixed(1)}B)</td>
+      </tr>`).join('');
+  }
+}
+
+// ── Equity Projection ──────────────────────────────────────────
+function renderEquityProjection(forceCase) {
+  const eq = PROJECTIONS.equity;
+  const years = eq.map(d => d.year);
+  const cas = forceCase || getActiveCase('equity');
+
+  if (projCharts.equity) { projCharts.equity.destroy(); }
+
+  const ctx = document.getElementById('chart-equity-proj');
+  projCharts.equity = new Chart(ctx, {
+    data: {
+      labels: years,
+      datasets: [
+        {
+          type: 'line', label: 'Shares Out (bear, M)', data: eq.map(d => d.sharesOutstanding_bear),
+          borderColor: '#ef5350', borderDash: [4,3], borderWidth: 2, pointRadius: 3,
+          fill: false, tension: 0.3, hidden: cas !== 'bear', yAxisID: 'y'
+        },
+        {
+          type: 'line', label: 'Shares Out (base, M)', data: eq.map(d => d.sharesOutstanding_base),
+          borderColor: '#f0c040', borderWidth: 2, pointRadius: 3,
+          fill: false, tension: 0.3, hidden: cas !== 'base', yAxisID: 'y'
+        },
+        {
+          type: 'line', label: 'Shares Out (bull, M)', data: eq.map(d => d.sharesOutstanding_bull),
+          borderColor: '#4caf50', borderDash: [4,3], borderWidth: 2, pointRadius: 3,
+          fill: false, tension: 0.3, hidden: cas !== 'bull', yAxisID: 'y'
+        },
+        {
+          type: 'line', label: 'EPS (bear)', data: eq.map(d => d.eps_bear),
+          borderColor: '#ef5350', borderDash: [2,2], borderWidth: 2, pointRadius: 3,
+          fill: false, tension: 0.3, hidden: cas !== 'bear', yAxisID: 'y2'
+        },
+        {
+          type: 'line', label: 'EPS (base)', data: eq.map(d => d.eps_base),
+          borderColor: '#2DD4BF', borderWidth: 2, pointRadius: 3,
+          fill: false, tension: 0.3, hidden: cas !== 'base', yAxisID: 'y2'
+        },
+        {
+          type: 'line', label: 'EPS (bull)', data: eq.map(d => d.eps_bull),
+          borderColor: '#66bb6a', borderDash: [2,2], borderWidth: 2, pointRadius: 3,
+          fill: false, tension: 0.3, hidden: cas !== 'bull', yAxisID: 'y2'
+        },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, labels: { color: '#a0a0b8', font: { size: 11, family: 'Space Grotesk' } } } },
+      scales: {
+        x: { ticks: { color: '#606080', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { position: 'left', ticks: { color: '#606080', callback: v => v + 'M' }, grid: { color: 'rgba(255,255,255,0.04)' }, title: { display: true, text: 'Shares (M)', color: '#606080' }, min: 2200, max: 3300 },
+        y2: { position: 'right', ticks: { color: '#2DD4BF', callback: v => '$' + v.toFixed(2) }, grid: { drawOnChartArea: false }, title: { display: true, text: 'EPS ($)', color: '#2DD4BF' } }
+      }
+    }
+  });
+  chartsRendered.equityProj = true;
+
+  const tbody = document.getElementById('equity-proj-tbody');
+  if (tbody) {
+    tbody.innerHTML = eq.map(d => `
+      <tr>
+        <td>${d.year}</td>
+        <td class="proj-bear">${d.sharesOutstanding_bear}M</td>
+        <td class="proj-base">${d.sharesOutstanding_base}M</td>
+        <td class="proj-bull">${d.sharesOutstanding_bull}M</td>
+        <td class="proj-bear">$${d.eps_bear.toFixed(2)}</td>
+        <td class="proj-base">$${d.eps_base.toFixed(2)}</td>
+        <td class="proj-bull">$${d.eps_bull.toFixed(2)}</td>
+      </tr>`).join('');
+  }
+}
+
+// ── BS Projection ──────────────────────────────────────────────
+function renderBSProjection(forceCase) {
+  const bs = PROJECTIONS.balanceSheet;
+  const years = bs.map(d => d.year);
+  const cas = forceCase || getActiveCase('bs');
+
+  if (projCharts.bs) { projCharts.bs.destroy(); }
+
+  const ctx = document.getElementById('chart-bs-proj');
+  projCharts.bs = new Chart(ctx, {
+    data: {
+      labels: years,
+      datasets: [
+        {
+          type: 'bar', label: 'Total Assets (bear)', data: bs.map(d => d.totalAssets_bear/1000),
+          backgroundColor: 'rgba(239,83,80,0.3)', borderColor: '#ef5350', borderWidth: 1,
+          hidden: cas !== 'bear', yAxisID: 'y'
+        },
+        {
+          type: 'bar', label: 'Total Assets (base)', data: bs.map(d => d.totalAssets_base/1000),
+          backgroundColor: 'rgba(76,175,80,0.35)', borderColor: '#4caf50', borderWidth: 1,
+          hidden: cas !== 'base', yAxisID: 'y'
+        },
+        {
+          type: 'bar', label: 'Total Assets (bull)', data: bs.map(d => d.totalAssets_bull/1000),
+          backgroundColor: 'rgba(76,175,80,0.55)', borderColor: '#66bb6a', borderWidth: 1,
+          hidden: cas !== 'bull', yAxisID: 'y'
+        },
+        {
+          type: 'line', label: 'Equity (bear)', data: bs.map(d => d.equity_bear/1000),
+          borderColor: '#ef5350', borderDash: [4,3], borderWidth: 2, pointRadius: 3,
+          fill: false, tension: 0.3, hidden: cas !== 'bear', yAxisID: 'y'
+        },
+        {
+          type: 'line', label: 'Equity (base)', data: bs.map(d => d.equity_base/1000),
+          borderColor: '#f0c040', borderWidth: 2, pointRadius: 3,
+          fill: false, tension: 0.3, hidden: cas !== 'base', yAxisID: 'y'
+        },
+        {
+          type: 'line', label: 'Equity (bull)', data: bs.map(d => d.equity_bull/1000),
+          borderColor: '#4caf50', borderDash: [4,3], borderWidth: 2, pointRadius: 3,
+          fill: false, tension: 0.3, hidden: cas !== 'bull', yAxisID: 'y'
+        },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, labels: { color: '#a0a0b8', font: { size: 11, family: 'Space Grotesk' } } } },
+      scales: {
+        x: { ticks: { color: '#606080', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#606080', callback: v => '$' + v.toFixed(0) + 'B' }, grid: { color: 'rgba(255,255,255,0.04)' }, title: { display: true, text: '($B)', color: '#606080' } }
+      }
+    }
+  });
+  chartsRendered.bsProj = true;
+
+  const tbody = document.getElementById('bs-proj-tbody');
+  if (tbody) {
+    tbody.innerHTML = bs.map(d => `
+      <tr>
+        <td>${d.year}</td>
+        <td class="proj-bear">$${(d.totalAssets_bear/1000).toFixed(1)}B</td>
+        <td class="proj-base">$${(d.totalAssets_base/1000).toFixed(1)}B</td>
+        <td class="proj-bull">$${(d.totalAssets_bull/1000).toFixed(1)}B</td>
+        <td class="proj-bear">$${(d.equity_bear/1000).toFixed(1)}B</td>
+        <td class="proj-base">$${(d.equity_base/1000).toFixed(1)}B</td>
+        <td class="proj-bull">$${(d.equity_bull/1000).toFixed(1)}B</td>
+      </tr>`).join('');
+  }
+}
+
+// ── Dividend Charts (Dividends Tab) ───────────────────────────
+function renderDividendCharts() {
+  if (chartsRendered.dps) return;
+  chartsRendered.dps = true;
+
+  const dpsData = PROJECTIONS.dividendPerShare;
+  const historical = dpsData.filter(d => d.type === 'actual');
+  const projected = dpsData.filter(d => d.type === 'projected');
+
+  // Historical bar chart
+  if (projCharts.dpsHist) projCharts.dpsHist.destroy();
+  const histCtx = document.getElementById('chart-dps-hist');
+  projCharts.dpsHist = new Chart(histCtx, {
+    type: 'bar',
+    data: {
+      labels: historical.map(d => d.year),
+      datasets: [{
+        label: 'DPS (Actual)',
+        data: historical.map(d => d.dps),
+        backgroundColor: 'rgba(76,175,80,0.5)',
+        borderColor: '#4caf50',
+        borderWidth: 1,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        datalabels: false,
+        tooltip: { callbacks: { label: ctx => '$' + ctx.raw.toFixed(4) } }
+      },
+      scales: {
+        x: { ticks: { color: '#606080', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#606080', callback: v => '$' + v.toFixed(2) }, grid: { color: 'rgba(255,255,255,0.04)' }, title: { display: true, text: 'DPS ($)', color: '#606080' } }
+      }
+    }
+  });
+
+  // Projection line chart
+  if (projCharts.dpsProj) projCharts.dpsProj.destroy();
+  const projCtx = document.getElementById('chart-dps-proj');
+  projCharts.dpsProj = new Chart(projCtx, {
+    type: 'line',
+    data: {
+      labels: projected.map(d => d.year),
+      datasets: [
+        {
+          label: 'Bear DPS', data: projected.map(d => d.dps_bear),
+          borderColor: '#ef5350', borderDash: [5,3], borderWidth: 2, pointRadius: 4,
+          fill: false, tension: 0.3
+        },
+        {
+          label: 'Base DPS', data: projected.map(d => d.dps_base),
+          borderColor: '#f0c040', borderWidth: 2.5, pointRadius: 4,
+          fill: false, tension: 0.3
+        },
+        {
+          label: 'Bull DPS', data: projected.map(d => d.dps_bull),
+          borderColor: '#4caf50', borderDash: [5,3], borderWidth: 2, pointRadius: 4,
+          fill: false, tension: 0.3
+        },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, labels: { color: '#a0a0b8', font: { size: 11, family: 'Space Grotesk' } } } },
+      scales: {
+        x: { ticks: { color: '#606080', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#606080', callback: v => '$' + v.toFixed(2) }, grid: { color: 'rgba(255,255,255,0.04)' }, title: { display: true, text: 'DPS ($)', color: '#606080' } }
+      }
+    }
+  });
+
+  // Build DPS data table
+  const tbody = document.getElementById('dps-table-tbody');
+  if (tbody) {
+    // Historical rows
+    let prevDps = null;
+    const histRows = historical.map(d => {
+      const growth = prevDps ? ((d.dps - prevDps) / prevDps * 100).toFixed(1) + '%' : '—';
+      prevDps = d.dps;
+      // Find CF data for total dividends (approximate from CASHFLOW_DATA)
+      const cfYear = CASHFLOW_DATA.filter(c => parseInt(c.period) === d.year || c.fiscal_year === d.year);
+      const totalDiv = cfYear.reduce((s, c) => s + Math.abs(c.dividends_paid || 0), 0);
+      const sharesEst = d.year <= 2025 ? (PROJECTIONS.methodology.sharesBase2025 + (2025 - d.year) * PROJECTIONS.methodology.shareReductionPerYrBase) : null;
+      return `<tr>
+        <td>${d.year}</td>
+        <td class="proj-base">$${d.dps.toFixed(4)}</td>
+        <td>${growth}</td>
+        <td>—</td>
+        <td>—</td>
+        <td>${sharesEst ? Math.round(sharesEst) + 'M' : '—'}</td>
+        <td>—</td>
+      </tr>`;
+    });
+
+    // Projected rows
+    const projRows = projected.map((d, i) => {
+      const prevBase = i === 0 ? historical[historical.length - 1].dps : projected[i-1].dps_base;
+      const growth = ((d.dps_base - prevBase) / prevBase * 100).toFixed(1) + '%';
+      const cfRow = PROJECTIONS.cashFlow.find(c => c.year === d.year);
+      const eqRow = PROJECTIONS.equity.find(e => e.year === d.year);
+      const totalDiv = cfRow ? '$' + (Math.abs(cfRow.dividendsPaid_base)/1000).toFixed(2) + 'B' : '—';
+      const shares = eqRow ? eqRow.sharesOutstanding_base + 'M' : '—';
+      return `<tr>
+        <td>${d.year} <span style="font-size:9px;color:var(--muted)">(proj)</span></td>
+        <td class="proj-base">$${d.dps_base.toFixed(3)}</td>
+        <td>${growth}</td>
+        <td class="proj-bear">$${d.dps_bear.toFixed(3)}</td>
+        <td class="proj-bull">$${d.dps_bull.toFixed(3)}</td>
+        <td>${totalDiv}</td>
+        <td>${shares}</td>
+      </tr>`;
+    });
+
+    tbody.innerHTML = histRows.join('') + projRows.join('');
+  }
 }
 </script>
 </body>
