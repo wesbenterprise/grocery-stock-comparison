@@ -389,9 +389,9 @@ export default function PublixOverview() {
               .tl-left { width: 104px; flex-shrink: 0; display: flex; align-items: center; padding-top: 18px; }
               .tl-card { margin-left: 16px; margin-bottom: 12px; }
               @media (max-width: 600px) {
-                .tl-line { left: 16px; }
-                .tl-row { flex-direction: column; padding-left: 36px; position: relative; }
-                .tl-left { width: auto; padding-top: 0; margin-bottom: 4px; position: absolute; left: -36px; top: 16px; flex-direction: column; align-items: center; gap: 2px; }
+                .tl-line { left: 28px; }
+                .tl-row { flex-direction: column; padding-left: 56px; position: relative; }
+                .tl-left { width: auto; padding-top: 0; margin-bottom: 4px; position: absolute; left: -56px; top: 16px; flex-direction: column; align-items: center; gap: 2px; width: 52px; }
                 .tl-card { margin-left: 0; }
               }
             `}</style>
