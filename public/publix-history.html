@@ -149,9 +149,8 @@ tr:hover td{background:rgba(76,175,80,.03)}
 }
 @media(max-width:768px){
   /* Tab switcher — scrollable on mobile */
-  .tab-switcher{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;white-space:nowrap;display:block}
-  .tab-switcher::-webkit-scrollbar{display:none}
-  .tab-btn{display:inline-block;padding:10px 18px;font-size:14px}
+  .tab-switcher{display:grid;grid-template-columns:repeat(4,1fr);overflow:visible;border-bottom:2px solid var(--border)}
+  .tab-btn{display:flex;align-items:center;justify-content:center;text-align:center;white-space:normal;line-height:1.25;padding:10px 6px;font-size:12px;min-height:48px}
   /* Header */
   .app-header{padding:0 16px}
   .header-badge{display:none}
