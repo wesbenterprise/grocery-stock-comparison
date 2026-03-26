@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import ChartSetup from './ChartSetup';
 import DashboardContent from './DashboardContent';
 import {
   QUARTERS,
@@ -9,11 +8,12 @@ import {
   filterByYears,
 } from '../../lib/publix-financials';
 
-const ALL_YEARS = [...new Set(QUARTERS.map(d => d.year))].sort();
-const DEFAULT_RANGE = [ALL_YEARS[0], ALL_YEARS[ALL_YEARS.length - 1]];
+const ALL_YEARS = [...new Set(QUARTERS.map(d => d.fiscalYear))].sort();
+const MIN_YEAR = ALL_YEARS[0];
+const MAX_YEAR = ALL_YEARS[ALL_YEARS.length - 1];
 
 export default function PublixHistoryPage() {
-  const [yearRange, setYearRange] = useState(DEFAULT_RANGE);
+  const [yearRange, setYearRange] = useState([MIN_YEAR, MAX_YEAR]);
   const [activePreset, setActivePreset] = useState('all');
 
   const filteredData = useMemo(
@@ -25,19 +25,16 @@ export default function PublixHistoryPage() {
   const prevQ = filteredData[filteredData.length - 2] ?? {};
 
   return (
-    <>
-      <ChartSetup />
-      <DashboardContent
-        filteredData={filteredData}
-        yearRange={yearRange}
-        setYearRange={setYearRange}
-        activePreset={activePreset}
-        setActivePreset={setActivePreset}
-        latestQ={latestQ}
-        prevQ={prevQ}
-        kpiSparklineData={KPI_SPARKLINE_DATA}
-        handleLogout={() => {}}
-      />
-    </>
+    <DashboardContent
+      filteredData={filteredData}
+      yearRange={yearRange}
+      setYearRange={setYearRange}
+      activePreset={activePreset}
+      setActivePreset={setActivePreset}
+      latestQ={latestQ}
+      prevQ={prevQ}
+      kpiSparklineData={KPI_SPARKLINE_DATA}
+      handleLogout={() => {}}
+    />
   );
 }
