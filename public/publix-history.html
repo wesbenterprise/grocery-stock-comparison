@@ -47,7 +47,7 @@ h1,h2,h3,h4,h5,h6{font-family:var(--font-display);font-weight:800;line-height:1.
 .shake{animation:shake .4s ease-in-out}
 
 /* Dashboard */
-#dashboard{display:none;max-width:1400px;width:100%;margin:0 auto;padding:80px 24px 72px;box-sizing:border-box}
+#dashboard{display:block;max-width:1400px;width:100%;margin:0 auto;padding:80px 24px 72px;box-sizing:border-box}
 .app-header{position:fixed;top:0;left:0;right:0;z-index:100;height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:rgba(10,10,15,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.07)}
 .header-brand{display:flex;align-items:center;gap:12px;text-decoration:none}
 .header-brand-p{font-family:var(--font-serif);font-size:26px;font-weight:900;color:var(--amber);line-height:1;letter-spacing:-.02em;margin-right:2px}
@@ -186,14 +186,7 @@ tr:hover td{background:rgba(76,175,80,.03)}
 <a href="/stock-compare" style="font-size:0.75rem;color:#a0a0b8;text-decoration:none;">Stock Comparison</a>
 </nav>
 
-<!-- Password Gate -->
-<div id="gate" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;">
-  <div class="gate-box">
-    <input type="password" id="pw-input" placeholder="Enter password" autocomplete="off">
-    <button id="pw-btn">Unlock</button>
-  </div>
-  <div class="error" id="pw-error"></div>
-</div>
+
 
 <!-- Dashboard -->
 <div id="dashboard">
@@ -210,7 +203,6 @@ tr:hover td{background:rgba(76,175,80,.03)}
       <a class="header-nav-link active" href="/publix-history">Financial History</a>
       <a class="header-nav-link" href="/publix-ceo-timeline">CEO Timeline</a>
       <div class="header-live">
-        <button class="logout-btn" id="logout-btn">Logout</button>
       </div>
     </nav>
   </header>
@@ -840,12 +832,7 @@ function checkAuth() { showDashboard(); }
 
 document.getElementById('pw-btn').addEventListener('click', tryLogin);
 document.getElementById('pw-input').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
-document.getElementById('logout-btn').addEventListener('click', () => {
-  localStorage.removeItem('bfp-auth');
-  document.getElementById('dashboard').style.display = 'none';
-  document.getElementById('gate').style.display = 'flex';
-  document.getElementById('pw-input').value = '';
-});
+
 
 function showDashboard() {
   document.getElementById('gate').style.display = 'none';
