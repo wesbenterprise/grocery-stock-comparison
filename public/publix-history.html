@@ -175,6 +175,27 @@ tr:hover td{background:rgba(76,175,80,.03)}
   /* Toggles */
   .toggle-group{flex-wrap:wrap;gap:6px}
 }
+/* ── HAMBURGER + MOBILE NAV ── */
+.desktop-nav{display:flex;align-items:center;gap:4px}
+.hamburger-btn{display:none;background:none;border:none;cursor:pointer;padding:8px;margin-left:auto;flex-shrink:0}
+.hamburger-icon{display:flex;flex-direction:column;gap:5px;width:22px}
+.hamburger-icon span{display:block;height:2px;background:var(--text);border-radius:2px;transition:transform .2s,opacity .2s;transform-origin:center}
+.hamburger-icon.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.hamburger-icon.open span:nth-child(2){opacity:0}
+.hamburger-icon.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+.mobile-nav-overlay{position:fixed;top:60px;left:0;right:0;bottom:0;z-index:200;background:rgba(0,0,0,.5);backdrop-filter:blur(4px)}
+.mobile-nav{background:rgba(10,10,15,.98);border-bottom:1px solid rgba(255,255,255,.08);padding:8px 0 16px;display:flex;flex-direction:column}
+.mobile-nav-link{font-family:var(--font-mono);font-size:14px;font-weight:600;color:var(--muted);text-decoration:none;padding:14px 24px;border-left:3px solid transparent;transition:color .15s,background .15s,border-color .15s}
+.mobile-nav-link:hover{color:var(--text-secondary);background:rgba(255,255,255,.04)}
+.mobile-nav-link.active{color:var(--amber);border-left-color:var(--amber);background:rgba(76,175,80,.08)}
+@media(max-width:680px){
+  .desktop-nav{display:none}
+  .hamburger-btn{display:flex;align-items:center}
+}
+@media(min-width:681px){
+  .hamburger-btn{display:none!important}
+  .mobile-nav-overlay{display:none!important}
+}
 </style>
 </head>
 <body>
@@ -189,14 +210,29 @@ tr:hover td{background:rgba(76,175,80,.03)}
         <span class="header-brand-sub">Built to Last</span>
       </div>
     </a>
-    <nav class="header-nav">
+    <nav class="header-nav desktop-nav">
       <a class="header-nav-link" href="/">Publix: Built to Last</a>
       <a class="header-nav-link" href="/publix-ceo-timeline">CEO Timeline</a>
       <a class="header-nav-link active" href="/publix-history">Financial History</a>
       <a class="header-nav-link" href="/stock-compare">Stock Comparison</a>
       <a class="header-nav-link" href="/mr-george">🏛️ Mr. George's Office</a>
     </nav>
+    <!-- Mobile hamburger -->
+    <button class="hamburger-btn" id="hamburger-btn" aria-label="Toggle menu" onclick="toggleMobileNav()">
+      <span class="hamburger-icon" id="hamburger-icon"><span></span><span></span><span></span></span>
+    </button>
   </header>
+
+  <!-- Mobile nav dropdown -->
+  <div class="mobile-nav-overlay" id="mobile-nav-overlay" style="display:none" onclick="toggleMobileNav()">
+    <nav class="mobile-nav" onclick="event.stopPropagation()">
+      <a class="mobile-nav-link" href="/">Publix: Built to Last</a>
+      <a class="mobile-nav-link" href="/publix-ceo-timeline">CEO Timeline</a>
+      <a class="mobile-nav-link active" href="/publix-history">Financial History</a>
+      <a class="mobile-nav-link" href="/stock-compare">Stock Comparison</a>
+      <a class="mobile-nav-link" href="/mr-george">🏛️ Mr. George's Office</a>
+    </nav>
+  </div>
 
   <!-- Tab Switcher -->
   <div class="tab-switcher">
@@ -2704,6 +2740,14 @@ requestAnimationFrame(() => {
   buildYearSelector();
   updateAll();
 });
+
+function toggleMobileNav() {
+  const overlay = document.getElementById('mobile-nav-overlay');
+  const icon = document.getElementById('hamburger-icon');
+  const isOpen = overlay.style.display !== 'none';
+  overlay.style.display = isOpen ? 'none' : 'block';
+  icon.classList.toggle('open', !isOpen);
+}
 </script>
 </body>
 </html>
