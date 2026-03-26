@@ -1,8 +1,4 @@
-'use client';
-import dynamic from 'next/dynamic';
-
-const HistoryDashboard = dynamic(() => import('./HistoryDashboard'), { ssr: false });
-
+import { redirect } from 'next/navigation';
 export default function PublixHistoryPage() {
-  return <HistoryDashboard />;
+  redirect('/publix-history.html');
 }

@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Publix Super Markets — Financial History</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0/dist/chartjs-plugin-annotation.min.js"></script>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400;1,700&family=Nunito:wght@700;800;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Space+Grotesk:wght@500;600;700&display=swap");
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{overflow-x:hidden}
+:root{
+  --bg:#0a0a0f;
+  --bg-surface:#111118;
+  --card:#16161f;
+  --card-hover:#1c1c28;
+  --border:rgba(255,255,255,0.08);
+  --border-hover:rgba(255,255,255,0.16);
+  --amber:#4caf50;
+  --amber-glow:rgba(76,175,80,0.15);
+  --teal:#2DD4BF;
+  --text:#f0f0f5;
+  --text-secondary:#a0a0b8;
+  --muted:#606080;
+  --red:#ef5350;
+  --green:#4caf50;
+  --accent:#7c6fff;
+  --publix:#4caf50;
+  --publix-glow:rgba(76,175,80,0.15);
+  --font-display:"Nunito", system-ui, sans-serif;
+  --font-serif:"Playfair Display", Georgia, "Times New Roman", serif;
+  --font-body:"DM Sans", system-ui, sans-serif;
+  --font-mono:"Space Grotesk", monospace;
+}
+body{font-family:var(--font-body);background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow-x:hidden}
+a{color:var(--amber)}
+h1,h2,h3,h4,h5,h6{font-family:var(--font-display);font-weight:800;line-height:1.2;letter-spacing:-0.01em}
+
+
+#gate input:focus{border-color:var(--amber)}
+#gate button{background:var(--amber);color:#000;border:none;padding:12px 24px;border-radius:10px;font-family:var(--font-display);font-weight:700;cursor:pointer;font-size:15px;transition:opacity .2s}
+#gate button:hover{opacity:.9}
+#gate .error{color:var(--red);font-size:14px;height:20px;font-family:var(--font-body)}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.shake{animation:shake .4s ease-in-out}
+
+/* Dashboard */
+#dashboard{display:block;max-width:1400px;width:100%;margin:0 auto;padding:80px 24px 72px;box-sizing:border-box}
+.app-header{position:fixed;top:0;left:0;right:0;z-index:100;height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:rgba(10,10,15,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.07)}
+.header-brand{display:flex;align-items:center;gap:12px;text-decoration:none}
+.header-brand-p{font-family:var(--font-serif);font-size:26px;font-weight:900;color:var(--amber);line-height:1;letter-spacing:-.02em;margin-right:2px}
+.header-brand-sub{font-family:var(--font-mono);font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;display:block}
+.header-nav{display:flex;align-items:center;gap:4px}
+.header-nav-link{font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--muted);text-decoration:none;padding:6px 12px;border-radius:7px;letter-spacing:.03em;transition:color .15s,background .15s}
+.header-nav-link:hover{color:var(--text);background:rgba(255,255,255,.05)}
+.header-nav-link.active{color:var(--amber);background:rgba(76,175,80,.1)}
+.header-live{display:flex;align-items:center;gap:8px;padding-left:12px;margin-left:8px;border-left:1px solid var(--border)}
+.header-badge{font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--muted);background:#1e1e2a;border:1px solid var(--border);padding:2px 10px;border-radius:6px;letter-spacing:.04em;text-transform:uppercase}
+.logout-btn{background:transparent;border:1px solid var(--border);color:var(--text-secondary);padding:6px 14px;border-radius:8px;cursor:pointer;font-family:var(--font-mono);font-size:12px;font-weight:600;transition:all .2s}
+.logout-btn:hover{border-color:var(--red);color:var(--red)}
+
+/* Year Selector */
+.year-selector{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:28px}
+.year-btn{background:var(--card);border:1px solid var(--border);color:var(--text-secondary);padding:6px 14px;border-radius:8px;cursor:pointer;font-family:var(--font-mono);font-size:13px;font-weight:600;transition:all .15s;letter-spacing:.02em}
+.year-btn:hover{border-color:var(--border-hover);color:var(--text)}
+.year-btn.active{background:var(--amber-glow);border-color:var(--amber);color:var(--amber);font-weight:700}
+.year-btn.preset{font-weight:600}
+
+/* KPI Cards */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 22px;position:relative;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.05);transition:border-color .2s}
+.kpi-card:hover{border-color:var(--border-hover)}
+.kpi-card .label{color:var(--text-secondary);font-family:var(--font-body);font-size:12px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;font-weight:500}
+.kpi-card .value{font-family:var(--font-serif);font-size:28px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.kpi-card .change{font-family:var(--font-mono);font-size:12px;margin-top:4px;font-weight:600}
+.kpi-card .change.up{color:var(--green)}
+.kpi-card .change.down{color:var(--red)}
+.kpi-card canvas{position:absolute;bottom:0;right:0;width:100px;height:40px;opacity:.5;pointer-events:none}
+.kpi-spark-wrap{position:absolute;right:14px;top:50%;transform:translateY(-50%);width:80px;height:36px;border:1px solid rgba(255,255,255,0.12);border-radius:6px;overflow:hidden;background:rgba(255,255,255,0.02)}
+.kpi-card .kpi-spark{width:80px;height:36px;display:block;pointer-events:none}
+
+/* Chart Cards */
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.05);position:relative;overflow:hidden}
+.chart-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(76,175,80,0.025) 0%,transparent 50%);pointer-events:none}
+.chart-card h3{font-family:var(--font-serif);color:var(--text);font-size:18px;font-weight:700;margin-bottom:4px;letter-spacing:-0.01em}
+.chart-card .chart-eyebrow{font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--amber);margin-bottom:5px;display:block}
+.chart-card .chart-subtitle{color:var(--muted);font-family:var(--font-body);font-size:12px;margin-bottom:16px;font-weight:400}
+.chart-toggle{display:flex;gap:4px;margin-bottom:14px;background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:3px;width:fit-content}
+.toggle-btn{background:transparent;border:none;color:var(--text-secondary);padding:5px 14px;border-radius:6px;cursor:pointer;font-family:var(--font-mono);font-size:12px;font-weight:600;transition:all .15s;letter-spacing:.02em}
+.toggle-btn.active{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.3)}
+.toggle-btn:hover:not(.active){color:var(--text)}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+
+/* Heatmap */
+.heatmap{overflow-x:auto}
+.heatmap-grid{display:grid;gap:3px;min-width:600px}
+.hm-cell{padding:8px 6px;text-align:center;font-family:var(--font-mono);font-size:11px;font-weight:600;border-radius:6px;color:var(--text);transition:transform .15s}
+.hm-cell:hover{transform:scale(1.08);z-index:1}
+.hm-header{background:transparent;color:var(--muted);font-weight:700;font-size:11px}
+.hm-year{background:transparent;color:var(--text-secondary);font-weight:700;text-align:right;padding-right:10px}
+
+/* Data Table */
+.table-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--amber);font-family:var(--font-display);font-size:15px;font-weight:700;margin-bottom:12px;user-select:none}
+.table-toggle .arrow{transition:transform .2s;display:inline-block}
+.table-toggle .arrow.open{transform:rotate(90deg)}
+.data-table-wrap{overflow-x:auto;display:none}
+.data-table-wrap.open{display:block}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{color:var(--muted);font-family:var(--font-mono);font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:10px 10px;text-align:right;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;white-space:nowrap;font-size:10px}
+th:first-child{text-align:left}
+th:hover{color:var(--amber)}
+th .sort-arrow{margin-left:3px;opacity:.4}
+th.sorted .sort-arrow{opacity:1;color:var(--amber)}
+td{font-family:var(--font-mono);padding:8px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.04);white-space:nowrap;font-weight:500;color:var(--text-secondary)}
+td:first-child{text-align:left;color:var(--amber);font-weight:600}
+tr:hover td{background:rgba(76,175,80,.03)}
+
+/* Anderson Narrative Cards */
+.narrative-card{background:#0d0d14;border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:18px 22px;margin-top:16px;margin-bottom:8px}
+.narrative-card .narrative-header{font-family:var(--font-serif);font-size:13px;font-weight:700;font-style:italic;color:var(--amber);letter-spacing:.01em;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.narrative-card .narrative-header::after{content:'';flex:1;height:1px;background:rgba(76,175,80,.15)}
+.narrative-card .narrative-text{font-family:var(--font-body);font-size:13.5px;line-height:1.75;color:rgba(240,240,245,0.72)}
+.narrative-card .narrative-text{font-family:var(--font-body);font-size:13px;font-style:italic;color:var(--text-secondary);line-height:1.7}
+
+/* Tab Switcher */
+.tab-switcher{display:flex;gap:0;margin-bottom:28px;border-bottom:2px solid var(--border)}
+.tab-btn{background:transparent;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--muted);padding:12px 28px;font-family:var(--font-serif);font-size:15px;font-weight:700;cursor:pointer;letter-spacing:-.01em;transition:color .15s,border-color .15s}
+.tab-btn:hover{color:var(--text-secondary)}
+.tab-btn.active{color:var(--amber);border-bottom-color:var(--amber)}
+
+/* Cash Flow Section */
+#cf-section{display:none}
+
+/* Responsive */
+@media(max-width:900px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .chart-grid{grid-template-columns:1fr}
+}
+@media(max-width:860px){
+  .app-header{padding:0 16px}
+  .header-brand-sub{display:none}
+  .header-nav-link{padding:5px 8px;font-size:11px}
+}
+@media(max-width:620px){
+  .header-brand-p{font-size:20px}
+  .header-nav-link{padding:5px 6px;font-size:10px;letter-spacing:0}
+}
+@media(max-width:768px){
+  /* Tab switcher — scrollable on mobile */
+  .tab-switcher{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;white-space:nowrap;display:block}
+  .tab-switcher::-webkit-scrollbar{display:none}
+  .tab-btn{display:inline-block;padding:10px 18px;font-size:14px}
+  /* Header */
+  .app-header{padding:0 16px}
+  .header-badge{display:none}
+  /* Dashboard padding — account for fixed header */
+  #dashboard{padding:72px 14px 48px}
+  /* Year selector */
+  .year-selector{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px}
+  .year-selector::-webkit-scrollbar{display:none}
+  .year-btn{white-space:nowrap;flex-shrink:0}
+  /* Charts */
+  .chart-card{padding:16px}
+  .chart-card h3{font-size:15px}
+  .narrative-card{padding:12px 14px}
+  .narrative-card .narrative-text{font-size:12px}
+  /* KPI — 2-col on mobile, not 1 */
+  .kpi-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .kpi-card{padding:14px 16px}
+  .kpi-card .value{font-size:22px}
+  /* Table — horizontal scroll */
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  /* Toggles */
+  .toggle-group{flex-wrap:wrap;gap:6px}
+}
+</style>
+</head>
+<body><nav id="injected-nav" style="position:fixed;top:0;left:0;right:0;z-index:9999;background:rgba(10,10,15,0.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,0.08);padding:0 24px;height:48px;display:flex;align-items:center;gap:24px;font-family:system-ui,sans-serif;">
+<a href="/" style="font-size:0.8125rem;font-weight:700;color:#f0f0f5;text-decoration:none;letter-spacing:-0.01em;">Publix Intelligence</a>
+<span style="color:rgba(255,255,255,0.15);font-size:0.7rem;">|</span>
+<a href="/" style="font-size:0.75rem;color:#a0a0b8;text-decoration:none;">Publix: Built to Last</a>
+<a href="/publix-ceo-timeline" style="font-size:0.75rem;color:#a0a0b8;text-decoration:none;">CEO Timeline</a>
+<a href="/publix-history" style="font-size:0.75rem;color:#4caf50;text-decoration:none;font-weight:600;">Financial History</a>
+<a href="/stock-compare" style="font-size:0.75rem;color:#a0a0b8;text-decoration:none;">Stock Comparison</a>
+</nav>
+
+  <div class="error" id="pw-error"></div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard">
+  <header class="app-header">
+    <a class="header-brand" href="/" style="text-decoration:none">
+      <span class="header-brand-p">P</span>
+      <div>
+        <div style="font-family:var(--font-serif);font-size:15px;font-weight:700;color:var(--text);line-height:1.1">Publix Intelligence</div>
+        <span class="header-brand-sub">Grocery Stock Compare</span>
+      </div>
+    </a>
+    <nav class="header-nav">
+      <a class="header-nav-link" href="/">Stock Compare</a>
+      <a class="header-nav-link active" href="/publix-history">Financial History</a>
+      <a class="header-nav-link" href="/publix-ceo-timeline">CEO Timeline</a>
+      <div class="header-live">
+      </div>
+    </nav>
+  </header>
+
+  <!-- Tab Switcher -->
+  <div class="tab-switcher">
+    <button class="tab-btn active" id="tab-is" onclick="switchTab('is')">Income Statement</button>
+    <button class="tab-btn" id="tab-cf" onclick="switchTab('cf')">Cash Flow</button>
+    <button class="tab-btn" data-tab="equity" onclick="switchTab('equity')">Equity</button>
+    <button class="tab-btn" data-tab="balance-sheet" onclick="switchTab('balance-sheet')">Balance Sheet</button>
+  </div>
+
+  <!-- Income Statement Section -->
+  <div id="is-section">
+
+  <!-- Year Selector -->
+  <div class="year-selector" id="year-selector"></div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid" id="kpi-grid"></div>
+
+  <!-- Revenue & Operating Net Income -->
+  <div class="chart-card">
+    <h3>Revenue &amp; Adjusted Net Income</h3>
+    <div class="chart-subtitle">Quarterly revenue (bars) and operating net income ex. securities G/L (line) with key event annotations</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+      <div class="chart-toggle" id="rev-period-toggle">
+        <button class="toggle-btn active" data-period="quarterly">Quarterly</button>
+        <button class="toggle-btn" data-period="annual">Annual</button>
+      </div>
+      <div class="chart-toggle" id="rev-view-toggle">
+        <button class="toggle-btn active" data-view="absolute">Absolute</button>
+        <button class="toggle-btn" data-view="yoy">YoY %</button>
+      </div>
+    </div>
+    <div style="position:relative;height:320px"><canvas id="chart-revenue"></canvas></div>
+    <div class="narrative-card">
+      <div class="narrative-header">&#9670; Anderson's Take</div>
+      <div class="narrative-text">Revenue has compounded at 6.8% annually over the decade — steady, not spectacular. The story is really in operating earnings (stripped of unrealized securities G/L): operating net income CAGR of ~8.5% means Publix has consistently grown the bottom line faster than the top through actual business operations. The 2022 earnings compression despite accelerating revenue is the single most important chart on this page — it shows exactly how inflation squeezed margins even as customers kept spending. Post-2022 recovery has been strong on an operating basis.</div>
+    </div>
+  </div>
+
+  <div class="chart-grid">
+    <!-- Margin Analysis -->
+    <div class="chart-card">
+      <h3>Margin Analysis</h3>
+      <div class="chart-subtitle">Gross, operating &amp; net margins with industry reference lines</div>
+      <div class="chart-toggle" id="margins-period-toggle">
+        <button class="toggle-btn active" data-period="quarterly">Quarterly</button>
+        <button class="toggle-btn" data-period="annual">Annual</button>
+      </div>
+      <div style="position:relative;height:280px"><canvas id="chart-margins"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text">Publix runs 2–4x the operating margins of the typical U.S. grocery chain. The moat is not pricing power — it's cost structure. SG&amp;A efficiency and labor productivity drive the spread. The secular gross margin decline (28.7% → 25.3% over 10 years) is a quiet warning sign: if it continues without offsetting SG&amp;A cuts, operating margins follow. Watch this line. The 2022–2023 compression was inflation-driven and has partially recovered; the underlying downtrend predates it.</div>
+      </div>
+    </div>
+
+    <!-- Revenue Per Store -->
+    <div class="chart-card">
+      <h3>Revenue Per Store</h3>
+      <div class="chart-subtitle">Quarterly revenue divided by interpolated store count Store count interpolated between annual year-end figures.</div>
+      <div class="chart-toggle" id="rps-period-toggle">
+        <button class="toggle-btn active" data-period="quarterly">Quarterly</button>
+        <button class="toggle-btn" data-period="annual">Annual</button>
+      </div>
+      <div style="position:relative;height:280px"><canvas id="chart-rps"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text">The COVID-era step-change in revenue per store is permanent. Pre-pandemic average was roughly $8–9M/quarter per store. Post-normalization it reset to $11M+. That's not just inflation — it's a structural shift in grocery spend share. Publix captured pandemic pantry-loading and kept it. The implication: Publix's store count growth understates its actual capacity expansion.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Seasonal Heatmap -->
+  <div class="chart-card">
+    <h3>Seasonal Margin Heatmap</h3>
+    <div class="chart-subtitle">Cell value = net margin %; cell intensity = revenue magnitude</div>
+    <div class="heatmap" id="heatmap"></div>
+  </div>
+
+  <div class="chart-grid">
+    <!-- Balance Sheet -->
+    <div class="chart-card">
+      <h3>Balance Sheet</h3>
+      <div class="chart-subtitle">Total assets, liabilities &amp; stockholders' equity over time</div>
+      <div class="chart-toggle" id="balance-period-toggle">
+        <button class="toggle-btn active" data-period="quarterly">Quarterly</button>
+        <button class="toggle-btn" data-period="annual">Annual</button>
+      </div>
+      <div style="position:relative;height:280px"><canvas id="chart-balance"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text">The 2019 liability spike looks alarming but is purely accounting: ASC 842 required operating leases onto the balance sheet for the first time. Publix has essentially no traditional debt. The equity growth story (CAGR +10.3%) is clean and consistent — a company that funds everything internally and still compounds equity at double digits is a rare thing in low-margin retail.</div>
+      </div>
+    </div>
+
+    <!-- Store Expansion -->
+    <div class="chart-card">
+      <h3>Store Expansion</h3>
+      <div class="chart-subtitle">Store count growth with net new stores per year</div>
+      <div style="position:relative;height:280px"><canvas id="chart-stores"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text">From 1,114 stores in 2015 to 1,432 in 2025 — 29% growth in footprint over a decade. Notably, revenue per store grew faster than store count: the fleet is getting more productive, not just bigger. New stores are opening into markets where Publix's brand already has pricing power. The question for the next decade is whether that productivity premium holds as they push into less-established markets.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Table -->
+  <div class="chart-card">
+    <div class="table-toggle" id="table-toggle">
+      <span class="arrow" id="table-arrow">&#9654;</span> Full Quarterly Data (44 Quarters)
+    </div>
+    <div class="data-table-wrap" id="table-wrap">
+      <table>
+        <thead id="table-head"></thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  </div><!-- end #is-section -->
+
+  <!-- Cash Flow Section -->
+  <div id="cf-section">
+    <!-- CF KPI Cards -->
+    <div class="kpi-grid" id="cf-kpi-grid"></div>
+
+    <!-- OCF / Capex / FCF Chart -->
+    <div class="chart-card">
+      <h3>Operating Cash Flow, Capex &amp; Free Cash Flow</h3>
+      <div class="chart-subtitle">Quarterly cash generation and capital deployment</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+        <div class="chart-toggle" id="cf-ocf-period-toggle">
+          <button class="toggle-btn active" data-period="quarterly">Quarterly</button>
+          <button class="toggle-btn" data-period="annual">Annual</button>
+        </div>
+        <div class="chart-toggle" id="cf-ocf-view-toggle">
+          <button class="toggle-btn active" data-view="absolute">Absolute</button>
+          <button class="toggle-btn" data-view="yoy">YoY %</button>
+        </div>
+      </div>
+      <div style="position:relative;height:380px"><canvas id="chart-cf-ocf"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text">Publix generates cash at a rate that most grocers can't match. Annual OCF has grown from ~$3.5B in FY2015 to over $8B by FY2025 — more than doubling in a decade. The OCF-to-net-income spread is consistently wide because D&amp;A is a real non-cash charge running $550M+ per quarter by 2025, and working capital is favorable (suppliers effectively float Publix's inventory). Free cash flow tells the real story: after $2B+ in annual capex for store construction and remodels, Publix still generates $3–4B of FCF per year. That's not a grocery company. That's a cash machine wearing a grocery uniform.</div>
+      </div>
+    </div>
+
+    <!-- Capital Allocation Chart -->
+    <div class="chart-card">
+      <h3>Capital Allocation</h3>
+      <div class="chart-subtitle">How Publix deploys capital — capex, dividends, buybacks, and retained</div>
+      <div class="chart-toggle" id="cf-alloc-toggle">
+        <button class="toggle-btn active" data-mode="quarterly">Quarterly</button>
+        <button class="toggle-btn" data-mode="annual">Annual</button>
+      </div>
+      <div style="position:relative;height:300px"><canvas id="chart-cf-alloc"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text">The capital allocation picture reveals a disciplined, internally-funded growth machine. Capex runs $2–2.5B annually — almost entirely new stores, remodels, and technology — and is covered several times over by operating cash flow. Dividends have grown steadily and reflect the employee-ownership model: Publix associates are the shareholders, so the dividend policy doubles as a profit-sharing mechanism. Buybacks are opportunistic and modest relative to the cash pile. The purple "retained" bar is the most telling — in most years, Publix retains $1B+ after all distributions, compounding equity organically at double-digit rates without touching debt markets. When the retained bar dips negative, it's a deliberate choice to return more than was generated that quarter — a signal of confidence, not distress.</div>
+      </div>
+    </div>
+
+    <!-- Cash Conversion Chart -->
+    <div class="chart-card">
+      <h3>Cash Conversion</h3>
+      <div class="chart-subtitle">Operating cash flow and free cash flow as % of revenue</div>
+      <div class="chart-toggle" id="cf-conv-toggle">
+        <button class="toggle-btn active" data-period="quarterly">Quarterly</button>
+        <button class="toggle-btn" data-period="annual">Annual</button>
+      </div>
+      <div style="position:relative;height:280px"><canvas id="chart-cf-conversion"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text">OCF conversion — cash from operations as a percentage of revenue — runs 7–9% in normal years, which is exceptional for a grocery business where 2–3% is typical. The FCF margin (after capex) sits at 4–6% consistently. Two things drive this spread above peers: favorable supplier payment terms that create a structural working capital advantage, and a real estate strategy (mostly owned or long-term leased) that front-loads capex but eliminates rent escalation risk. The 2020 spike in OCF conversion was genuine — COVID demand surge hit margins without proportional cost increases. The subsequent normalization back to the trend line is exactly what you'd expect from a well-managed operation. The trend line itself is what matters: it hasn't compressed. That's a durable moat signal.</div>
+      </div>
+    </div>
+
+    <!-- CF Data Table -->
+    <div class="chart-card">
+      <div class="table-toggle" id="cf-table-toggle">
+        <span class="arrow" id="cf-table-arrow">&#9654;</span> Cash Flow Quarterly Data (44 Quarters)
+      </div>
+      <div class="data-table-wrap" id="cf-table-wrap">
+        <table>
+          <thead id="cf-table-head"></thead>
+          <tbody id="cf-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div><!-- end #cf-section -->
+
+  <div id="equity-section" style="display:none">
+    <!-- Equity KPI Cards -->
+    <div class="kpi-grid" id="equity-kpi-grid"></div>
+
+
+
+    <!-- Chart 1: Equity Compounding -->
+    <div class="chart-card">
+      <h3>Equity Compounding</h3>
+      <div class="chart-subtitle">Total stockholders' equity and book value per share</div>
+      <div class="chart-toggle" id="equity-compound-toggle">
+        <button class="toggle-btn" data-period="quarterly">Quarterly</button>
+        <button class="toggle-btn active" data-period="annual">Annual</button>
+      </div>
+      <div style="position:relative;height:340px"><canvas id="chart-equity-compound"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text" id="narrative-equity-compound">Publix has grown book equity from roughly $8.6B in 2015 to over $26B by 2025 — a ~11.6% CAGR in absolute terms. But that understates the per-shareholder story. Book value per share has compounded faster over the same period, the difference attributable almost entirely to a sustained buyback program that has retired roughly 17% of split-adjusted float. Equity isn't just growing — it's concentrating. Each remaining share commands a larger claim on the balance sheet than it did a decade ago, and that gap widens each year repurchases continue.</div>
+      </div>
+    </div>
+
+    <!-- Chart 2: Share Count & Buybacks -->
+    <div class="chart-card">
+      <h3>Share Count &amp; Buybacks</h3>
+      <div class="chart-subtitle">Split-adjusted shares outstanding and quarterly buyback spend (pre-2022 figures ×5 for split)</div>
+      <div class="chart-toggle" id="equity-shares-toggle">
+        <button class="toggle-btn" data-period="quarterly">Quarterly</button>
+        <button class="toggle-btn active" data-period="annual">Annual</button>
+      </div>
+      <div style="position:relative;height:340px"><canvas id="chart-equity-shares"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text">Publix has been a consistent repurchaser. On a split-adjusted basis, shares outstanding have declined from approximately 3,851M in 2015 to roughly 3,216M by 2025 — a reduction of ~16.5% over a decade, retiring roughly 60–70M shares per year on average. Publix is private; these repurchases represent buybacks from departing associates and estate transactions, not open-market buying. The mechanical effect on per-share metrics is identical to a public company buyback. When buyback spend spikes relative to share reduction, the implicit price paid per share rose — Publix was buying at higher valuations.</div>
+      </div>
+    </div>
+
+    <!-- Chart 3: EPS vs NI Indexed -->
+    <div class="chart-card">
+      <h3>EPS vs Adj. Net Income — Indexed Growth</h3>
+      <div class="chart-subtitle">Both rebased to 100 at 2015-Q1. The gap is the buyback accretion premium.</div>
+      <div class="chart-toggle" id="equity-eps-toggle">
+        <button class="toggle-btn" data-period="quarterly">Quarterly</button>
+        <button class="toggle-btn active" data-period="annual">Annual</button>
+      </div>
+      <div style="position:relative;height:320px"><canvas id="chart-equity-eps"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text">Operating net income has grown significantly since 2015, but split-adjusted EPS has grown faster. The spread between the two indexed lines is the mechanical output of ten years of share count reduction. Publix hasn't just grown earnings — it's grown earnings per remaining share faster than earnings grew in absolute terms. For an associate-owned company where the shareholders are employees, this compounds directly in their favor: each associate's stake earns more not just because the business is more profitable, but because there are fewer shares dividing that profit.</div>
+      </div>
+    </div>
+
+    <!-- Chart 4: Shareholder Returns Composition -->
+    <div class="chart-card">
+      <h3>Shareholder Returns Composition</h3>
+      <div class="chart-subtitle">Dividends and buybacks vs operating net income — Capital Return Rate</div>
+      <div style="position:relative;height:320px"><canvas id="chart-equity-returns"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text">Publix returns capital through both dividends and buybacks, and the Capital Return Rate — total returns as a percentage of operating net income — tells the real story about management's capital philosophy. In years where it exceeds 100%, Publix is returning more than it earned: drawing on operating cash flow above the net income line. This is not financial stress — OCF consistently exceeds net income due to D&A and working capital dynamics. It is a deliberate signal: Publix is not building a war chest. It is returning capital to its associates. The consistency of that commitment, year after year, is the policy.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="bs-section" style="display:none">
+    <div class="kpi-grid" id="bs-kpi-grid"></div>
+
+
+
+    <div class="chart-card">
+      <h3>Asset Composition</h3>
+      <div class="chart-subtitle">Operating assets vs. investment portfolio — quarterly FY2015–FY2025</div>
+      <div class="chart-toggle" id="bs-assets-toggle">
+        <button class="toggle-btn active" data-period="quarterly">Quarterly</button>
+        <button class="toggle-btn" data-period="annual">Annual</button>
+      </div>
+      <div style="position:relative;height:360px"><canvas id="chart-bs-assets"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text">Publix's balance sheet is not a grocery balance sheet. The physical store footprint — PP&E — is roughly $15B, but sitting alongside it is a $20B investment portfolio that has nothing to do with selling groceries. Long-term investments have compounded at roughly 9–10% annually since 2015. The ROU assets that appeared in 2019 reflect ASC 842 lease capitalization, not a real change in the business — Publix has always leased most of its locations. What you're looking at is a company that generates so much cash it can fund its own store growth AND accumulate an investment portfolio larger than the entire market cap of most regional grocery chains.</div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3>Balance Sheet Growth</h3>
+      <div class="chart-subtitle">Total assets, equity, and liabilities — quarterly FY2015–FY2025</div>
+      <div class="chart-toggle" id="bs-growth-toggle">
+        <button class="toggle-btn active" data-period="quarterly">Quarterly</button>
+        <button class="toggle-btn" data-period="annual">Annual</button>
+      </div>
+      <div style="position:relative;height:340px"><canvas id="chart-bs-growth"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text">Total assets have grown from roughly $16B in 2015 to over $40B in 2025 — a 2.5x increase in a decade, compounding at roughly 10% annually. The notable jump in liabilities in 2019 is entirely ASC 842 lease capitalization — Publix didn't take on debt, they just started reporting leases on the balance sheet as required. Actual financial liabilities remain minimal. Equity has grown in near-lockstep with assets, which tells you everything: this company funds its own growth without borrowing.</div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3>Asset Efficiency &amp; Working Capital</h3>
+      <div class="chart-subtitle">Asset turnover (TTM) and current ratio — quarterly FY2015–FY2025</div>
+      <div class="chart-toggle" id="bs-efficiency-toggle">
+        <button class="toggle-btn active" data-period="quarterly">Quarterly</button>
+        <button class="toggle-btn" data-period="annual">Annual</button>
+      </div>
+      <div style="position:relative;height:320px"><canvas id="chart-bs-efficiency"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text">Two signals worth separating. Asset turnover has drifted down from ~1.1x in 2015 to roughly 0.7x — not because the stores got less efficient, but because the investment portfolio keeps growing faster than revenue. If you stripped out the $20B investment portfolio and measured turnover against operating assets only, you'd see a highly efficient retailer. The current ratio below 1.0x is deliberate and healthy: Publix collects cash at the register before it pays vendors, which means the business self-funds its working capital needs. A current ratio below 1.0 for Publix is a sign of operational leverage, not distress.</div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3>Liability Structure</h3>
+      <div class="chart-subtitle">What Publix owes — and what it doesn't</div>
+      <div class="chart-toggle" id="bs-liab-toggle">
+        <button class="toggle-btn active" data-mode="quarterly">Quarterly</button>
+        <button class="toggle-btn" data-mode="annual">Annual</button>
+      </div>
+      <div style="position:relative;height:320px"><canvas id="chart-bs-liab"></canvas></div>
+      <div class="narrative-card">
+        <div class="narrative-header">&#9670; Anderson's Take</div>
+        <div class="narrative-text">Publix's liabilities are almost entirely operating in nature — vendor payables and lease obligations. The AP balance is float: Publix sells groceries for cash before it has to pay the producers. The lease stack grew significantly in 2019 but that's ASC 842 bringing long-standing operating leases onto the balance sheet for the first time — it's the same stores, same leases, just now visible. The deferred tax liability is ~$1.6B, which is accounting timing, not a real cash claim in any near-term window. Long-term debt is functionally zero. For a company with $40B in assets, this is an extraordinary capital structure — one that only works when you generate enough free cash flow to never need outside financing.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ──────────────────────────────────────────────────────────────
+// RAW DATA (44 quarters from SEC EDGAR)
+// ──────────────────────────────────────────────────────────────
+const RAW_QUARTERS = [
+  { period:"2015-Q1", fiscal_year:2015, quarter:1, period_end:"2015-03-28", revenue:8412745000, gross_profit:2411514000, gross_margin_pct:28.67, operating_income:773794000, operating_margin_pct:9.2, net_income:548918000, net_margin_pct:6.52, eps_basic:0.71, total_assets:15905937000, total_liabilities:4176984000, stockholders_equity:8591535000 },
+  { period:"2015-Q2", fiscal_year:2015, quarter:2, period_end:"2015-06-27", revenue:8018031000, gross_profit:2295692000, gross_margin_pct:28.63, operating_income:668440000, operating_margin_pct:8.34, net_income:482741000, net_margin_pct:6.02, eps_basic:0.62, total_assets:15714319000, total_liabilities:3662174000, stockholders_equity:8984622000 },
+  { period:"2015-Q3", fiscal_year:2015, quarter:3, period_end:"2015-09-26", revenue:7902144000, gross_profit:2163921000, gross_margin_pct:27.38, operating_income:558126000, operating_margin_pct:7.06, net_income:412314000, net_margin_pct:5.22, eps_basic:0.53, total_assets:15946059000, total_liabilities:3796287000, stockholders_equity:9123906000 },
+  { period:"2015-Q4", fiscal_year:2015, quarter:4, period_end:"2015-12-26", revenue:8285839000, gross_profit:2288022000, gross_margin_pct:27.61, operating_income:677881000, operating_margin_pct:8.18, net_income:521075000, net_margin_pct:6.29, eps_basic:0.68, total_assets:16359278000, total_liabilities:3928016000, stockholders_equity:9440453000 },
+  { period:"2016-Q1", fiscal_year:2016, quarter:1, period_end:"2016-03-26", revenue:8790561000, gross_profit:2519437000, gross_margin_pct:28.66, operating_income:826787000, operating_margin_pct:9.41, net_income:581889000, net_margin_pct:6.62, eps_basic:0.75, total_assets:17004056000, total_liabilities:3950696000, stockholders_equity:9591132000 },
+  { period:"2016-Q2", fiscal_year:2016, quarter:2, period_end:"2016-06-25", revenue:8190537000, gross_profit:2309064000, gross_margin_pct:28.19, operating_income:659351000, operating_margin_pct:8.05, net_income:478187000, net_margin_pct:5.84, eps_basic:0.62, total_assets:16940312000, total_liabilities:3743459000, stockholders_equity:9942670000 },
+  { period:"2016-Q3", fiscal_year:2016, quarter:3, period_end:"2016-09-24", revenue:8090649000, gross_profit:2188570000, gross_margin_pct:27.05, operating_income:535637000, operating_margin_pct:6.62, net_income:421135000, net_margin_pct:5.21, eps_basic:0.55, total_assets:17332819000, total_liabilities:4000632000, stockholders_equity:10159188000 },
+  { period:"2016-Q4", fiscal_year:2016, quarter:4, period_end:"2016-12-31", revenue:9202362000, gross_profit:2522733000, gross_margin_pct:27.41, operating_income:729876000, operating_margin_pct:7.93, net_income:544477000, net_margin_pct:5.92, eps_basic:0.71, total_assets:17386458000, total_liabilities:3889021000, stockholders_equity:10405171000 },
+  { period:"2017-Q1", fiscal_year:2017, quarter:1, period_end:"2017-04-01", revenue:8752946000, gross_profit:2496042000, gross_margin_pct:28.52, operating_income:740012000, operating_margin_pct:8.45, net_income:555271000, net_margin_pct:6.34, eps_basic:0.73, total_assets:18026221000, total_liabilities:3939172000, stockholders_equity:10575902000 },
+  { period:"2017-Q2", fiscal_year:2017, quarter:2, period_end:"2017-07-01", revenue:8482827000, gross_profit:2366475000, gross_margin_pct:27.9, operating_income:613303000, operating_margin_pct:7.23, net_income:495072000, net_margin_pct:5.84, eps_basic:0.65, total_assets:17941315000, total_liabilities:3804244000, stockholders_equity:10836496000 },
+  { period:"2017-Q3", fiscal_year:2017, quarter:3, period_end:"2017-09-30", revenue:8586080000, gross_profit:2366345000, gross_margin_pct:27.56, operating_income:634794000, operating_margin_pct:7.39, net_income:474927000, net_margin_pct:5.53, eps_basic:0.63, total_assets:17969044000, total_liabilities:4266509000, stockholders_equity:10541896000 },
+  { period:"2017-Q4", fiscal_year:2017, quarter:4, period_end:"2017-12-30", revenue:9014985000, gross_profit:2478259000, gross_margin_pct:27.49, operating_income:744715000, operating_margin_pct:8.26, net_income:766624000, net_margin_pct:8.5, eps_basic:1.04, total_assets:18183506000, total_liabilities:4074887000, stockholders_equity:11017149000 },
+  { period:"2018-Q1", fiscal_year:2018, quarter:1, period_end:"2018-03-31", revenue:9345807000, gross_profit:2664350000, gross_margin_pct:28.51, operating_income:833957000, operating_margin_pct:8.92, net_income:680271000, net_margin_pct:7.28, eps_basic:0.93, total_assets:18546137000, total_liabilities:3928369000, stockholders_equity:11126566000 },
+  { period:"2018-Q2", fiscal_year:2018, quarter:2, period_end:"2018-06-30", revenue:8826003000, gross_profit:2459957000, gross_margin_pct:27.87, operating_income:642792000, operating_margin_pct:7.28, net_income:616172000, net_margin_pct:6.98, eps_basic:0.84, total_assets:18576862000, total_liabilities:3805429000, stockholders_equity:11485083000 },
+  { period:"2018-Q3", fiscal_year:2018, quarter:3, period_end:"2018-09-29", revenue:8858101000, gross_profit:2422060000, gross_margin_pct:27.34, operating_income:583152000, operating_margin_pct:6.58, net_income:677744000, net_margin_pct:7.65, eps_basic:0.94, total_assets:18998748000, total_liabilities:4106856000, stockholders_equity:11666996000 },
+  { period:"2018-Q4", fiscal_year:2018, quarter:4, period_end:"2018-12-29", revenue:9365807000, gross_profit:2537960000, gross_margin_pct:27.1, operating_income:684502000, operating_margin_pct:7.31, net_income:406980000, net_margin_pct:4.35, eps_basic:0.57, total_assets:18982516000, total_liabilities:3987852000, stockholders_equity:11823342000 },
+  { period:"2019-Q1", fiscal_year:2019, quarter:1, period_end:"2019-03-30", revenue:9760110000, gross_profit:2793718000, gross_margin_pct:28.62, operating_income:856575000, operating_margin_pct:8.78, net_income:980971000, net_margin_pct:10.05, eps_basic:1.37, total_assets:22970300000, total_liabilities:6973560000, stockholders_equity:12450398000 },
+  { period:"2019-Q2", fiscal_year:2019, quarter:2, period_end:"2019-06-29", revenue:9446916000, gross_profit:2634326000, gross_margin_pct:27.89, operating_income:679438000, operating_margin_pct:7.19, net_income:661057000, net_margin_pct:7.0, eps_basic:0.92, total_assets:23383629000, total_liabilities:7097775000, stockholders_equity:12897061000 },
+  { period:"2019-Q3", fiscal_year:2019, quarter:3, period_end:"2019-09-28", revenue:9417933000, gross_profit:2577858000, gross_margin_pct:27.37, operating_income:612030000, operating_margin_pct:6.5, net_income:574026000, net_margin_pct:6.1, eps_basic:0.81, total_assets:23929393000, total_liabilities:7405844000, stockholders_equity:13200858000 },
+  { period:"2019-Q4", fiscal_year:2019, quarter:4, period_end:"2019-12-28", revenue:9837794000, gross_profit:2716382000, gross_margin_pct:27.61, operating_income:741206000, operating_margin_pct:7.53, net_income:789341000, net_margin_pct:8.02, eps_basic:1.11, total_assets:24507120000, total_liabilities:7605776000, stockholders_equity:13604000000 },
+  { period:"2020-Q1", fiscal_year:2020, quarter:1, period_end:"2020-03-28", revenue:11306951000, gross_profit:3269383000, gross_margin_pct:28.91, operating_income:1151611000, operating_margin_pct:10.18, net_income:667335000, net_margin_pct:5.9, eps_basic:0.94, total_assets:25202317000, total_liabilities:7955599000, stockholders_equity:13505729000 },
+  { period:"2020-Q2", fiscal_year:2020, quarter:2, period_end:"2020-06-27", revenue:11468563000, gross_profit:3312889000, gross_margin_pct:28.89, operating_income:1077045000, operating_margin_pct:9.39, net_income:1367055000, net_margin_pct:11.92, eps_basic:1.94, total_assets:26845843000, total_liabilities:8506838000, stockholders_equity:14734397000 },
+  { period:"2020-Q3", fiscal_year:2020, quarter:3, period_end:"2020-09-26", revenue:11136409000, gross_profit:3133393000, gross_margin_pct:28.14, operating_income:876323000, operating_margin_pct:7.87, net_income:917584000, net_margin_pct:8.24, eps_basic:1.31, total_assets:27194202000, total_liabilities:8407773000, stockholders_equity:15227652000 },
+  { period:"2020-Q4", fiscal_year:2020, quarter:4, period_end:"2020-12-26", revenue:11292036000, gross_profit:3133294000, gross_margin_pct:27.75, operating_income:907021000, operating_margin_pct:8.03, net_income:1019864000, net_margin_pct:9.03, eps_basic:1.47, total_assets:28094077000, total_liabilities:8808213000, stockholders_equity:15757000000 },
+  { period:"2021-Q1", fiscal_year:2021, quarter:1, period_end:"2021-03-27", revenue:11760235000, gross_profit:3377013000, gross_margin_pct:28.72, operating_income:1051604000, operating_margin_pct:8.94, net_income:1495093000, net_margin_pct:12.71, eps_basic:2.16, total_assets:29446420000, total_liabilities:8836700000, stockholders_equity:16522259000 },
+  { period:"2021-Q2", fiscal_year:2021, quarter:2, period_end:"2021-06-26", revenue:11927061000, gross_profit:3410983000, gross_margin_pct:28.6, operating_income:1109358000, operating_margin_pct:9.3, net_income:1009404000, net_margin_pct:8.46, eps_basic:0.29, total_assets:29983121000, total_liabilities:8813288000, stockholders_equity:17266580000 },
+  { period:"2021-Q3", fiscal_year:2021, quarter:3, period_end:"2021-09-25", revenue:12007162000, gross_profit:3295526000, gross_margin_pct:27.45, operating_income:909520000, operating_margin_pct:7.57, net_income:856906000, net_margin_pct:7.14, eps_basic:0.25, total_assets:30874323000, total_liabilities:9301760000, stockholders_equity:17706884000 },
+  { period:"2021-Q4", fiscal_year:2021, quarter:4, period_end:"2021-12-25", revenue:12699542000, gross_profit:3482478000, gross_margin_pct:27.42, operating_income:1082518000, operating_margin_pct:8.52, net_income:1050597000, net_margin_pct:8.27, eps_basic:3.7, total_assets:31524000000, total_liabilities:9486000000, stockholders_equity:18170000000 },
+  { period:"2022-Q1", fiscal_year:2022, quarter:1, period_end:"2022-03-26", revenue:13336000000, gross_profit:3769000000, gross_margin_pct:28.26, operating_income:1282000000, operating_margin_pct:9.61, net_income:618000000, net_margin_pct:4.63, eps_basic:0.18, total_assets:30911368000, total_liabilities:8894041000, stockholders_equity:17549000000 },
+  { period:"2022-Q2", fiscal_year:2022, quarter:2, period_end:"2022-06-25", revenue:13035000000, gross_profit:3558000000, gross_margin_pct:27.3, operating_income:1073000000, operating_margin_pct:8.23, net_income:628000000, net_margin_pct:4.82, eps_basic:0.18, total_assets:30374604000, total_liabilities:8837791000, stockholders_equity:17243000000 },
+  { period:"2022-Q3", fiscal_year:2022, quarter:3, period_end:"2022-09-24", revenue:13107000000, gross_profit:3470000000, gross_margin_pct:26.47, operating_income:935000000, operating_margin_pct:7.13, net_income:394000000, net_margin_pct:3.01, eps_basic:0.12, total_assets:30347557000, total_liabilities:9105228000, stockholders_equity:17065000000 },
+  { period:"2022-Q4", fiscal_year:2022, quarter:4, period_end:"2022-12-31", revenue:15464000000, gross_profit:4207000000, gross_margin_pct:27.21, operating_income:1469000000, operating_margin_pct:9.5, net_income:1278000000, net_margin_pct:8.26, eps_basic:0.38, total_assets:31047000000, total_liabilities:9195000000, stockholders_equity:17786000000 },
+  { period:"2023-Q1", fiscal_year:2023, quarter:1, period_end:"2023-04-01", revenue:14438000000, gross_profit:3910000000, gross_margin_pct:27.08, operating_income:1215000000, operating_margin_pct:8.42, net_income:1241000000, net_margin_pct:8.6, eps_basic:0.37, total_assets:32241000000, total_liabilities:9109000000, stockholders_equity:18432000000 },
+  { period:"2023-Q2", fiscal_year:2023, quarter:2, period_end:"2023-07-01", revenue:14189000000, gross_profit:3809000000, gross_margin_pct:26.84, operating_income:1070000000, operating_margin_pct:7.54, net_income:1097000000, net_margin_pct:7.73, eps_basic:0.33, total_assets:32776000000, total_liabilities:9165000000, stockholders_equity:19183000000 },
+  { period:"2023-Q3", fiscal_year:2023, quarter:3, period_end:"2023-09-30", revenue:14062000000, gross_profit:3780000000, gross_margin_pct:26.88, operating_income:1056000000, operating_margin_pct:7.51, net_income:833000000, net_margin_pct:5.92, eps_basic:0.25, total_assets:33354000000, total_liabilities:9533000000, stockholders_equity:19496000000 },
+  { period:"2023-Q4", fiscal_year:2023, quarter:4, period_end:"2023-12-30", revenue:14845000000, gross_profit:3946000000, gross_margin_pct:26.58, operating_income:1132000000, operating_margin_pct:7.63, net_income:1178000000, net_margin_pct:7.94, eps_basic:0.36, total_assets:34384000000, total_liabilities:9713000000, stockholders_equity:20416000000 },
+  { period:"2024-Q1", fiscal_year:2024, quarter:1, period_end:"2024-03-30", revenue:15162000000, gross_profit:4003000000, gross_margin_pct:26.4, operating_income:1195000000, operating_margin_pct:7.88, net_income:1366000000, net_margin_pct:9.01, eps_basic:0.41, total_assets:35764000000, total_liabilities:9864000000, stockholders_equity:21030000000 },
+  { period:"2024-Q2", fiscal_year:2024, quarter:2, period_end:"2024-06-29", revenue:14636000000, gross_profit:3831000000, gross_margin_pct:26.18, operating_income:1052000000, operating_margin_pct:7.19, net_income:972000000, net_margin_pct:6.64, eps_basic:0.29, total_assets:35752000000, total_liabilities:9609000000, stockholders_equity:21493000000 },
+  { period:"2024-Q3", fiscal_year:2024, quarter:3, period_end:"2024-09-28", revenue:14733000000, gross_profit:3818000000, gross_margin_pct:25.91, operating_income:1020000000, operating_margin_pct:6.92, net_income:1097000000, net_margin_pct:7.45, eps_basic:0.33, total_assets:36851000000, total_liabilities:9984000000, stockholders_equity:22284000000 },
+  { period:"2024-Q4", fiscal_year:2024, quarter:4, period_end:"2024-12-28", revenue:15646000000, gross_profit:4097000000, gross_margin_pct:26.19, operating_income:1201000000, operating_margin_pct:7.68, net_income:1200000000, net_margin_pct:7.67, eps_basic:0.38, total_assets:37601000000, total_liabilities:10173000000, stockholders_equity:22863000000 },
+  { period:"2025-Q1", fiscal_year:2025, quarter:1, period_end:"2025-03-29", revenue:15934000000, gross_profit:4240000000, gross_margin_pct:26.61, operating_income:1344000000, operating_margin_pct:8.43, net_income:1011000000, net_margin_pct:6.34, eps_basic:0.31, total_assets:38398000000, total_liabilities:10051000000, stockholders_equity:23002000000 },
+  { period:"2025-Q2", fiscal_year:2025, quarter:2, period_end:"2025-06-28", revenue:15690000000, gross_profit:4084000000, gross_margin_pct:26.03, operating_income:1152000000, operating_margin_pct:7.34, net_income:1375000000, net_margin_pct:8.76, eps_basic:0.42, total_assets:39370000000, total_liabilities:10323000000, stockholders_equity:23956000000 },
+  { period:"2025-Q3", fiscal_year:2025, quarter:3, period_end:"2025-09-27", revenue:15499000000, gross_profit:4003000000, gross_margin_pct:25.83, operating_income:1062000000, operating_margin_pct:6.85, net_income:1183000000, net_margin_pct:7.63, eps_basic:0.37, total_assets:40363000000, total_liabilities:10840000000, stockholders_equity:24471000000 },
+  { period:"2025-Q4", fiscal_year:2025, quarter:4, period_end:"2025-12-27", revenue:16086000000, gross_profit:4062000000, gross_margin_pct:25.25, operating_income:1066000000, operating_margin_pct:6.63, net_income:1165000000, net_margin_pct:7.24, eps_basic:0.36, total_assets:40989000000, total_liabilities:10887000000, stockholders_equity:25141000000 }
+];
+
+const YEAR_END_STORE_COUNTS = {
+  2014:1100, 2015:1114, 2016:1136, 2017:1167, 2018:1211, 2019:1239,
+  2020:1264, 2021:1293, 2022:1322, 2023:1360, 2024:1390, 2025:1432
+};
+
+const ANNOTATIONS = [
+  { id:'covid_surge', quarter:'2020-Q1', label:'COVID Surge', color:'#ef5350' },
+  { id:'portfolio_peak', quarter:'2021-Q1', label:'Portfolio Peak', color:'#2DD4BF' },
+  { id:'inflation_surge', quarter:'2022-Q1', label:'Inflation Pass-Through', color:'#4caf50' },
+  { id:'margin_trough', quarter:'2022-Q3', label:'Margin Trough', color:'#ef5350' },
+  { id:'normalization', quarter:'2024-Q1', label:'Organic Growth', color:'#4caf50' },
+];
+
+// ──────────────────────────────────────────────────────────────
+// Initialize quarters with derived fields
+// ──────────────────────────────────────────────────────────────
+function initializeQuarters(raw) {
+  const withStores = raw.map(r => {
+    const fy = r.fiscal_year, q = r.quarter;
+    const prevEnd = YEAR_END_STORE_COUNTS[fy - 1];
+    const thisEnd = YEAR_END_STORE_COUNTS[fy];
+    const storeCount = q === 4 ? thisEnd : Math.round(prevEnd + (thisEnd - prevEnd) * (q / 4));
+    return {
+      period: r.period, fiscalYear: r.fiscal_year, quarter: r.quarter, periodEnd: r.period_end,
+      revenue: r.revenue, grossProfit: r.gross_profit, grossMarginPct: r.gross_margin_pct,
+      operatingIncome: r.operating_income, operatingMarginPct: r.operating_margin_pct,
+      netIncome: r.net_income, netMarginPct: r.net_margin_pct, epsBasic: r.eps_basic,
+      totalAssets: r.total_assets, totalLiabilities: r.total_liabilities,
+      stockholdersEquity: r.stockholders_equity, storeCount,
+      revenuePerStore: r.revenue / storeCount,
+    };
+  });
+  const yoyRev = withStores.map((q,i) => i < 4 ? null : ((q.revenue - withStores[i-4].revenue) / Math.abs(withStores[i-4].revenue)) * 100);
+  // yoyNetIncomeGrowth computed AFTER operatingNetIncome is attached — see below
+  return withStores.map((q,i) => ({ ...q, yoyRevenueGrowth: yoyRev[i] }));
+}
+
+const QUARTERS = initializeQuarters(RAW_QUARTERS);
+
+// ──────────────────────────────────────────────────────────────
+// Operating Net Income — strip after-tax unrealized securities G/L
+// ──────────────────────────────────────────────────────────────
+// Q1-Q3: EDGAR XBRL EquitySecuritiesFvNiUnrealizedGainLoss, 25.4% statutory rate
+// Q4:    Derived directly from Publix official annual press release non-GAAP tables
+//        (FY total adjusted NI minus Q1+Q2+Q3 adjusted NI). Sourced 2026-03-24.
+const UNREALIZED_GL = {
+  '2018-Q1': -26000000, '2018-Q2': 77000000, '2018-Q3': 166000000,
+  '2019-Q1': 314000000, '2019-Q2': 5000000, '2019-Q3': -27000000,
+  '2020-Q1': -387000000, '2020-Q2': 597000000, '2020-Q3': 131000000,
+  '2021-Q1': 785000000, '2021-Q2': 129000000, '2021-Q3': 73000000,
+  '2022-Q1': -581000000, '2022-Q2': -358000000, '2022-Q3': -556000000,
+  '2023-Q1': 246000000, '2023-Q2': 123000000, '2023-Q3': -144000000,
+  '2024-Q1': 387000000, '2024-Q2': 43000000, '2024-Q3': 224000000,
+  '2025-Q1': -223000000, '2025-Q2': 446000000, '2025-Q3': 272000000,
+};
+// Q4 operating NI sourced directly from Publix annual press release non-GAAP tables.
+// These override the back-calculation for Q4 only.
+const Q4_OPERATING_NI_OVERRIDE = {
+  '2018-Q4': 704500000,   // derived: FY $2,517.5M - Q1-Q3 $1,813M
+  '2019-Q4': 618600000,   // derived: FY $2,615.6M - Q1-Q3 $1,997M
+  '2020-Q4': 918500000,   // press release Q4 table (more reliable than derived $992M)
+  '2021-Q4': 959700000,   // press release Q4 table (more reliable than derived $967M)
+  '2022-Q4': 1293000000,  // press release Q4 table — exact match with derived
+  '2023-Q4': 1050000000,  // press release Q4 table
+  '2024-Q4': 1100000000,  // derived = press release Q4 table — exact match
+  '2025-Q4': 1003000000,  // press release Q4 table ($1,003M ≈ derived $1,004M)
+};
+const TAX_RATE = 0.254;
+QUARTERS.forEach(q => {
+  if (Q4_OPERATING_NI_OVERRIDE[q.period] !== undefined) {
+    // Q4: use press-release-sourced figure directly
+    q.operatingNetIncome = Q4_OPERATING_NI_OVERRIDE[q.period];
+  } else {
+    // Q1-Q3: back-calculate from EDGAR unrealized GL at 25.4% statutory rate
+    const gl = UNREALIZED_GL[q.period] || 0;
+    q.operatingNetIncome = q.netIncome - (gl * (1 - TAX_RATE));
+  }
+  q.operatingNetMarginPct = (q.operatingNetIncome / q.revenue) * 100;
+});
+
+// YoY Operating Net Income Growth — computed after operatingNetIncome is set
+QUARTERS.forEach((q, i) => {
+  if (i < 4) { q.yoyNetIncomeGrowth = null; return; }
+  const prior = QUARTERS[i - 4];
+  q.yoyNetIncomeGrowth = ((q.operatingNetIncome - prior.operatingNetIncome) / Math.abs(prior.operatingNetIncome)) * 100;
+});
+
+// ──────────────────────────────────────────────────────────────
+// Cash Flow Data (SEC EDGAR)
+// ──────────────────────────────────────────────────────────────
+const CASHFLOW_DATA = [
+  {period:"2015-Q1",fiscal_year:2015,quarter:1,operating_cash_flow:1135388000,capex:-221571000,free_cash_flow:913817000,depreciation_amortization:134073000,stock_repurchases:-277730000,dividends_paid:0,cash_end_of_period:455751000},
+  {period:"2015-Q2",fiscal_year:2015,quarter:2,operating_cash_flow:543040000,capex:-283365000,free_cash_flow:259675000,depreciation_amortization:135693000,stock_repurchases:-204220000,dividends_paid:-303354000,cash_end_of_period:277244000},
+  {period:"2015-Q3",fiscal_year:2015,quarter:3,operating_cash_flow:699169000,capex:-274100000,free_cash_flow:425069000,depreciation_amortization:152361000,stock_repurchases:-200217000,dividends_paid:-154968000,cash_end_of_period:327498000},
+  {period:"2015-Q4",fiscal_year:2015,quarter:4,operating_cash_flow:563768000,capex:-456612000,free_cash_flow:107156000,depreciation_amortization:159765000,stock_repurchases:-173634000,dividends_paid:-154444000,cash_end_of_period:352176000},
+  {period:"2016-Q1",fiscal_year:2016,quarter:1,operating_cash_flow:1248417000,capex:-336682000,free_cash_flow:911735000,depreciation_amortization:149934000,stock_repurchases:-277919000,dividends_paid:-153957000,cash_end_of_period:493677000},
+  {period:"2016-Q2",fiscal_year:2016,quarter:2,operating_cash_flow:567006000,capex:-394054000,free_cash_flow:172952000,depreciation_amortization:157733000,stock_repurchases:-245482000,dividends_paid:-172116000,cash_end_of_period:304762000},
+  {period:"2016-Q3",fiscal_year:2016,quarter:3,operating_cash_flow:803340000,capex:-379780000,free_cash_flow:423560000,depreciation_amortization:151027000,stock_repurchases:-199240000,dividends_paid:-171245000,cash_end_of_period:304561000},
+  {period:"2016-Q4",fiscal_year:2016,quarter:4,operating_cash_flow:634192000,capex:-333311000,free_cash_flow:300881000,depreciation_amortization:165509000,stock_repurchases:-237621000,dividends_paid:-170584000,cash_end_of_period:438319000},
+  {period:"2017-Q1",fiscal_year:2017,quarter:1,operating_cash_flow:1161526000,capex:-287654000,free_cash_flow:873872000,depreciation_amortization:157291000,stock_repurchases:-287451000,dividends_paid:-169722000,cash_end_of_period:568632000},
+  {period:"2017-Q2",fiscal_year:2017,quarter:2,operating_cash_flow:494424000,capex:-441600000,free_cash_flow:52824000,depreciation_amortization:160383000,stock_repurchases:-306793000,dividends_paid:-176410000,cash_end_of_period:253725000},
+  {period:"2017-Q3",fiscal_year:2017,quarter:3,operating_cash_flow:1157065000,capex:-333898000,free_cash_flow:823167000,depreciation_amortization:166633000,stock_repurchases:-844384000,dividends_paid:-173655000,cash_end_of_period:670695000},
+  {period:"2017-Q4",fiscal_year:2017,quarter:4,operating_cash_flow:767266000,capex:-365907000,free_cash_flow:401359000,depreciation_amortization:179702000,stock_repurchases:-313236000,dividends_paid:-169873000,cash_end_of_period:579925000},
+  {period:"2018-Q1",fiscal_year:2018,quarter:1,operating_cash_flow:1104802000,capex:-449980000,free_cash_flow:654822000,depreciation_amortization:160170000,stock_repurchases:-432894000,dividends_paid:-168597000,cash_end_of_period:644355000},
+  {period:"2018-Q2",fiscal_year:2018,quarter:2,operating_cash_flow:728659000,capex:-281393000,free_cash_flow:447266000,depreciation_amortization:168211000,stock_repurchases:-317877000,dividends_paid:-190655000,cash_end_of_period:561930000},
+  {period:"2018-Q3",fiscal_year:2018,quarter:3,operating_cash_flow:1029530000,capex:-367472000,free_cash_flow:662058000,depreciation_amortization:172717000,stock_repurchases:-441275000,dividends_paid:-188441000,cash_end_of_period:616283000},
+  {period:"2018-Q4",fiscal_year:2018,quarter:4,operating_cash_flow:768935000,capex:-251244000,free_cash_flow:517691000,depreciation_amortization:176056000,stock_repurchases:-213826000,dividends_paid:-186817000,cash_end_of_period:599264000},
+  {period:"2019-Q1",fiscal_year:2019,quarter:1,operating_cash_flow:1428356000,capex:-254836000,free_cash_flow:1173520000,depreciation_amortization:174049000,stock_repurchases:-333857000,dividends_paid:-185835000,cash_end_of_period:1012142000},
+  {period:"2019-Q2",fiscal_year:2019,quarter:2,operating_cash_flow:833608000,capex:-396377000,free_cash_flow:437231000,depreciation_amortization:176927000,stock_repurchases:-256851000,dividends_paid:-215552000,cash_end_of_period:820610000},
+  {period:"2019-Q3",fiscal_year:2019,quarter:3,operating_cash_flow:905024000,capex:-234173000,free_cash_flow:670851000,depreciation_amortization:183771000,stock_repurchases:-223598000,dividends_paid:-214162000,cash_end_of_period:1294010000},
+  {period:"2019-Q4",fiscal_year:2019,quarter:4,operating_cash_flow:857443000,capex:-255732000,free_cash_flow:601711000,depreciation_amortization:181922000,stock_repurchases:-274264000,dividends_paid:-213184000,cash_end_of_period:763000000},
+  {period:"2020-Q1",fiscal_year:2020,quarter:1,operating_cash_flow:2292505000,capex:-269288000,free_cash_flow:2023217000,depreciation_amortization:178969000,stock_repurchases:-442509000,dividends_paid:-211847000,cash_end_of_period:1618875000},
+  {period:"2020-Q2",fiscal_year:2020,quarter:2,operating_cash_flow:1251193000,capex:-304715000,free_cash_flow:946478000,depreciation_amortization:180299000,stock_repurchases:-332605000,dividends_paid:-225495000,cash_end_of_period:1423493000},
+  {period:"2020-Q3",fiscal_year:2020,quarter:3,operating_cash_flow:736222000,capex:-320316000,free_cash_flow:415906000,depreciation_amortization:185912000,stock_repurchases:-316031000,dividends_paid:-224264000,cash_end_of_period:602798000},
+  {period:"2020-Q4",fiscal_year:2020,quarter:4,operating_cash_flow:1144080000,capex:-333681000,free_cash_flow:810399000,depreciation_amortization:191820000,stock_repurchases:-348855000,dividends_paid:-222394000,cash_end_of_period:673000000},
+  {period:"2021-Q1",fiscal_year:2021,quarter:1,operating_cash_flow:1488297000,capex:-345933000,free_cash_flow:1142364000,depreciation_amortization:192241000,stock_repurchases:-340092000,dividends_paid:-220975000,cash_end_of_period:979059000},
+  {period:"2021-Q2",fiscal_year:2021,quarter:2,operating_cash_flow:1090980000,capex:-303989000,free_cash_flow:786991000,depreciation_amortization:196849000,stock_repurchases:-248145000,dividends_paid:-256562000,cash_end_of_period:903810000},
+  {period:"2021-Q3",fiscal_year:2021,quarter:3,operating_cash_flow:1547444000,capex:-333409000,free_cash_flow:1214035000,depreciation_amortization:199246000,stock_repurchases:-244209000,dividends_paid:-255349000,cash_end_of_period:1171532000},
+  {period:"2021-Q4",fiscal_year:2021,quarter:4,operating_cash_flow:1262279000,capex:-304669000,free_cash_flow:957610000,depreciation_amortization:205664000,stock_repurchases:-304554000,dividends_paid:-254114000,cash_end_of_period:1132000000},
+  {period:"2022-Q1",fiscal_year:2022,quarter:1,operating_cash_flow:1573000000,capex:-402000000,free_cash_flow:1171000000,depreciation_amortization:202000000,stock_repurchases:-538000000,dividends_paid:-253000000,cash_end_of_period:680000000},
+  {period:"2022-Q2",fiscal_year:2022,quarter:2,operating_cash_flow:1204000000,capex:-386000000,free_cash_flow:818000000,depreciation_amortization:206000000,stock_repurchases:-733000000,dividends_paid:-307000000,cash_end_of_period:1028000000},
+  {period:"2022-Q3",fiscal_year:2022,quarter:3,operating_cash_flow:1310000000,capex:-498000000,free_cash_flow:812000000,depreciation_amortization:211000000,stock_repurchases:-375000000,dividends_paid:-304000000,cash_end_of_period:1599000000},
+  {period:"2022-Q4",fiscal_year:2022,quarter:4,operating_cash_flow:1417000000,capex:-482000000,free_cash_flow:935000000,depreciation_amortization:219000000,stock_repurchases:-491000000,dividends_paid:-302000000,cash_end_of_period:1336000000},
+  {period:"2023-Q1",fiscal_year:2023,quarter:1,operating_cash_flow:1509000000,capex:-492000000,free_cash_flow:1017000000,depreciation_amortization:222000000,stock_repurchases:-317000000,dividends_paid:-299000000,cash_end_of_period:1561000000},
+  {period:"2023-Q2",fiscal_year:2023,quarter:2,operating_cash_flow:1221000000,capex:-392000000,free_cash_flow:829000000,depreciation_amortization:225000000,stock_repurchases:-258000000,dividends_paid:-334000000,cash_end_of_period:1563000000},
+  {period:"2023-Q3",fiscal_year:2023,quarter:3,operating_cash_flow:1527000000,capex:-441000000,free_cash_flow:1086000000,depreciation_amortization:229000000,stock_repurchases:-320000000,dividends_paid:-332000000,cash_end_of_period:1089000000},
+  {period:"2023-Q4",fiscal_year:2023,quarter:4,operating_cash_flow:1343000000,capex:-668000000,free_cash_flow:675000000,depreciation_amortization:238000000,stock_repurchases:-270000000,dividends_paid:-331000000,cash_end_of_period:865000000},
+  {period:"2024-Q1",fiscal_year:2024,quarter:1,operating_cash_flow:1675000000,capex:-792000000,free_cash_flow:883000000,depreciation_amortization:258000000,stock_repurchases:-394000000,dividends_paid:-329000000,cash_end_of_period:756000000},
+  {period:"2024-Q2",fiscal_year:2024,quarter:2,operating_cash_flow:1057000000,capex:-407000000,free_cash_flow:650000000,depreciation_amortization:236000000,stock_repurchases:-421000000,dividends_paid:-356000000,cash_end_of_period:485000000},
+  {period:"2024-Q3",fiscal_year:2024,quarter:3,operating_cash_flow:1565000000,capex:-792000000,free_cash_flow:773000000,depreciation_amortization:258000000,stock_repurchases:-287000000,dividends_paid:-352000000,cash_end_of_period:945000000},
+  {period:"2024-Q4",fiscal_year:2024,quarter:4,operating_cash_flow:1271000000,capex:-621000000,free_cash_flow:650000000,depreciation_amortization:256000000,stock_repurchases:-291000000,dividends_paid:-351000000,cash_end_of_period:856000000},
+  {period:"2025-Q1",fiscal_year:2025,quarter:1,operating_cash_flow:2076000000,capex:-555000000,free_cash_flow:1521000000,depreciation_amortization:285000000,stock_repurchases:-453000000,dividends_paid:-351000000,cash_end_of_period:1184000000},
+  {period:"2025-Q2",fiscal_year:2025,quarter:2,operating_cash_flow:1164000000,capex:-463000000,free_cash_flow:701000000,depreciation_amortization:242000000,stock_repurchases:-413000000,dividends_paid:-360000000,cash_end_of_period:656000000},
+  {period:"2025-Q3",fiscal_year:2025,quarter:3,operating_cash_flow:1534000000,capex:-555000000,free_cash_flow:979000000,depreciation_amortization:285000000,stock_repurchases:-487000000,dividends_paid:-359000000,cash_end_of_period:859000000},
+  {period:"2025-Q4",fiscal_year:2025,quarter:4,operating_cash_flow:1134000000,capex:-679000000,free_cash_flow:455000000,depreciation_amortization:279000000,stock_repurchases:-345000000,dividends_paid:-356000000,cash_end_of_period:632000000},
+];
+
+// ── Balance Sheet Data ────────────────────────────────────────────
+// Filtered to FY2015-Q1 → FY2025-Q4 (44 quarters)
+const BS_DATA = [
+  {period:"2015-Q1", total_assets:15905937000, assets_current:3832747000, cash:455751000, short_term_investments:1055958000, equity_securities_fv:null, long_term_investments:5843613000, accounts_receivable:594071000, ppe_net:5839270000, rou_asset:null, total_liabilities:4176984000, liabilities_current:3151995000, accounts_payable:1642287000, lt_debt:209039000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:130171000, stockholders_equity:8591535000},
+  {period:"2015-Q2", total_assets:15714319000, assets_current:3649341000, cash:277244000, short_term_investments:1147371000, equity_securities_fv:null, long_term_investments:5700274000, accounts_receivable:565474000, ppe_net:5964739000, rou_asset:null, total_liabilities:3662174000, liabilities_current:2666867000, accounts_payable:1476418000, lt_debt:212030000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:119122000, stockholders_equity:8984622000},
+  {period:"2015-Q3", total_assets:15946059000, assets_current:3740394000, cash:327498000, short_term_investments:1113729000, equity_securities_fv:null, long_term_investments:5710550000, accounts_receivable:597918000, ppe_net:6087313000, rou_asset:null, total_liabilities:3796287000, liabilities_current:2900877000, accounts_payable:1489523000, lt_debt:176006000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:112106000, stockholders_equity:9123906000},
+  {period:"2015-Q4", total_assets:16359278000, assets_current:4314433000, cash:352176000, short_term_investments:1376698000, equity_securities_fv:null, long_term_investments:5226236000, accounts_receivable:723685000, ppe_net:6387298000, rou_asset:null, total_liabilities:3928016000, liabilities_current:2902689000, accounts_payable:1675858000, lt_debt:179753000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:104243000, stockholders_equity:9440453000},
+  {period:"2016-Q1", total_assets:17004056000, assets_current:4334454000, cash:493677000, short_term_investments:1402034000, equity_securities_fv:null, long_term_investments:5665497000, accounts_receivable:724195000, ppe_net:6580286000, rou_asset:null, total_liabilities:3950696000, liabilities_current:2924239000, accounts_payable:1650496000, lt_debt:171398000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:102323000, stockholders_equity:9591132000},
+  {period:"2016-Q2", total_assets:16940312000, assets_current:4145837000, cash:304762000, short_term_investments:1464791000, equity_securities_fv:null, long_term_investments:5532326000, accounts_receivable:611515000, ppe_net:6853078000, rou_asset:null, total_liabilities:3743459000, liabilities_current:2696209000, accounts_payable:1505544000, lt_debt:169514000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:98261000, stockholders_equity:9942670000},
+  {period:"2016-Q3", total_assets:17332819000, assets_current:4283155000, cash:304561000, short_term_investments:1588737000, equity_securities_fv:null, long_term_investments:5461844000, accounts_receivable:633777000, ppe_net:7121732000, rou_asset:null, total_liabilities:4000632000, liabilities_current:2972318000, accounts_payable:1510815000, lt_debt:165374000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:96928000, stockholders_equity:10159188000},
+  {period:"2016-Q4", total_assets:17386458000, assets_current:4518177000, cash:438319000, short_term_investments:1591740000, equity_securities_fv:null, long_term_investments:5146878000, accounts_receivable:715292000, ppe_net:7287123000, rou_asset:null, total_liabilities:3889021000, liabilities_current:2943713000, accounts_payable:1609652000, lt_debt:136585000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:93574000, stockholders_equity:10405171000},
+  {period:"2017-Q1", total_assets:18026221000, assets_current:4613395000, cash:568632000, short_term_investments:1597903000, equity_securities_fv:null, long_term_investments:5461917000, accounts_receivable:665464000, ppe_net:7408952000, rou_asset:null, total_liabilities:3939172000, liabilities_current:2991495000, accounts_payable:1730028000, lt_debt:115928000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:94276000, stockholders_equity:10575902000},
+  {period:"2017-Q2", total_assets:17941315000, assets_current:4428575000, cash:253725000, short_term_investments:1712555000, equity_securities_fv:null, long_term_investments:5278322000, accounts_receivable:637608000, ppe_net:7676611000, rou_asset:null, total_liabilities:3804244000, liabilities_current:2789246000, accounts_payable:1654448000, lt_debt:163358000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:87263000, stockholders_equity:10836496000},
+  {period:"2017-Q3", total_assets:17969044000, assets_current:4329970000, cash:670695000, short_term_investments:1256724000, equity_securities_fv:null, long_term_investments:5243817000, accounts_receivable:647332000, ppe_net:7832361000, rou_asset:null, total_liabilities:4266509000, liabilities_current:3245928000, accounts_payable:1778927000, lt_debt:153186000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:87428000, stockholders_equity:10541896000},
+  {period:"2017-Q4", total_assets:18183506000, assets_current:4084921000, cash:579925000, short_term_investments:915579000, equity_securities_fv:2547180000, long_term_investments:5517732000, accounts_receivable:671414000, ppe_net:7997704000, rou_asset:null, total_liabilities:4074887000, liabilities_current:3142314000, accounts_payable:1754706000, lt_debt:155201000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:84361000, stockholders_equity:11017149000},
+  {period:"2018-Q1", total_assets:18546137000, assets_current:4000792000, cash:644355000, short_term_investments:753054000, equity_securities_fv:null, long_term_investments:5762493000, accounts_receivable:746904000, ppe_net:8277566000, rou_asset:null, total_liabilities:3928369000, liabilities_current:3006596000, accounts_payable:1893710000, lt_debt:157836000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:84152000, stockholders_equity:11126566000},
+  {period:"2018-Q2", total_assets:18576862000, assets_current:3711010000, cash:561930000, short_term_investments:665338000, equity_securities_fv:2976660000, long_term_investments:5963551000, accounts_receivable:630061000, ppe_net:8392379000, rou_asset:null, total_liabilities:3805429000, liabilities_current:2863992000, accounts_payable:1730965000, lt_debt:169604000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:72542000, stockholders_equity:11485083000},
+  {period:"2018-Q3", total_assets:18998748000, assets_current:3643814000, cash:616283000, short_term_investments:575195000, equity_securities_fv:3184910000, long_term_investments:6278318000, accounts_receivable:649945000, ppe_net:8574060000, rou_asset:null, total_liabilities:4106856000, liabilities_current:3133648000, accounts_payable:1754822000, lt_debt:163928000, lease_current:null, lease_noncurrent:null, deferred_tax:null, other_noncurrent_liab:71412000, stockholders_equity:11666996000},
+  {period:"2018-Q4", total_assets:18982516000, assets_current:3814196000, cash:599264000, short_term_investments:560992000, equity_securities_fv:2698720000, long_term_investments:6016438000, accounts_receivable:682981000, ppe_net:8636617000, rou_asset:0, total_liabilities:3987852000, liabilities_current:3009555000, accounts_payable:1864604000, lt_debt:162711000, lease_current:0, lease_noncurrent:0, deferred_tax:null, other_noncurrent_liab:67102000, stockholders_equity:11823342000},
+  {period:"2019-Q1", total_assets:22970300000, assets_current:4027342000, cash:1012142000, short_term_investments:525667000, equity_securities_fv:2961025000, long_term_investments:6790916000, accounts_receivable:694921000, ppe_net:8827727000, rou_asset:2860491000, total_liabilities:6973560000, liabilities_current:3331105000, accounts_payable:1901726000, lt_debt:161639000, lease_current:327399000, lease_noncurrent:2535134000, deferred_tax:null, other_noncurrent_liab:109203000, stockholders_equity:12450398000},
+  {period:"2019-Q2", total_assets:23383629000, assets_current:3806643000, cash:820610000, short_term_investments:443636000, equity_securities_fv:2566113000, long_term_investments:7214453000, accounts_receivable:680737000, ppe_net:9050440000, rou_asset:2852599000, total_liabilities:7097775000, liabilities_current:3376486000, accounts_payable:1873569000, lt_debt:166926000, lease_current:327735000, lease_noncurrent:2520256000, deferred_tax:null, other_noncurrent_liab:136791000, stockholders_equity:12897061000},
+  {period:"2019-Q3", total_assets:23929393000, assets_current:4307193000, cash:1294010000, short_term_investments:453132000, equity_securities_fv:2170083000, long_term_investments:7145508000, accounts_receivable:700836000, ppe_net:9109023000, rou_asset:2909462000, total_liabilities:7405844000, liabilities_current:3652244000, accounts_payable:1815800000, lt_debt:145300000, lease_current:332648000, lease_noncurrent:2562160000, deferred_tax:null, other_noncurrent_liab:127010000, stockholders_equity:13200858000},
+  {period:"2019-Q4", total_assets:24507120000, assets_current:3927600000, cash:763000000, short_term_investments:438105000, equity_securities_fv:2354346000, long_term_investments:7988280000, accounts_receivable:737093000, ppe_net:9184522000, rou_asset:2964780000, total_liabilities:7605776000, liabilities_current:3700714000, accounts_payable:1984761000, lt_debt:131997000, lease_current:335391000, lease_noncurrent:2603206000, deferred_tax:682484000, other_noncurrent_liab:140633000, stockholders_equity:13604000000},
+  {period:"2020-Q1", total_assets:25202317000, assets_current:4578004000, cash:1618875000, short_term_investments:454111000, equity_securities_fv:2479919000, long_term_investments:7919444000, accounts_receivable:834391000, ppe_net:9268365000, rou_asset:2991588000, total_liabilities:7955599000, liabilities_current:4202071000, accounts_payable:2502165000, lt_debt:121457000, lease_current:337270000, lease_noncurrent:2610655000, deferred_tax:535610000, other_noncurrent_liab:138719000, stockholders_equity:13505729000},
+  {period:"2020-Q2", total_assets:26845843000, assets_current:4650272000, cash:1423493000, short_term_investments:566920000, equity_securities_fv:2565053000, long_term_investments:9459373000, accounts_receivable:725568000, ppe_net:9315916000, rou_asset:2977399000, total_liabilities:8506838000, liabilities_current:4561183000, accounts_payable:2155743000, lt_debt:124764000, lease_current:340461000, lease_noncurrent:2605433000, deferred_tax:710607000, other_noncurrent_liab:154820000, stockholders_equity:14734397000},
+  {period:"2020-Q3", total_assets:27194202000, assets_current:4117693000, cash:602798000, short_term_investments:650446000, equity_securities_fv:2280448000, long_term_investments:10165781000, accounts_receivable:777504000, ppe_net:9461777000, rou_asset:3011550000, total_liabilities:8407773000, liabilities_current:4391620000, accounts_payable:2138485000, lt_debt:138879000, lease_current:344186000, lease_noncurrent:2628156000, deferred_tax:717574000, other_noncurrent_liab:177993000, stockholders_equity:15227652000},
+  {period:"2020-Q4", total_assets:28094077000, assets_current:4417796000, cash:673000000, short_term_investments:682965000, equity_securities_fv:2089907000, long_term_investments:10605234000, accounts_receivable:917531000, ppe_net:9690520000, rou_asset:2965424000, total_liabilities:8808213000, liabilities_current:4366844000, accounts_payable:2414798000, lt_debt:123835000, lease_current:345805000, lease_noncurrent:2588258000, deferred_tax:772722000, other_noncurrent_liab:474285000, stockholders_equity:15757000000},
+  {period:"2021-Q1", total_assets:29446420000, assets_current:4590599000, cash:979059000, short_term_investments:661992000, equity_securities_fv:3155057000, long_term_investments:11624617000, accounts_receivable:831308000, ppe_net:9882436000, rou_asset:2925750000, total_liabilities:8836700000, liabilities_current:4416618000, accounts_payable:2374395000, lt_debt:115064000, lease_current:347015000, lease_noncurrent:2550441000, deferred_tax:899277000, other_noncurrent_liab:484329000, stockholders_equity:16522259000},
+  {period:"2021-Q2", total_assets:29983121000, assets_current:4532450000, cash:903810000, short_term_investments:678075000, equity_securities_fv:3347910000, long_term_investments:12080627000, accounts_receivable:793009000, ppe_net:10000215000, rou_asset:2931874000, total_liabilities:8813288000, liabilities_current:4295637000, accounts_payable:2299558000, lt_debt:113368000, lease_current:351353000, lease_noncurrent:2551728000, deferred_tax:976910000, other_noncurrent_liab:498391000, stockholders_equity:17266580000},
+  {period:"2021-Q3", total_assets:30874323000, assets_current:4768579000, cash:1171532000, short_term_investments:774261000, equity_securities_fv:3427854000, long_term_investments:12582694000, accounts_receivable:797918000, ppe_net:10138759000, rou_asset:2959937000, total_liabilities:9301760000, liabilities_current:4687307000, accounts_payable:2411056000, lt_debt:112220000, lease_current:354792000, lease_noncurrent:2572350000, deferred_tax:1012201000, other_noncurrent_liab:535601000, stockholders_equity:17706884000},
+  {period:"2021-Q4", total_assets:31524000000, assets_current:5105000000, cash:1132000000, short_term_investments:883000000, equity_securities_fv:3600000000, long_term_investments:12768000000, accounts_receivable:904000000, ppe_net:10256000000, rou_asset:2950000000, total_liabilities:9486000000, liabilities_current:4822000000, accounts_payable:2595000000, lt_debt:98000000, lease_current:355000000, lease_noncurrent:2570000000, deferred_tax:1031000000, other_noncurrent_liab:305000000, stockholders_equity:18170000000},
+  {period:"2022-Q1", total_assets:30911368000, assets_current:4514997000, cash:679816000, short_term_investments:905060000, equity_securities_fv:3384646000, long_term_investments:12534245000, accounts_receivable:842069000, ppe_net:10457772000, rou_asset:2897144000, total_liabilities:8894041000, liabilities_current:4672908000, accounts_payable:2566290000, lt_debt:82746000, lease_current:355025000, lease_noncurrent:2516022000, deferred_tax:748763000, other_noncurrent_liab:170823000, stockholders_equity:17549000000},
+  {period:"2022-Q2", total_assets:30374604000, assets_current:4730142000, cash:1028264000, short_term_investments:737709000, equity_securities_fv:3034694000, long_term_investments:11611377000, accounts_receivable:831164000, ppe_net:10627275000, rou_asset:2885420000, total_liabilities:8837791000, liabilities_current:4763506000, accounts_payable:2567088000, lt_debt:82747000, lease_current:356320000, lease_noncurrent:2503258000, deferred_tax:632348000, other_noncurrent_liab:170445000, stockholders_equity:17243000000},
+  {period:"2022-Q3", total_assets:30347557000, assets_current:5349557000, cash:1599459000, short_term_investments:533339000, equity_securities_fv:2479761000, long_term_investments:10673266000, accounts_receivable:966408000, ppe_net:10869719000, rou_asset:2915642000, total_liabilities:9105228000, liabilities_current:5142893000, accounts_payable:2668854000, lt_debt:61680000, lease_current:357457000, lease_noncurrent:2528313000, deferred_tax:524681000, other_noncurrent_liab:164826000, stockholders_equity:17065000000},
+  {period:"2022-Q4", total_assets:31047000000, assets_current:5423000000, cash:1336000000, short_term_investments:566000000, equity_securities_fv:2500000000, long_term_investments:10992000000, accounts_receivable:1106000000, ppe_net:11092000000, rou_asset:2979000000, total_liabilities:9195000000, liabilities_current:5172000000, accounts_payable:2812000000, lt_debt:43000000, lease_current:359000000, lease_noncurrent:2573000000, deferred_tax:575000000, other_noncurrent_liab:141000000, stockholders_equity:17786000000},
+  {period:"2023-Q1", total_assets:32241000000, assets_current:5870000000, cash:null, short_term_investments:751000000, equity_securities_fv:2700000000, long_term_investments:11429000000, accounts_receivable:1078000000, ppe_net:11337000000, rou_asset:3044000000, total_liabilities:9109000000, liabilities_current:4957000000, accounts_payable:2954000000, lt_debt:43000000, lease_current:359000000, lease_noncurrent:2606000000, deferred_tax:668000000, other_noncurrent_liab:131000000, stockholders_equity:18432000000},
+  {period:"2023-Q2", total_assets:32776000000, assets_current:6151000000, cash:null, short_term_investments:1087000000, equity_securities_fv:2600000000, long_term_investments:11464000000, accounts_receivable:1072000000, ppe_net:11516000000, rou_asset:3079000000, total_liabilities:9165000000, liabilities_current:4936000000, accounts_payable:2807000000, lt_debt:52000000, lease_current:360000000, lease_noncurrent:2619000000, deferred_tax:686000000, other_noncurrent_liab:130000000, stockholders_equity:19183000000},
+  {period:"2023-Q3", total_assets:33354000000, assets_current:6444000000, cash:null, short_term_investments:1771000000, equity_securities_fv:2500000000, long_term_investments:11459000000, accounts_receivable:1074000000, ppe_net:11735000000, rou_asset:3093000000, total_liabilities:9533000000, liabilities_current:5351000000, accounts_payable:2763000000, lt_debt:42000000, lease_current:360000000, lease_noncurrent:2613000000, deferred_tax:629000000, other_noncurrent_liab:127000000, stockholders_equity:19496000000},
+  {period:"2023-Q4", total_assets:34384000000, assets_current:6482000000, cash:null, short_term_investments:1899000000, equity_securities_fv:2700000000, long_term_investments:11867000000, accounts_receivable:1174000000, ppe_net:12184000000, rou_asset:3121000000, total_liabilities:9713000000, liabilities_current:5282000000, accounts_payable:2931000000, lt_debt:42000000, lease_current:361000000, lease_noncurrent:2624000000, deferred_tax:764000000, other_noncurrent_liab:244000000, stockholders_equity:20416000000},
+  {period:"2024-Q1", total_assets:35764000000, assets_current:6887000000, cash:null, short_term_investments:2322000000, equity_securities_fv:3100000000, long_term_investments:12445000000, accounts_receivable:1293000000, ppe_net:12544000000, rou_asset:3128000000, total_liabilities:9864000000, liabilities_current:5276000000, accounts_payable:3077000000, lt_debt:41000000, lease_current:358000000, lease_noncurrent:2608000000, deferred_tax:849000000, other_noncurrent_liab:212000000, stockholders_equity:21030000000},
+  {period:"2024-Q2", total_assets:35752000000, assets_current:6798000000, cash:null, short_term_investments:2547000000, equity_securities_fv:3100000000, long_term_investments:12130000000, accounts_receivable:1148000000, ppe_net:12899000000, rou_asset:3122000000, total_liabilities:9609000000, liabilities_current:5000000000, accounts_payable:2809000000, lt_debt:40000000, lease_current:356000000, lease_noncurrent:2602000000, deferred_tax:869000000, other_noncurrent_liab:209000000, stockholders_equity:21493000000},
+  {period:"2024-Q3", total_assets:36851000000, assets_current:7171000000, cash:null, short_term_investments:2563000000, equity_securities_fv:3300000000, long_term_investments:12336000000, accounts_receivable:1177000000, ppe_net:13413000000, rou_asset:3090000000, total_liabilities:9984000000, liabilities_current:5241000000, accounts_payable:2738000000, lt_debt:40000000, lease_current:353000000, lease_noncurrent:2569000000, deferred_tax:1005000000, other_noncurrent_liab:205000000, stockholders_equity:22284000000},
+  {period:"2024-Q4", total_assets:37601000000, assets_current:7688000000, cash:null, short_term_investments:2800000000, equity_securities_fv:3500000000, long_term_investments:12258000000, accounts_receivable:1228000000, ppe_net:13769000000, rou_asset:3030000000, total_liabilities:10173000000, liabilities_current:5417000000, accounts_payable:2949000000, lt_debt:20000000, lease_current:354000000, lease_noncurrent:2511000000, deferred_tax:1078000000, other_noncurrent_liab:230000000, stockholders_equity:22863000000},
+  {period:"2025-Q1", total_assets:38398000000, assets_current:7899000000, cash:null, short_term_investments:2866000000, equity_securities_fv:3800000000, long_term_investments:12641000000, accounts_receivable:1252000000, ppe_net:14018000000, rou_asset:3004000000, total_liabilities:10051000000, liabilities_current:5315000000, accounts_payable:2955000000, lt_debt:null, lease_current:356000000, lease_noncurrent:2477000000, deferred_tax:1031000000, other_noncurrent_liab:247000000, stockholders_equity:23002000000},
+  {period:"2025-Q2", total_assets:39370000000, assets_current:7280000000, cash:null, short_term_investments:2469000000, equity_securities_fv:4500000000, long_term_investments:13894000000, accounts_receivable:1291000000, ppe_net:14362000000, rou_asset:2974000000, total_liabilities:10323000000, liabilities_current:5421000000, accounts_payable:3000000000, lt_debt:null, lease_current:356000000, lease_noncurrent:2446000000, deferred_tax:1165000000, other_noncurrent_liab:257000000, stockholders_equity:23956000000},
+  {period:"2025-Q3", total_assets:40363000000, assets_current:7660000000, cash:null, short_term_investments:2513000000, equity_securities_fv:4800000000, long_term_investments:14204000000, accounts_receivable:1349000000, ppe_net:14679000000, rou_asset:2979000000, total_liabilities:10840000000, liabilities_current:5666000000, accounts_payable:2911000000, lt_debt:null, lease_current:357000000, lease_noncurrent:2440000000, deferred_tax:1425000000, other_noncurrent_liab:231000000, stockholders_equity:24471000000},
+  {period:"2025-Q4", total_assets:40989000000, assets_current:7679000000, cash:null, short_term_investments:2597000000, equity_securities_fv:5000000000, long_term_investments:14455000000, accounts_receivable:1366000000, ppe_net:15070000000, rou_asset:2952000000, total_liabilities:10887000000, liabilities_current:5604000000, accounts_payable:3074000000, lt_debt:2000000, lease_current:359000000, lease_noncurrent:2418000000, deferred_tax:1563000000, other_noncurrent_liab:218000000, stockholders_equity:25141000000},
+];
+
+// ──────────────────────────────────────────────────────────────
+// Annual aggregation
+// ──────────────────────────────────────────────────────────────
+function computeAnnualTotals(quarters) {
+  const byYear = {};
+  quarters.forEach(q => {
+    if (!byYear[q.fiscalYear]) byYear[q.fiscalYear] = {year: q.fiscalYear, revenue: 0, netIncome: 0, operatingNetIncome: 0, grossProfit: 0, operatingIncome: 0, storeCount: 0, revenuePerStore: 0, _q4: null};
+    byYear[q.fiscalYear].revenue += q.revenue;
+    byYear[q.fiscalYear].netIncome += q.netIncome;
+    byYear[q.fiscalYear].operatingNetIncome += q.operatingNetIncome;
+    byYear[q.fiscalYear].grossProfit += q.grossProfit;
+    byYear[q.fiscalYear].operatingIncome += q.operatingIncome;
+    if (q.quarter === 4) byYear[q.fiscalYear]._q4 = q; // capture Q4 snapshot
+  });
+  return Object.values(byYear).sort((a,b) => a.year - b.year).map(d => {
+    // Compute derived margin % from annual totals
+    d.grossMarginPct = d.revenue ? (d.grossProfit / d.revenue) * 100 : null;
+    d.operatingMarginPct = d.revenue ? (d.operatingIncome / d.revenue) * 100 : null;
+    d.operatingNetMarginPct = d.revenue ? (d.operatingNetIncome / d.revenue) * 100 : null;
+    // Store count and RPS from Q4 snapshot
+    d.storeCount = d._q4 ? d._q4.storeCount : null;
+    d.revenuePerStore = d._q4 && d._q4.storeCount ? d.revenue / d._q4.storeCount : null;
+    return d;
+  });
+}
+
+function computeCashflowAnnualTotals(data) {
+  const byYear = {};
+  data.forEach(d => {
+    if (!byYear[d.fiscal_year]) byYear[d.fiscal_year] = {year: d.fiscal_year, operating_cash_flow:0, capex:0, free_cash_flow:0, depreciation_amortization:0, stock_repurchases:0, dividends_paid:0};
+    byYear[d.fiscal_year].operating_cash_flow += d.operating_cash_flow;
+    byYear[d.fiscal_year].capex += d.capex;
+    byYear[d.fiscal_year].free_cash_flow += d.free_cash_flow;
+    byYear[d.fiscal_year].depreciation_amortization += d.depreciation_amortization;
+    byYear[d.fiscal_year].stock_repurchases += d.stock_repurchases;
+    byYear[d.fiscal_year].dividends_paid += d.dividends_paid;
+  });
+  return Object.values(byYear).sort((a,b) => a.year - b.year);
+}
+
+// ──────────────────────────────────────────────────────────────
+// Helpers
+// ──────────────────────────────────────────────────────────────
+function fmtB(v) { return '$' + (v/1e9).toFixed(1) + 'B'; }
+function fmtM(v) { return '$' + (v/1e6).toFixed(0) + 'M'; }
+function fmtPct(v,d) { return v.toFixed(d||2) + '%'; }
+function fmtNum(v) { return v.toLocaleString('en-US'); }
+
+// ──────────────────────────────────────────────────────────────
+// State
+// ──────────────────────────────────────────────────────────────
+let filteredData = [...QUARTERS];
+let activePreset = 'all';
+let yearStart = 2015, yearEnd = 2025;
+let revPeriod = 'quarterly'; // 'quarterly' | 'annual'
+let revView = 'absolute';   // 'absolute' | 'yoy'
+let marginsPeriod = 'quarterly';
+let rpsPeriod = 'quarterly';
+let balancePeriod = 'quarterly';
+let charts = {};
+let tableSortCol = 'period';
+let tableSortAsc = false;
+
+function initDashboard() { buildYearSelector(); updateAll(); }
+initDashboard();
+</script>
+</body>
+</html>
