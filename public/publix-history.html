@@ -2685,8 +2685,10 @@ makeToggle('bs-liab-toggle', v => { bsLiabMode = v; bsPeriod = v; }, renderBSLia
 // ──────────────────────────────────────────────────────────────
 // Boot
 // ──────────────────────────────────────────────────────────────
-buildYearSelector();
-updateAll();
+requestAnimationFrame(() => {
+  buildYearSelector();
+  updateAll();
+});
 </script>
 </body>
 </html>
