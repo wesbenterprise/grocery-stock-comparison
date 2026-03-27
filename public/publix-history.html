@@ -500,10 +500,16 @@ tr:hover td{background:rgba(76,175,80,.03)}
         <button class="case-btn" data-case="bull" onclick="setProjCase('cf','bull')">BULL</button>
         <button class="case-btn" data-case="bear" onclick="setProjCase('cf','bear')">BEAR</button>
       </div>
+      <div style="display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap;">
+        <span style="font-size:11px;color:#888;letter-spacing:0.1em;text-transform:uppercase;font-family:monospace;">Growth Rate:</span>
+        <button id="growth-2" onclick="setGrowthRate(2)" style="background:#111;border:1px solid #555;color:#888;font-family:monospace;font-size:11px;font-weight:700;padding:5px 14px;border-radius:6px;cursor:pointer;letter-spacing:0.04em;transition:all .15s;">2%</button>
+        <button id="growth-4" onclick="setGrowthRate(4)" style="background:#111;border:1px solid #f0c040;color:#f0c040;font-family:monospace;font-size:11px;font-weight:700;padding:5px 14px;border-radius:6px;cursor:pointer;letter-spacing:0.04em;transition:all .15s;">4%</button>
+        <button id="growth-6" onclick="setGrowthRate(6)" style="background:#111;border:1px solid #555;color:#888;font-family:monospace;font-size:11px;font-weight:700;padding:5px 14px;border-radius:6px;cursor:pointer;letter-spacing:0.04em;transition:all .15s;">6%</button>
+      </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-        <span class="proj-pill">FCF base '35: $5.6B</span>
-        <span class="proj-pill">FCF bull '35: $8.7B</span>
-        <span class="proj-pill">Div pool CAGR (base): 5.6%</span>
+        <span class="proj-pill" id="cf-pill-base">FCF base '35: $5.6B</span>
+        <span class="proj-pill" id="cf-pill-bull">FCF bull '35: $8.7B</span>
+        <span class="proj-pill" id="cf-pill-div">Div pool CAGR (base): 5.6%</span>
       </div>
       <div style="position:relative;height:320px"><canvas id="chart-cf-proj"></canvas></div>
       <table class="projection-table" style="margin-top:20px">
@@ -1170,6 +1176,9 @@ const PROJECTIONS = {
     { year:2035, dps_base:0.864, dps_bull:1.041, dps_bear:0.715, type:'projected' },
   ],
 };
+
+// Store original cashFlow data for growth rate toggle scaling
+PROJECTIONS._cashFlowOriginal = PROJECTIONS.cashFlow.map(d => Object.assign({}, d));
 
 // ──────────────────────────────────────────────────────────────
 // Helpers
@@ -3188,6 +3197,85 @@ function renderISProjection(forceCase) {
         <td class="proj-base">$${d.eps_base.toFixed(2)}</td>
       </tr>`).join('');
   }
+}
+
+// ── Growth Rate Toggle ─────────────────────────────────────────
+let _cfGrowthRate = 4; // default 4%
+
+function setGrowthRate(rate) {
+  _cfGrowthRate = rate;
+
+  // Update button styles
+  [2, 4, 6].forEach(r => {
+    const btn = document.getElementById('growth-' + r);
+    if (!btn) return;
+    if (r === rate) {
+      btn.style.borderColor = '#f0c040';
+      btn.style.color = '#f0c040';
+    } else {
+      btn.style.borderColor = '#555';
+      btn.style.color = '#888';
+    }
+  });
+
+  // Recalculate projections and re-render
+  _recalcCFProjections(rate);
+  renderCFProjection();
+}
+
+function _recalcCFProjections(rate) {
+  // Bear = rate-2% (min 0%), Base = rate%, Bull = rate+2%
+  const bearRate  = Math.max(0, rate - 2) / 100;
+  const baseRate  = rate / 100;
+  const bullRate  = (rate + 2) / 100;
+
+  // Anchor from 2025 actuals embedded in methodology
+  const m = PROJECTIONS.methodology;
+  const fcf2025Base = Math.abs(m.capexBase2025) > 0
+    ? (m.capexBase2025 + 6300000) // approximate OCF2025 − capex2025 → use fixed anchor
+    : 3400000;
+
+  // Use the original 4% base data as a scaling reference
+  const originalBase = 0.04;
+
+  PROJECTIONS.cashFlow = PROJECTIONS._cashFlowOriginal.map(d => {
+    const yr = d.year - 2025; // years from anchor
+
+    // Scale FCF from original using ratio of compound growth factors
+    const scaleBase = Math.pow(1 + baseRate, yr) / Math.pow(1 + originalBase, yr);
+    const scaleBear = Math.pow(1 + bearRate, yr) / Math.pow(1 + (originalBase - 0.02), yr);
+    const scaleBull = Math.pow(1 + bullRate, yr) / Math.pow(1 + (originalBase + 0.02), yr);
+
+    const newFcfBase = Math.round(d.fcf_base * scaleBase);
+    const newFcfBear = Math.round(d.fcf_bear * scaleBear);
+    const newFcfBull = Math.round(d.fcf_bull * scaleBull);
+
+    const newDivBase = Math.round(d.dividendsPaid_base * scaleBase);
+    const newDivBear = Math.round(d.dividendsPaid_bear * scaleBear);
+    const newDivBull = Math.round(d.dividendsPaid_bull * scaleBull);
+
+    const newOcfBase = Math.round(d.ocf_base * scaleBase);
+    const newOcfBear = Math.round(d.ocf_bear * scaleBear);
+    const newOcfBull = Math.round(d.ocf_bull * scaleBull);
+
+    return Object.assign({}, d, {
+      fcf_base: newFcfBase, fcf_bear: newFcfBear, fcf_bull: newFcfBull,
+      ocf_base: newOcfBase, ocf_bear: newOcfBear, ocf_bull: newOcfBull,
+      dividendsPaid_base: newDivBase, dividendsPaid_bear: newDivBear, dividendsPaid_bull: newDivBull,
+    });
+  });
+
+  // Update summary pills
+  const last = PROJECTIONS.cashFlow[PROJECTIONS.cashFlow.length - 1];
+  const p1 = document.getElementById('cf-pill-base');
+  const p2 = document.getElementById('cf-pill-bull');
+  const p3 = document.getElementById('cf-pill-div');
+  if (p1) p1.textContent = 'FCF base \'35: $' + (last.fcf_base / 1000).toFixed(1) + 'B';
+  if (p2) p2.textContent = 'FCF bull \'35: $' + (last.fcf_bull / 1000).toFixed(1) + 'B';
+  // Compute div CAGR base: from year 1 to year 10
+  const first = PROJECTIONS.cashFlow[0];
+  const divCagr = (Math.pow(Math.abs(last.dividendsPaid_base) / Math.abs(first.dividendsPaid_base), 1/9) - 1) * 100;
+  if (p3) p3.textContent = 'Div pool CAGR (base): ' + divCagr.toFixed(1) + '%';
 }
 
 // ── CF Projection ──────────────────────────────────────────────
