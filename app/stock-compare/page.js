@@ -15,6 +15,16 @@ const PredictionPanel = dynamic(() => import('../components/PredictionPanel'), {
   ),
 });
 
+const PredictionPanelSP = dynamic(() => import('../components/PredictionPanelSP'), {
+  ssr: false,
+  loading: () => (
+    <div className="prediction-panel loading">
+      <div className="spinner" />
+      <p>Loading predictor (with S&P 500)...</p>
+    </div>
+  ),
+});
+
 const StockChart = dynamic(() => import('../components/StockChart'), {
   ssr: false,
   loading: () => (
@@ -57,6 +67,7 @@ function ChangeTag({ pct, isGain }) {
 
 export default function Page() {
   const [liveStocks, setLiveStocks] = useState({ KR: null, WMT: null, ADRNY: null, ACI: null, WMK: null });
+  const [predMode, setPredMode] = useState('grocery');
 
   const handleLiveData = useCallback((data) => {
     setLiveStocks(data);
@@ -79,7 +90,29 @@ export default function Page() {
 
           {/* Publix Price Predictor */}
           <section aria-label="Publix price prediction">
-            <PredictionPanel />
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+              {[['grocery', 'Grocery Peers Only'], ['sp500', 'Include S&P 500']].map(([mode, label]) => (
+                <button
+                  key={mode}
+                  onClick={() => setPredMode(mode)}
+                  style={{
+                    padding: '8px 20px',
+                    borderRadius: '999px',
+                    border: predMode === mode ? '1px solid rgba(255,255,255,0.3)' : '1px solid rgba(255,255,255,0.1)',
+                    background: predMode === mode ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.03)',
+                    color: predMode === mode ? '#f0f0f5' : '#8080a0',
+                    fontFamily: "'Space Grotesk', sans-serif",
+                    fontSize: '13px',
+                    fontWeight: predMode === mode ? 600 : 400,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {predMode === 'grocery' ? <PredictionPanel /> : <PredictionPanelSP />}
           </section>
 
           {/* Company Cards */}
