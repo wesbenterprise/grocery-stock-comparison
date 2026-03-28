@@ -154,7 +154,7 @@ export default function PredictionPanel() {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
+        interaction: { mode: 'nearest', axis: 'x', intersect: false },
         animation: { duration: 400 },
         scales: {
           x: {
@@ -200,6 +200,13 @@ export default function PredictionPanel() {
             borderColor: 'rgba(255,255,255,0.06)',
             borderWidth: 1,
             callbacks: {
+              title: (items) => {
+                if (!items.length) return '';
+                // Use the actual x value from the hovered data point
+                const raw = items[0].parsed.x;
+                const d = new Date(raw);
+                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+              },
               label: (ctx) => `${ctx.dataset.label}: $${ctx.parsed.y.toFixed(2)}`,
             },
           },
